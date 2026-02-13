@@ -242,7 +242,7 @@
     {{-- PENGHASILAN --}}
     <div class="bg-header">PENGHASILAN</div>
     <table>
-        @if(!$isTraining)
+        
         <tr>
             <td class="label">Gaji Pokok</td>
             <td class="value">Rp {{ number_format($gajipokok, 0, ',', '.') }}</td>
@@ -263,7 +263,7 @@
             <td class="label">Tunj. Fungsional</td>
             <td class="value">Rp {{ number_format($tunjfungsional, 0, ',', '.') }}</td>
         </tr>
-        @endif
+       
 
         @if($jmlrujukan > 0)
         <tr>

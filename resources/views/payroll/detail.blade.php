@@ -184,7 +184,7 @@
         <div class="card-header bg-primary text-white py-2 px-3">PENGHASILAN</div>
         <div class="card-body p-0">
             <table style="width: 100%;" class="table table-sm table-borderless mb-0">
-                @if(!$isTraining)
+                
                 <tr>
                     <td style="width: 60%; padding: 5px 12px;">Gaji Pokok</td>
                     <td style="width: 40%; padding: 5px 12px;" class="text-end">Rp {{ number_format($gajipokok, 0, ',', '.') }}</td>
@@ -205,7 +205,7 @@
                     <td style="padding: 5px 12px;">Tunj. Fungsional</td>
                     <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($tunjfungsional, 0, ',', '.') }}</td>
                 </tr>
-                @endif
+                
 
                 @if($jmlrujukan > 0)
                 <tr>
