@@ -1,0 +1,72 @@
+[22-Jan-2025 05:14:28 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php on line 8
+[22-Jan-2025 05:14:48 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php on line 8
+[22-Jan-2025 05:33:27 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php on line 11
+[22-Jan-2025 05:42:10 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/User.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/User.php on line 11
+[22-Jan-2025 06:03:39 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php on line 8
+[22-Jan-2025 08:01:00 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php on line 8
+[22-Jan-2025 08:01:24 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/User.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/User.php on line 11
+[22-Jan-2025 08:26:49 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php on line 11
+[24-Jan-2025 05:05:21 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php on line 11
+[24-Jan-2025 05:06:38 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php on line 8
+[24-Jan-2025 05:07:12 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php on line 8
+[24-Jan-2025 05:39:11 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/User.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/User.php on line 11
+[26-Jan-2025 05:06:42 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Karyawan.php on line 11
+[26-Jan-2025 05:20:27 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Departemen.php on line 8
+[26-Jan-2025 05:24:12 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php on line 8
+[26-Jan-2025 15:33:22 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/User.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/User.php on line 11
+[27-Jan-2025 06:15:13 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/Pengajuanizin.php on line 8
+[27-Jan-2025 06:15:14 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Auth\User" not found in /home/rumj8833/public_html/ahadpagi/app/Models/User.php:11
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Models/User.php on line 11

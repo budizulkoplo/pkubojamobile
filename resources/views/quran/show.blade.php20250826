@@ -1,0 +1,219 @@
+@extends('layouts.presensi')
+
+@section('header')
+<div class="appHeader bg-primary text-light">
+    <div class="left">
+        <a href="javascript:;" class="headerButton goBack">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+        </a>
+    </div>
+    <div class="pageTitle">QUR'AN</div>
+    <div class="right"></div>
+</div>
+@endsection
+
+@section('content')
+<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New&display=swap" rel="stylesheet">
+
+<style>
+    .arab-text {
+        font-family: 'Scheherazade New', serif;
+        font-size: 1.6rem;
+        line-height: 2.6rem;
+        text-align: right;
+        direction: rtl;
+    }
+    .ayat-card {
+        border-radius: 12px;
+        position: relative;
+    }
+    .ayat-card.marked {
+        border: 2px solid #198754;
+        box-shadow: 0 0 10px rgba(25,135,84,.6);
+    }
+    .ayat-card .last-read-label {
+        position: absolute;
+        top: -14px; /* agak naik di atas card */
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #198754;
+        background: #d1e7dd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+
+
+    .form-check { margin: 0 10px; }
+</style>
+
+<div class="p-3" style="margin-top: 40px">
+
+    {{-- Header Surat --}}
+    <div class="text-center mb-4">
+        <h1 class="mb-0">{{ $surat['namaLatin'] }} <small class="text-muted">({{ $surat['arti'] }})</small></h1>
+        <h2 class="mt-2" style="font-family: 'Scheherazade New', serif;">{{ $surat['nama'] }}</h2>
+        <p class="mb-1"><strong>Jumlah Ayat:</strong> {{ $surat['jumlahAyat'] }}</p>
+        <p><strong>Tempat Turun:</strong> {{ $surat['tempatTurun'] }}</p>
+    </div>
+
+    {{-- Kontrol tampilan --}}
+    <div class="d-flex justify-content-center mb-4">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="mode" id="modeFull" value="full" checked>
+            <label class="form-check-label" for="modeFull">Lengkap</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="mode" id="modeArab" value="arab">
+            <label class="form-check-label" for="modeArab">Arab saja</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="mode" id="modeArabTerjemah" value="arab_terjemah">
+            <label class="form-check-label" for="modeArabTerjemah">Arab + Terjemahan</label>
+        </div>
+    </div>
+
+    {{-- Kontrol ukuran font --}}
+    <div class="text-center mb-4">
+        <button id="fontIncrease" class="btn btn-outline-primary btn-sm me-2">Perbesar+</button>
+        <button id="fontDecrease" class="btn btn-outline-primary btn-sm">Perkecil-</button>
+    </div>
+
+    {{-- Daftar Ayat --}}
+    @foreach($surat['ayat'] as $a)
+    <div class="card mb-3 shadow-sm ayat-card" 
+         data-ayat="{{ $a['nomorAyat'] }}" 
+         onclick="markAyat({{ $a['nomorAyat'] }})">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <span class="badge bg-primary px-3 py-2">Ayat {{ $a['nomorAyat'] }}</span>
+                <h3 class="arab-text flex-grow-1 ms-3">{{ $a['teksArab'] }}</h3>
+            </div>
+
+            <div class="latin mb-2">
+                <p><em>{{ $a['teksLatin'] }}</em></p>
+            </div>
+            <div class="terjemah">
+                <p>{{ $a['teksIndonesia'] }}</p>
+            </div>
+
+            {{-- Audio per ayat --}}
+            <audio controls preload="none" class="ayat-audio w-100" data-ayat="{{ $a['nomorAyat'] }}">
+                <source src="{{ $a['audio']['05'] }}" type="audio/mpeg">
+                Browser anda tidak mendukung pemutar audio.
+            </audio>
+            <span class="last-read-label d-none">Terakhir Dibaca</span>
+        </div>
+    </div>
+    @endforeach
+
+    {{-- Navigasi Surat --}}
+    <div class="d-flex justify-content-between mt-4">
+        @if($surat['suratSebelumnya'])
+            <a href="{{ route('quran.show', $surat['suratSebelumnya']['nomor']) }}" class="btn btn-outline-secondary">
+                ← {{ $surat['suratSebelumnya']['namaLatin'] }}
+            </a>
+        @else
+            <div></div>
+        @endif
+
+        @if($surat['suratSelanjutnya'])
+            <a href="{{ route('quran.show', $surat['suratSelanjutnya']['nomor']) }}" class="btn btn-outline-primary">
+                {{ $surat['suratSelanjutnya']['namaLatin'] }} →
+            </a>
+        @endif
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/quran" class="btn btn-dark">Kembali ke Daftar Surat</a>
+    </div>
+</div>
+
+{{-- Script --}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const radios = document.querySelectorAll('input[name="mode"]');
+    const cards = document.querySelectorAll(".ayat-card");
+    const arabTexts = document.querySelectorAll(".arab-text");
+    const audios = document.querySelectorAll(".ayat-audio");
+    const storageKey = "lastRead-{{ $surat['nomor'] }}";
+
+    // Fungsi tandai ayat
+    window.markAyat = function(no) {
+        // Hapus tanda di semua ayat
+        cards.forEach(c => {
+            c.classList.remove("marked");
+            c.querySelector(".last-read-label").classList.add("d-none");
+        });
+        // Tambah tanda di ayat yg dipilih
+        const card = document.querySelector(`.ayat-card[data-ayat='${no}']`);
+        if(card){
+            card.classList.add("marked");
+            card.querySelector(".last-read-label").classList.remove("d-none");
+            localStorage.setItem(storageKey, no);
+        }
+    }
+
+    // Load terakhir dibaca
+    const last = localStorage.getItem(storageKey);
+    if(last){
+        markAyat(last);
+    }
+
+    // Toggle mode tampilan
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            const mode = this.value;
+            cards.forEach(card => {
+                const latin = card.querySelector(".latin");
+                const terjemah = card.querySelector(".terjemah");
+                const audio = card.querySelector(".ayat-audio");
+
+                if(mode === "full"){
+                    latin.style.display = "block";
+                    terjemah.style.display = "block";
+                    audio.style.display = "block";
+                }
+                else if(mode === "arab"){
+                    latin.style.display = "none";
+                    terjemah.style.display = "none";
+                    audio.style.display = "none";
+                }
+                else if(mode === "arab_terjemah"){
+                    latin.style.display = "none";
+                    terjemah.style.display = "block";
+                    audio.style.display = "block";
+                }
+            });
+        });
+    });
+
+    // Auto play ayat berikutnya + tandai otomatis
+    audios.forEach((audio, index) => {
+        audio.addEventListener("ended", () => {
+            markAyat(audio.dataset.ayat); // simpan posisi terakhir
+            const next = audios[index + 1];
+            if (next) {
+                next.play();
+                next.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        });
+    });
+
+    // Zoom kontrol font arab
+    let fontSize = 1.6;
+    document.getElementById("fontIncrease").addEventListener("click", () => {
+        fontSize += 0.2;
+        arabTexts.forEach(t => t.style.fontSize = fontSize + "rem");
+    });
+    document.getElementById("fontDecrease").addEventListener("click", () => {
+        if(fontSize > 1.2){
+            fontSize -= 0.2;
+            arabTexts.forEach(t => t.style.fontSize = fontSize + "rem");
+        }
+    });
+});
+</script>
+@endsection  bisa sempurnakan untuk penanda nya, ketika memberi tanda terakhir dibaca diberi pilihan dulu Senin Pagi atau Ngaji Rutin nanti informasi nya ditampilkan jadi Terakhir Dibaca - Senin Pagi atau Terakhir Dibaca - Ngaji Rutin, senin pagi warna orange dan ngaji rutin warna hijau bisa?

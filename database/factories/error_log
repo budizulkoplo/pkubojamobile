@@ -1,0 +1,16 @@
+[23-Jan-2025 03:19:31 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php on line 12
+[24-Jan-2025 20:38:50 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php on line 12
+[25-Jan-2025 00:59:14 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php on line 12
+[27-Jan-2025 03:01:07 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Factories\Factory" not found in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/factories/UserFactory.php on line 12

@@ -1,0 +1,32 @@
+[22-Jan-2025 00:38:18 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/rumj8833/public_html/ahadpagi/routes/console.php:6
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/console.php on line 6
+[22-Jan-2025 00:38:27 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/rumj8833/public_html/ahadpagi/routes/console.php:6
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/console.php on line 6
+[22-Jan-2025 00:41:06 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/rumj8833/public_html/ahadpagi/routes/web.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/web.php on line 22
+[22-Jan-2025 01:22:05 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/rumj8833/public_html/ahadpagi/routes/web.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/web.php on line 22
+[24-Jan-2025 00:38:09 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/rumj8833/public_html/ahadpagi/routes/console.php:6
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/console.php on line 6
+[24-Jan-2025 01:08:31 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/rumj8833/public_html/ahadpagi/routes/web.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/web.php on line 22
+[26-Jan-2025 03:16:09 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/rumj8833/public_html/ahadpagi/routes/console.php:6
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/console.php on line 6
+[26-Jan-2025 03:17:59 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/rumj8833/public_html/ahadpagi/routes/web.php:22
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/routes/web.php on line 22

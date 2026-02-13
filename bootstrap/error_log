@@ -1,0 +1,16 @@
+[23-Jan-2025 03:05:10 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php on line 7
+[24-Jan-2025 08:33:13 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php on line 7
+[26-Jan-2025 08:13:04 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php on line 7
+[28-Jan-2025 08:12:03 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Application" not found in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/bootstrap/app.php on line 7

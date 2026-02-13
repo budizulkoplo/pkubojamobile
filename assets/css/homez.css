@@ -1,0 +1,191 @@
+
+    :root {
+        --primary-color: #07b8b2;
+        --soft-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        --light-gray: #f8f9fa;
+    }
+
+    body {
+    background-color: #f2f4f6;
+    padding-top: 110px; /* Sesuaikan dengan tinggi #user-section */
+    }
+
+    #user-section {
+        position: fixed; /* agar tidak ikut scroll */
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: linear-gradient(135deg, #07b8b2,rgb(20, 194, 188),rgb(2, 124, 118));
+        padding: 20px;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* lebih dalam */
+        color: white;
+        transition: background 0.3s ease-in-out;
+    }
+
+    #user-detail {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .avatar img {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+    }
+
+    #user-info h3 {
+        margin: 2px 0;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgb(63, 63, 63);
+    }
+
+    #user-role {
+        font-size: 12px;
+        color: white;
+        text-shadow: 1px 1px 2px rgb(63, 63, 63);
+    }
+
+    #user-info {
+        line-height: 1.2;
+    }
+
+    .performance-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 10px;
+        margin: 10px;
+        box-shadow: var(--soft-shadow);
+    }
+
+    .performance-card .title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .performance-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+    }
+
+    .perf-item {
+        display: flex;
+        align-items: center;
+        background: #f9f9f9;
+        border-radius: 12px;
+        padding: 10px;
+        gap: 12px;
+    }
+
+    .perf-item ion-icon {
+        font-size: 28px;
+        padding: 8px;
+        border-radius: 50%;
+        color: #fff;
+    }
+
+    .perf-kajian ion-icon {
+        background-color: #28a745;
+    }
+
+    .perf-ahad ion-icon {
+        background-color: #ffc107;
+    }
+
+    .perf-cuti ion-icon {
+        background-color: #17a2b8;
+    }
+
+    .perf-saldo ion-icon {
+        background-color: #fd7e14;
+    }
+
+    .perf-text {
+        display: flex;
+        flex-direction: column;
+        font-size: 13px;
+    }
+
+    .perf-text .label {
+        color: #555;
+    }
+
+    .perf-text .value {
+        font-weight: bold;
+        color: #222;
+        font-size: 14px;
+    }
+
+    .menu-capsule {
+        margin: -15px 15px 15px 15px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 15px;
+        box-shadow: var(--soft-shadow);
+    }
+
+    .list-menu {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .item-menu {
+        text-align: center;
+    }
+
+    .menu-icon a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #ffffff;
+        box-shadow: var(--soft-shadow);
+        font-size: 22px;
+    }
+
+    .menu-name span {
+        margin-top: 5px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .scrollable-content {
+        padding: 0 15px 20px 15px;
+    }
+
+    .rekappresensi button {
+        margin-bottom: 12px;
+        padding: 14px 15px !important;
+        font-size: 15px !important;
+        border-radius: 10px !important;
+        box-shadow: var(--soft-shadow);
+    }
+
+    .rekappresensi button ion-icon {
+        font-size: 20px !important;
+    }
+
+    .rekappresensi h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+        .list-menu {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
