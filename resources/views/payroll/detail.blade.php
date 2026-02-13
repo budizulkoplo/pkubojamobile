@@ -14,254 +14,342 @@
 
 @section('content')
 <div class="p-3" style="margin-top: 40px">
+    @php
+        // CEK STATUS TRAINING/OJT
+        $isTraining = ($rekap['gajipokok'] ?? 0) <= 0;
+        
+        // Untuk OJT, semua komponen selain kehadiran dianggap 0
+        if($isTraining) {
+            $gajipokok = 0;
+            $tunjstruktural = 0;
+            $tunjkeluarga = 0;
+            $tunjapotek = 0;
+            $tunjfungsional = 0;
+            $jmlrujukan = 0;
+            $rujukan = 0;
+            $totalharikerja = 0;
+            $uangmakan = 0;
+            $doubleshift = 0;
+            $cuti = 0;
+            $tugasluar = 0;
+            $konversilembur = 0;
+            $konversioperasi = 0;
+            $lemburkhusus = 0;
+            
+            // Potongan semua 0
+            $pph21 = 0;
+            $qurban = 0;
+            $potransport = 0;
+            $bpjstk = 0;
+            $koperasi = 0;
+        } else {
+            $gajipokok = $rekap['gajipokok'] ?? 0;
+            $tunjstruktural = $rekap['tunjstruktural'] ?? 0;
+            $tunjkeluarga = $rekap['tunjkeluarga'] ?? 0;
+            $tunjapotek = $rekap['tunjapotek'] ?? 0;
+            $tunjfungsional = $rekap['tunjfungsional'] ?? 0;
+            $jmlrujukan = $rekap['jmlrujukan'] ?? 0;
+            $rujukan = $rekap['rujukan'] ?? 0;
+            $totalharikerja = $rekap['totalharikerja'] ?? 0;
+            $uangmakan = $rekap['uangmakan'] ?? 0;
+            $doubleshift = $rekap['doubleshift'] ?? 0;
+            $cuti = $rekap['cuti'] ?? 0;
+            $tugasluar = $rekap['tugasluar'] ?? 0;
+            $konversilembur = $rekap['konversilembur'] ?? 0;
+            $konversioperasi = $rekap['konversioperasi'] ?? 0;
+            $lemburkhusus = $rekap['lemburkhusus'] ?? 0;
+            
+            // Potongan
+            $pph21 = $rekap['pph21'] ?? 0;
+            $qurban = $rekap['qurban'] ?? 0;
+            $potransport = $rekap['potransport'] ?? 0;
+            $bpjstk = $rekap['bpjstk'] ?? 0;
+            $koperasi = $rekap['koperasi'] ?? 0;
+        }
+
+        // Nilai yang selalu ada
+        $jmlabsensi = $rekap['jmlabsensi'] ?? 0;
+        $kehadiran = $rekap['kehadiran'] ?? 0;
+        $nilaiKehadiran = $jmlabsensi * $kehadiran;
+
+        // Logika perhitungan lembur dan operasi
+        if ($isTraining) {
+            $lemburVal = 0;
+            $operasiVal = 0;
+        } else {
+            $lemburVal = (!empty($lemburkhusus) && $lemburkhusus > 0) 
+                     ? ($konversilembur ?? 0) * $lemburkhusus
+                     : ($konversilembur ?? 0) * $kehadiran;
+            
+            $operasiVal = (!empty($lemburkhusus) && $lemburkhusus > 0) 
+                     ? ($konversioperasi ?? 0) * $lemburkhusus
+                     : ($konversioperasi ?? 0) * $kehadiran;
+        }
+
+        // Total penghasilan
+        if($isTraining) {
+            $totalPenghasilan = $nilaiKehadiran;
+        } else {
+            if ($rekap['use_new_system'] ?? false) {
+                // SISTEM BARU (termasuk operasi)
+                $totalPenghasilan =
+                    $gajipokok +
+                    $tunjstruktural +
+                    $tunjkeluarga +
+                    $tunjapotek +
+                    $tunjfungsional +
+                    ($jmlrujukan * $rujukan) +
+                    ($totalharikerja * $uangmakan) +
+                    ($jmlabsensi * $kehadiran) +
+                    ($tugasluar * $kehadiran) +
+                    $lemburVal + 
+                    $operasiVal +
+                    ($doubleshift * $kehadiran);
+            } else {
+                // SISTEM LAMA (tanpa operasi)
+                $totalPenghasilan =
+                    $gajipokok +
+                    $tunjstruktural +
+                    $tunjkeluarga +
+                    $tunjapotek +
+                    $tunjfungsional +
+                    ($jmlrujukan * $rujukan) +
+                    ($totalharikerja * $uangmakan) +
+                    ($jmlabsensi * $kehadiran) +
+                    ($cuti * $kehadiran) +
+                    ($tugasluar * $kehadiran) +
+                    $lemburVal +
+                    ($doubleshift * $kehadiran);
+                
+                $operasiVal = 0;
+            }
+        }
+
+        // Potongan
+        if($isTraining) {
+            $bpjs = 0;
+            $zis = 0;
+            $infaqPdm = 0;
+            $totalPotongan = 0;
+        } else {
+            $bpjs = ($totalPenghasilan > 4000000) ? 40000 : 28000;
+            $zis = round($totalPenghasilan * 0.025);
+            $infaqPdm = round($gajipokok * 0.01);
+            $totalPotongan = $zis + $pph21 + $qurban + $potransport + $infaqPdm + $bpjs + $bpjstk + $koperasi;
+        }
+        
+        $netto = $totalPenghasilan - $totalPotongan;
+    @endphp
+
+    {{-- HEADER --}}
     <div class="text-center mb-3">
         <img src="{{ asset('assets/img/' . $site['icon']) }}" alt="{{ $site['namaweb'] }}" style="height: 50px;">
         <h6 class="mt-2 mb-0">{{ $site['namaweb'] }}</h6>
         <small class="text-muted">Slip Gaji - {{ \Carbon\Carbon::createFromFormat('Y-m', $periode)->translatedFormat('F Y') }}</small>
-        <!-- @if($rekap['use_new_system'] ?? false)
-            <span class="badge bg-success ms-2">Sistem Baru</span>
-        @else
-            <span class="badge bg-secondary ms-2">Sistem Lama</span>
-        @endif -->
+        @if($isTraining)
+            <span class="badge bg-warning ms-2">Training/OJT</span>
+        @endif
     </div>
 
-    <div class="mb-2">
-        <strong>NIP:</strong> {{ $rekap['pegawai_nip'] }}<br>
-        <strong>Nama:</strong> {{ $rekap['pegawai_nama'] }}<br>
-        <strong>Jabatan:</strong> {{ $rekap['jabatan'] }}
-    </div>
-
-    @php
-        // Logika perhitungan berbeda untuk sistem lama dan baru
-        if ($rekap['use_new_system'] ?? false) {
-            // SISTEM BARU (termasuk operasi)
-            $lemburVal = (!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0) 
-                     ? ($rekap['konversilembur'] ?? 0) * ($rekap['lemburkhusus'] ?? 0)
-                     : ($rekap['konversilembur'] ?? 0) * ($rekap['kehadiran'] ?? 0);
-            
-            $operasiVal = (!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0) 
-                     ? ($rekap['konversioperasi'] ?? 0) * ($rekap['lemburkhusus'] ?? 0)
-                     : ($rekap['konversioperasi'] ?? 0) * ($rekap['kehadiran'] ?? 0);
-
-            $totalPenghasilan =
-                $rekap['gajipokok'] +
-                $rekap['tunjstruktural'] +
-                $rekap['tunjkeluarga'] +
-                $rekap['tunjapotek'] +
-                $rekap['tunjfungsional'] +
-                (($rekap['jmlrujukan'] ?? 0) * $rekap['rujukan']) +
-                (($rekap['totalharikerja'] ?? 0) * $rekap['uangmakan']) +
-                ($rekap['jmlabsensi'] * $rekap['kehadiran']) +
-            
-                ($rekap['tugasluar'] * $rekap['kehadiran']) +
-                $lemburVal + $operasiVal + // Termasuk operasiVal
-                (($rekap['doubleshift'] ?? 0) * ($rekap['kehadiran'] ?? 0));
-        } else {
-            // SISTEM LAMA (tanpa operasi)
-            $lemburVal = (!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0) 
-                     ? ($rekap['konversilembur'] ?? 0) * ($rekap['lemburkhusus'] ?? 0)
-                     : ($rekap['konversilembur'] ?? 0) * ($rekap['kehadiran'] ?? 0);
-
-            $totalPenghasilan =
-                $rekap['gajipokok'] +
-                $rekap['tunjstruktural'] +
-                $rekap['tunjkeluarga'] +
-                $rekap['tunjapotek'] +
-                $rekap['tunjfungsional'] +
-                (($rekap['jmlrujukan'] ?? 0) * $rekap['rujukan']) +
-                (($rekap['totalharikerja'] ?? 0) * $rekap['uangmakan']) +
-                ($rekap['jmlabsensi'] * $rekap['kehadiran']) +
-                ($rekap['cuti'] * $rekap['kehadiran']) +
-                ($rekap['tugasluar'] * $rekap['kehadiran']) +
-                $lemburVal + // Tanpa operasiVal
-                (($rekap['doubleshift'] ?? 0) * ($rekap['kehadiran'] ?? 0));
-            
-            $operasiVal = 0; // Default 0 untuk sistem lama
-        }
-
-        $bpjs = ($totalPenghasilan > 4000000) ? 40000 : 28000;
-        $zis = round($totalPenghasilan * 0.025);
-        $infaqPdm = round($rekap['gajipokok'] * 0.01);
-        $totalPotongan = $zis + ($rekap['pph21'] ?? 0) + ($rekap['qurban'] ?? 0) +
-                         ($rekap['potransport'] ?? 0) + $infaqPdm + $bpjs +
-                         ($rekap['bpjstk'] ?? 0) + ($rekap['koperasi'] ?? 0);
-        $netto = $totalPenghasilan - $totalPotongan;
-    @endphp
-
-   <div class="card mb-3">
-    <div class="card-header bg-primary text-white py-2 px-3">Penghasilan</div>
-    <ul class="list-group list-group-flush">
-        <li class="list-group-item d-flex justify-content-between">
-            Gaji Pokok <span>Rp {{ number_format($rekap['gajipokok'] ?? 0) }}</span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between">
-            Tunj. Struktural <span>Rp {{ number_format($rekap['tunjstruktural'] ?? 0) }}</span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between">
-            Tunj. Keluarga <span>Rp {{ number_format($rekap['tunjkeluarga'] ?? 0) }}</span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between">
-            Tunj. Apotek <span>Rp {{ number_format($rekap['tunjapotek'] ?? 0) }}</span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between">
-            Tunj. Fungsional <span>Rp {{ number_format($rekap['tunjfungsional'] ?? 0) }}</span>
-        </li>
-
-        {{-- Tunjangan Rujukan --}}
-        @if(($rekap['jmlrujukan'] ?? 0) > 0)
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    Tunj. Rujukan <span>Rp {{ number_format(($rekap['jmlrujukan'] ?? 0) * ($rekap['rujukan'] ?? 0)) }}</span>
-                </div>
-                <div class="text-muted small">
-                    {{ $rekap['jmlrujukan'] ?? 0 }} × Rp {{ number_format($rekap['rujukan'] ?? 0) }}
-                </div>
-            </li>
-        @endif
-
-        {{-- Uang Makan --}}
-        <li class="list-group-item">
-            <div class="d-flex justify-content-between">
-                Uang Makan <span>Rp {{ number_format(($rekap['totalharikerja'] ?? 0) * ($rekap['uangmakan'] ?? 0)) }}</span>
-            </div>
-            <div class="text-muted small">
-                {{ $rekap['totalharikerja'] ?? 0 }} hari × Rp {{ number_format($rekap['uangmakan'] ?? 0) }}
-            </div>
-        </li>
-
-        {{-- Kehadiran --}}
-        <li class="list-group-item">
-            <div class="d-flex justify-content-between">
-                Kehadiran <span>Rp {{ number_format(($rekap['jmlabsensi'] ?? 0) * ($rekap['kehadiran'] ?? 0)) }}</span>
-            </div>
-            <div class="text-muted small">
-                {{ $rekap['jmlabsensi'] ?? 0 }} × Rp {{ number_format($rekap['kehadiran'] ?? 0) }}
-            </div>
-        </li>
-
-        {{-- Doubleshift --}}
-        @if(($rekap['doubleshift'] ?? 0) > 0)
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    Doubleshift <span>Rp {{ number_format(($rekap['doubleshift'] ?? 0) * ($rekap['kehadiran'] ?? 0)) }}</span>
-                </div>
-                <div class="text-muted small">
-                    {{ $rekap['doubleshift'] ?? 0 }} × Rp {{ number_format($rekap['kehadiran'] ?? 0) }}
-                </div>
-            </li>
-        @endif
-
-        {{-- Cuti --}}
-        @if(!($rekap['use_new_system'] ?? false)) {{-- HANYA untuk sistem LAMA --}}
-            @if(($rekap['cuti'] ?? 0) > 0)
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        Cuti <span>Rp {{ number_format(($rekap['cuti'] ?? 0) * ($rekap['kehadiran'] ?? 0)) }}</span>
-                    </div>
-                    <div class="text-muted small">
-                        {{ $rekap['cuti'] ?? 0 }} × Rp {{ number_format($rekap['kehadiran'] ?? 0) }}
-                    </div>
-                </li>
+    {{-- IDENTITAS PEGAWAI --}}
+    <div class="mb-3 p-2 bg-light rounded">
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 30%;"><strong>Nama</strong></td>
+                <td style="width: 2%;">:</td>
+                <td>{{ $rekap['pegawai_nama'] }}</td>
+            </tr>
+            <tr>
+                <td><strong>NIP</strong></td>
+                <td>:</td>
+                <td>{{ $rekap['pegawai_nip'] }}</td>
+            </tr>
+            <tr>
+                <td><strong>Jabatan</strong></td>
+                <td>:</td>
+                <td>{{ $rekap['jabatan'] }}</td>
+            </tr>
+            @if($isTraining)
+            <tr>
+                <td><strong>Status</strong></td>
+                <td>:</td>
+                <td><span class="text-warning">Training/OJT</span></td>
+            </tr>
             @endif
-        @endif
-
-        {{-- Tugas Luar --}}
-        @if(($rekap['tugasluar'] ?? 0) > 0)
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    Tugas Luar <span>Rp {{ number_format($rekap['tugasluar'] * ($rekap['kehadiran'] ?? 0)) }}</span>
-                </div>
-                <div class="text-muted small">
-                    {{ $rekap['tugasluar'] }} × Rp {{ number_format($rekap['kehadiran'] ?? 0) }}
-                </div>
-            </li>
-        @endif
-
-        {{-- Lembur --}}
-        @if(($rekap['konversilembur'] ?? 0) > 0)
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    Lembur <span>Rp {{ number_format($lemburVal) }}</span>
-                </div>
-                <div class="text-muted small">
-                    {{ $rekap['konversilembur'] }} × Rp {{ number_format(!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0 ? $rekap['lemburkhusus'] : $rekap['kehadiran'], 0) }}
-                </div>
-            </li>
-        @endif
-
-        {{-- Operasi (hanya untuk sistem baru) --}}
-        @if(($rekap['use_new_system'] ?? false) && ($rekap['konversioperasi'] ?? 0) > 0)
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    Operasi <span>Rp {{ number_format($operasiVal) }}</span>
-                </div>
-                <div class="text-muted small">
-                    {{ $rekap['konversioperasi'] }} × Rp {{ number_format(!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0 ? $rekap['lemburkhusus'] : $rekap['kehadiran'], 0) }}
-                </div>
-            </li>
-        @endif
-
-        {{-- Total --}}
-        <li class="list-group-item d-flex justify-content-between fw-bold text-primary">
-            Total <span>Rp {{ number_format($totalPenghasilan ?? 0) }}</span>
-        </li>
-    </ul>
-</div>
-
-    <!-- Potongan dan bagian lainnya tetap sama -->
-    <div class="card mb-3">
-        <div class="card-header bg-danger text-white py-2 px-3">Potongan</div>
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    ZIS (2.5%) <span>Rp {{ number_format($zis ?? 0) }}</span>
-                </div>
-                <div class="text-muted small">2.5% × Total Penghasilan</div>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                PPH21 <span>Rp {{ number_format($rekap['pph21'] ?? 0) }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                Qurban <span>Rp {{ number_format($rekap['qurban'] ?? 0) }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                Transport <span>Rp {{ number_format($rekap['potransport'] ?? 0) }}</span>
-            </li>
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    Infaq PDM (1%) <span>Rp {{ number_format($infaqPdm ?? 0) }}</span>
-                </div>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                BPJS Kes <span>Rp {{ number_format($bpjs ?? 0) }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                BPJS TK <span>Rp {{ number_format($rekap['bpjstk'] ?? 0) }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                Koperasi <span>Rp {{ number_format($rekap['koperasi'] ?? 0) }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between fw-bold text-danger">
-                Total <span>Rp {{ number_format($totalPotongan ?? 0) }}</span>
-            </li>
-        </ul>
+        </table>
     </div>
 
-    <div class="card mb-3 border-success">
-        <div class="card-body text-center">
-            <h5 class="text-success mb-2">Total Diterima</h5>
-            <h4 class="text-success">Rp {{ number_format($netto) }}</h4>
-            <p class="text-muted mb-0">Semoga Berkah!</p>
+    {{-- PENGHASILAN --}}
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white py-2 px-3">PENGHASILAN</div>
+        <div class="card-body p-0">
+            <table style="width: 100%;" class="table table-sm table-borderless mb-0">
+                @if(!$isTraining)
+                <tr>
+                    <td style="width: 60%; padding: 5px 12px;">Gaji Pokok</td>
+                    <td style="width: 40%; padding: 5px 12px;" class="text-end">Rp {{ number_format($gajipokok, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Tunj. Struktural</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($tunjstruktural, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Tunj. Keluarga</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($tunjkeluarga, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Tunj. Apotek</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($tunjapotek, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Tunj. Fungsional</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($tunjfungsional, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if($jmlrujukan > 0)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Tunj. Rujukan <span class="text-muted">{{ $jmlrujukan }} × Rp {{ number_format($rujukan, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($jmlrujukan * $rujukan, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if($uangmakan > 0 && !$isTraining)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Uang Makan <span class="text-muted">{{ $jmlabsensi }} × Rp {{ number_format($uangmakan, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($jmlabsensi * $uangmakan, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if($doubleshift > 0)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Doubleshift <span class="text-muted">{{ $doubleshift }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($doubleshift * $kehadiran, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if(!($rekap['use_new_system'] ?? false) && $cuti > 0 && !$isTraining)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Cuti <span class="text-muted">{{ $cuti }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($cuti * $kehadiran, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if($tugasluar > 0)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Tugas Luar <span class="text-muted">{{ $tugasluar }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($tugasluar * $kehadiran, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if($konversilembur > 0 && !$isTraining)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Lembur <span class="text-muted">{{ $konversilembur }} × Rp {{ number_format(!empty($lemburkhusus) && $lemburkhusus > 0 ? $lemburkhusus : $kehadiran, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($lemburVal, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                @if(($rekap['use_new_system'] ?? false) && $konversioperasi > 0 && !$isTraining)
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Operasi <span class="text-muted">{{ $konversioperasi }} × Rp {{ number_format(!empty($lemburkhusus) && $lemburkhusus > 0 ? $lemburkhusus : $kehadiran, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($operasiVal, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                {{-- KEHADIRAN (selalu tampil) --}}
+                <tr>
+                    <td style="padding: 5px 12px;">
+                        Kehadiran <span class="text-muted">{{ $jmlabsensi }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span>
+                    </td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($nilaiKehadiran, 0, ',', '.') }}</td>
+                </tr>
+
+                {{-- TOTAL PENGHASILAN --}}
+                <tr style="border-top: 1px solid #dee2e6;">
+                    <td style="padding: 8px 12px; font-weight: bold;">Total Penghasilan</td>
+                    <td style="padding: 8px 12px; font-weight: bold; color: #0d6efd;" class="text-end">Rp {{ number_format($totalPenghasilan, 0, ',', '.') }}</td>
+                </tr>
+            </table>
         </div>
     </div>
 
-    <div class="text-end text-muted">
-        <small>Boja, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</small>
+    {{-- POTONGAN --}}
+    @if(!$isTraining)
+    <div class="card mb-3">
+        <div class="card-header bg-danger text-white py-2 px-3">POTONGAN</div>
+        <div class="card-body p-0">
+            <table style="width: 100%;" class="table table-sm table-borderless mb-0">
+                <tr>
+                    <td style="width: 60%; padding: 5px 12px;">ZIS (2.5%)</td>
+                    <td style="width: 40%; padding: 5px 12px;" class="text-end">Rp {{ number_format($zis, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">PPH21</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($pph21, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Qurban</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($qurban, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Transport</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($potransport, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Infaq PDM (1% GP)</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($infaqPdm, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">BPJS Kes</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($bpjs, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">BPJS TK</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($bpjstk, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 12px;">Koperasi</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($koperasi, 0, ',', '.') }}</td>
+                </tr>
+                <tr style="border-top: 1px solid #dee2e6;">
+                    <td style="padding: 8px 12px; font-weight: bold;">Total Potongan</td>
+                    <td style="padding: 8px 12px; font-weight: bold; color: #dc3545;" class="text-end">Rp {{ number_format($totalPotongan, 0, ',', '.') }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
-<hr>
-    <a href="{{ route('slip.pdf', [\Carbon\Carbon::parse($periode)->format('Y'), \Carbon\Carbon::parse($periode)->format('m')]) }}" class="btn btn-sm btn-outline-primary w-100">
-        <ion-icon name="download-outline"></ion-icon> Download Slip
-    </a>
+    @endif
+
+    {{-- TOTAL DITERIMA --}}
+    <div class="card mb-3 border-success">
+        <div class="card-body text-center py-3">
+            <h6 class="text-success mb-1">Total Diterima</h6>
+            <h4 class="text-success fw-bold mb-1">Rp {{ number_format($netto, 0, ',', '.') }}</h4>
+            <p class="text-muted small mb-0">Semoga Berkah!</p>
+        </div>
+    </div>
+
+    {{-- TANGGAL & DOWNLOAD --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <small class="text-muted">Boja, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</small>
+        <a href="{{ route('slip.pdf', [\Carbon\Carbon::parse($periode)->format('Y'), \Carbon\Carbon::parse($periode)->format('m')]) }}" class="btn btn-sm btn-outline-primary">
+            <ion-icon name="download-outline"></ion-icon> Download
+        </a>
+    </div>
 
 </div>
 @endsection
