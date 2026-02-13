@@ -328,7 +328,6 @@
     </table>
 
     {{-- POTONGAN --}}
-    @if(!$isTraining)
     <div class="bg-header">POTONGAN</div>
     <table>
         <tr>
@@ -368,29 +367,12 @@
             <td class="value">Rp {{ number_format($totalPotongan, 0, ',', '.') }}</td>
         </tr>
     </table>
-    @else
-    {{-- Untuk Training/OJT --}}
-    <div class="bg-header-warning">POTONGAN</div>
-    <table>
-        <tr>
-            <td class="label">Status Training/OJT</td>
-            <td class="value zero-value">Rp 0</td>
-        </tr>
-        <tr class="total-potongan">
-            <td>Total Potongan</td>
-            <td class="value">Rp 0</td>
-        </tr>
-    </table>
-    @endif
 
     {{-- TOTAL DITERIMA --}}
     <div class="text-center">
         <div class="highlight">Total Diterima</div>
         <div class="highlight">Rp {{ number_format($netto, 0, ',', '.') }}</div>
         <div class="note">Semoga Berkah!</div>
-        @if($isTraining)
-        <div class="note text-muted small">*Status Training/OJT (hanya menerima kehadiran)</div>
-        @endif
     </div>
 
     <hr>

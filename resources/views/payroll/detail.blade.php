@@ -288,7 +288,6 @@
     </div>
 
     {{-- POTONGAN --}}
-    @if(!$isTraining)
     <div class="card mb-3">
         <div class="card-header bg-danger text-white py-2 px-3">POTONGAN</div>
         <div class="card-body p-0">
@@ -332,7 +331,6 @@
             </table>
         </div>
     </div>
-    @endif
 
     {{-- TOTAL DITERIMA --}}
     <div class="card mb-3 border-success">
