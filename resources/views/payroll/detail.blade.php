@@ -99,7 +99,7 @@
                     $tunjapotek +
                     $tunjfungsional +
                     ($jmlrujukan * $rujukan) +
-                    ($totalharikerja * $uangmakan) +
+                    ($jmlabsensi * $uangmakan) +
                     ($jmlabsensi * $kehadiran) +
                     ($tugasluar * $lemburkhusus) +
                     $lemburVal + 
