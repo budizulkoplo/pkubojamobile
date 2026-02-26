@@ -189,7 +189,7 @@
                     ($jmlrujukan * $rujukan) +
                     ($totalharikerja * $uangmakan) +
                     ($jmlabsensi * $kehadiran) +
-                    ($tugasluar * $kehadiran) +
+                    ($tugasluar * $lemburkhusus) +
                     $lemburVal + 
                     $operasiVal +
                     ($doubleshift * $kehadiran);
@@ -295,8 +295,8 @@
 
         @if($tugasluar > 0)
         <tr>
-            <td class="label">Tugas Luar <span class="text-muted small">{{ $tugasluar }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span></td>
-            <td class="value">Rp {{ number_format($tugasluar * $kehadiran, 0, ',', '.') }}</td>
+            <td class="label">Tugas Luar <span class="text-muted small">{{ $tugasluar }} × Rp {{ number_format($lemburkhusus, 0, ',', '.') }}</span></td>
+            <td class="value">Rp {{ number_format($tugasluar * $lemburkhusus, 0, ',', '.') }}</td>
         </tr>
         @endif
 
