@@ -171,6 +171,8 @@ class PayrollController extends Controller
                 DB::raw('(SELECT uangmakan FROM nominaldasar LIMIT 1) as uangmakan'),
                 DB::raw('(SELECT koperasi FROM nominaldasar LIMIT 1) as koperasi'),
                 'mastergaji.bpjstk',
+                'mastergaji.harian',
+                'mastergaji.direktur',
                 'mastergaji.verifikasi'
             )
             ->where('payroll.periode', $periode)
