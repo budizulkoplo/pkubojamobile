@@ -200,15 +200,22 @@ Rp {{ number_format($totalPotongan,0,',','.') }}
 </div>
 </div>
 
-{{-- NETTO --}}
-<div class="card border-success mb-3">
-<div class="card-body text-center">
-<h6 class="text-success">Total Diterima</h6>
-<h4 class="text-success fw-bold">
-Rp {{ number_format($netto,0,',','.') }}
-</h4>
-</div>
-</div>
+{{-- TOTAL DITERIMA --}}
+    <div class="card mb-3 border-success">
+        <div class="card-body text-center py-3">
+            <h6 class="text-success mb-1">Total Diterima</h6>
+            <h4 class="text-success fw-bold mb-1">Rp {{ number_format($netto, 0, ',', '.') }}</h4>
+            <p class="text-muted small mb-0">Semoga Berkah!</p>
+        </div>
+    </div>
+
+    {{-- TANGGAL & DOWNLOAD --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <small class="text-muted">Boja, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</small>
+        <a href="{{ route('slip.pdf', [\Carbon\Carbon::parse($periode)->format('Y'), \Carbon\Carbon::parse($periode)->format('m')]) }}" class="btn btn-sm btn-outline-primary">
+            <ion-icon name="download-outline"></ion-icon> Download
+        </a>
+    </div>
 
 </div>
 @endsection
