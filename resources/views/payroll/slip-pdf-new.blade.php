@@ -103,106 +103,140 @@
     </div>
 
     @php
-/* =========================
-   STATUS PEGAWAI
-========================= */
-$isHarian   = ($rekap['harian'] ?? 0) == 1;
-$isDirektur = ($rekap['direktur'] ?? 0) == 1;
-$isTraining = !$isHarian && ($rekap['gajipokok'] ?? 0) <= 0;
 
-/* =========================
-   DATA DASAR
-========================= */
-$gajipokok      = $rekap['gajipokok'] ?? 0;
-$tunjstruktural = $rekap['tunjstruktural'] ?? 0;
-$tunjkeluarga   = $rekap['tunjkeluarga'] ?? 0;
-$tunjapotek     = $rekap['tunjapotek'] ?? 0;
-$tunjfungsional = $rekap['tunjfungsional'] ?? 0;
+        /* =========================
+        STATUS
+        ========================= */
+        $isHarian   = ($rekap['harian'] ?? 0) == 1;
+        $isDirektur = ($rekap['direktur'] ?? 0) == 1;
+        $isTraining = !$isHarian && ($rekap['gajipokok'] ?? 0) <= 0;
 
-$jmlrujukan = $rekap['jmlrujukan'] ?? 0;
-$rujukan    = $rekap['rujukan'] ?? 0;
+        /* =========================
+        DATA DASAR
+        ========================= */
+        $gajipokok      = $rekap['gajipokok'] ?? 0;
+        $tunjstruktural = $rekap['tunjstruktural'] ?? 0;
+        $tunjkeluarga   = $rekap['tunjkeluarga'] ?? 0;
+        $tunjapotek     = $rekap['tunjapotek'] ?? 0;
+        $tunjfungsional = $rekap['tunjfungsional'] ?? 0;
 
-$jmlabsensi = $rekap['jmlabsensi'] ?? 0;
-$kehadiran  = $rekap['kehadiran'] ?? 0;
-$nilaiKehadiran = $jmlabsensi * $kehadiran;
+        $jmlrujukan = $rekap['jmlrujukan'] ?? 0;
+        $rujukan    = $rekap['rujukan'] ?? 0;
 
-$uangmakanNominal = $rekap['uangmakan'] ?? 0;
-$uangMakan = $jmlabsensi * $uangmakanNominal;
-if ($isDirektur) $uangMakan = 0;
+        $jmlabsensi = $rekap['jmlabsensi'] ?? 0;
+        $kehadiran  = $rekap['kehadiran'] ?? 0;
+        $nilaiKehadiran = $jmlabsensi * $kehadiran;
 
-$doubleshift     = $rekap['doubleshift'] ?? 0;
-$tugasluar       = $rekap['tugasluar'] ?? 0;
-$konversilembur  = $rekap['konversilembur'] ?? 0;
-$konversioperasi = $rekap['konversioperasi'] ?? 0;
-$lemburkhusus    = $rekap['lemburkhusus'] ?? 0;
+        $uangmakanNominal = $rekap['uangmakan'] ?? 0;
+        $uangmakan = $jmlabsensi * $uangmakanNominal;
 
-$lemburRate = ($lemburkhusus > 0) ? $lemburkhusus : $kehadiran;
+        if ($isDirektur) {
+            $uangmakan = 0;
+        }
 
-$lemburVal      = $konversilembur * $lemburRate;
-$operasiVal     = $konversioperasi * $lemburRate;
-$tugasLuarVal   = $tugasluar * $lemburRate;
-$doubleShiftVal = $doubleshift * $lemburRate;
+        $doubleshift     = $rekap['doubleshift'] ?? 0;
+        $tugasluar       = $rekap['tugasluar'] ?? 0;
+        $konversilembur  = $rekap['konversilembur'] ?? 0;
+        $konversioperasi = $rekap['konversioperasi'] ?? 0;
+        $lemburkhusus    = $rekap['lemburkhusus'] ?? 0;
+        $cuti            = $rekap['cuti'] ?? 0;
+        $totalharikerja  = $rekap['totalharikerja'] ?? 0;
 
-/* =========================
-   PERHITUNGAN PENGHASILAN
-========================= */
-if ($isHarian) {
+        $lemburRate = ($lemburkhusus > 0) ? $lemburkhusus : $kehadiran;
 
-    $totalPenghasilan = $nilaiKehadiran;
+        $lemburVal      = $konversilembur * $lemburRate;
+        $operasiVal     = $konversioperasi * $lemburRate;
+        $tugasLuarVal   = $tugasluar * $lemburRate;
+        $doubleShiftVal = $doubleshift * $lemburRate;
 
-} elseif ($isTraining) {
+        /* =========================
+        TOTAL PENGHASILAN
+        ========================= */
 
-    $totalPenghasilan = $nilaiKehadiran;
+        if ($isHarian) {
 
-    $gajipokok = $tunjstruktural = $tunjkeluarga = $tunjapotek = $tunjfungsional = 0;
-    $jmlrujukan = $rujukan = 0;
-    $uangMakan = 0;
-    $lemburVal = $operasiVal = $tugasLuarVal = $doubleShiftVal = 0;
+            // Harian hanya kehadiran
+            $totalPenghasilan = $nilaiKehadiran;
 
-} else {
+        } elseif ($isTraining) {
 
-    $totalPenghasilan =
-        $gajipokok +
-        $tunjstruktural +
-        $tunjkeluarga +
-        $tunjapotek +
-        $tunjfungsional +
-        ($jmlrujukan * $rujukan) +
-        $uangMakan +
-        $nilaiKehadiran +
-        $tugasLuarVal +
-        $lemburVal +
-        $operasiVal +
-        $doubleShiftVal;
-}
+            // Training hanya kehadiran
+            $totalPenghasilan = $nilaiKehadiran;
 
-/* =========================
-   POTONGAN
-========================= */
-if ($isTraining) {
+            // Nolkan komponen lain
+            $gajipokok = $tunjstruktural = $tunjkeluarga = $tunjapotek = $tunjfungsional = 0;
+            $jmlrujukan = $rujukan = 0;
+            $uangmakan = 0;
+            $lemburVal = $operasiVal = $tugasLuarVal = $doubleShiftVal = 0;
 
-    $zis = $pph21 = $qurban = $potransport = $infaqPdm = $bpjs = $bpjstk = $koperasi = 0;
-    $totalPotongan = 0;
+        } else {
 
-} else {
+            if ($rekap['use_new_system'] ?? false) {
 
-    $pph21      = $rekap['pph21'] ?? 0;
-    $qurban     = $rekap['qurban'] ?? 0;
-    $potransport= $rekap['potransport'] ?? 0;
-    $bpjs       = $rekap['bpjskes'] ?? 0;
-    $bpjstk     = $rekap['bpjstk'] ?? 0;
-    $koperasi   = $rekap['koperasi'] ?? 0;
+                $totalPenghasilan =
+                    $gajipokok +
+                    $tunjstruktural +
+                    $tunjkeluarga +
+                    $tunjapotek +
+                    $tunjfungsional +
+                    ($jmlrujukan * $rujukan) +
+                    $uangmakan +
+                    $nilaiKehadiran +
+                    $tugasLuarVal +
+                    $lemburVal +
+                    $operasiVal +
+                    $doubleShiftVal;
 
-    $zis = round($totalPenghasilan * 0.025);
-    $infaqPdm = round($gajipokok * 0.01);
+            } else {
 
-    $totalPotongan =
-        $zis + $pph21 + $qurban + $potransport +
-        $infaqPdm + $bpjs + $bpjstk + $koperasi;
-}
+                $totalPenghasilan =
+                    $gajipokok +
+                    $tunjstruktural +
+                    $tunjkeluarga +
+                    $tunjapotek +
+                    $tunjfungsional +
+                    ($jmlrujukan * $rujukan) +
+                    ($totalharikerja * $uangmakanNominal) +
+                    $nilaiKehadiran +
+                    ($cuti * $kehadiran) +
+                    $tugasLuarVal +
+                    $lemburVal +
+                    $doubleShiftVal;
 
-$netto = $totalPenghasilan - $totalPotongan;
-@endphp
+                $operasiVal = 0;
+            }
+        }
+
+        /* =========================
+        POTONGAN
+        ========================= */
+
+        if ($isTraining) {
+
+            // Training tidak ada potongan
+            $zis = $pph21 = $qurban = $potransport = $infaqPdm = $bpjs = $bpjstk = $koperasi = 0;
+            $totalPotongan = 0;
+
+        } else {
+
+            $pph21      = $rekap['pph21'] ?? 0;
+            $qurban     = $rekap['qurban'] ?? 0;
+            $potransport= $rekap['potransport'] ?? 0;
+            $bpjs       = $rekap['bpjskes'] ?? 0;
+            $bpjstk     = $rekap['bpjstk'] ?? 0;
+            $koperasi   = $rekap['koperasi'] ?? 0;
+
+            $zis = round($totalPenghasilan * 0.025);
+            $infaqPdm = round($gajipokok * 0.01);
+
+            $totalPotongan =
+                $zis + $pph21 + $qurban + $potransport +
+                $infaqPdm + $bpjs + $bpjstk + $koperasi;
+        }
+
+        $netto = $totalPenghasilan - $totalPotongan;
+
+        @endphp
 
     {{-- IDENTITAS PEGAWAI --}}
     <p>
