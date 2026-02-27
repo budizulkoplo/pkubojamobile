@@ -15,67 +15,83 @@
 @section('content')
 <div class="p-3" style="margin-top: 40px">
     @php
+        // CEK STATUS TRAINING/OJT
+        $isTraining = ($rekap['gajipokok'] ?? 0) <= 0;
+        
+        // Untuk OJT, semua komponen selain kehadiran dianggap 0
+        if($isTraining) {
+            $gajipokok = 0;
+            $tunjstruktural = 0;
+            $tunjkeluarga = 0;
+            $tunjapotek = 0;
+            $tunjfungsional = 0;
+            $jmlrujukan = 0;
+            $rujukan = 0;
+            $totalharikerja = 0;
+            $uangmakan = 0;
+            $doubleshift = 0;
+            $cuti = 0;
+            $tugasluar = 0;
+            $konversilembur = 0;
+            $konversioperasi = 0;
+            $lemburkhusus = 0;
+            
+            // Potongan semua 0
+            $pph21 = 0;
+            $qurban = 0;
+            $potransport = 0;
+            $bpjstk = 0;
+            $koperasi = 0;
+        } else {
+            $gajipokok = $rekap['gajipokok'] ?? 0;
+            $tunjstruktural = $rekap['tunjstruktural'] ?? 0;
+            $tunjkeluarga = $rekap['tunjkeluarga'] ?? 0;
+            $tunjapotek = $rekap['tunjapotek'] ?? 0;
+            $tunjfungsional = $rekap['tunjfungsional'] ?? 0;
+            $jmlrujukan = $rekap['jmlrujukan'] ?? 0;
+            $rujukan = $rekap['rujukan'] ?? 0;
+            $totalharikerja = $rekap['totalharikerja'] ?? 0;
+            $uangmakan = $rekap['uangmakan'] ?? 0;
+            $doubleshift = $rekap['doubleshift'] ?? 0;
+            $cuti = $rekap['cuti'] ?? 0;
+            $tugasluar = $rekap['tugasluar'] ?? 0;
+            $konversilembur = $rekap['konversilembur'] ?? 0;
+            $konversioperasi = $rekap['konversioperasi'] ?? 0;
+            $lemburkhusus = $rekap['lemburkhusus'] ?? 0;
+            
+            // Potongan
+            $pph21 = $rekap['pph21'] ?? 0;
+            $qurban = $rekap['qurban'] ?? 0;
+            $potransport = $rekap['potransport'] ?? 0;
+            $bpjstk = $rekap['bpjstk'] ?? 0;
+            $koperasi = $rekap['koperasi'] ?? 0;
+        }
 
-        /* =========================
-        STATUS
-        ========================= */
-        $isHarian   = ($rekap['harian'] ?? 0) == 1;
-        $isDirektur = ($rekap['direktur'] ?? 0) == 1;
-        $isTraining = !$isHarian && ($rekap['gajipokok'] ?? 0) <= 0;
-
-        /* =========================
-        DATA DASAR
-        ========================= */
-        $gajipokok      = $rekap['gajipokok'] ?? 0;
-        $tunjstruktural = $rekap['tunjstruktural'] ?? 0;
-        $tunjkeluarga   = $rekap['tunjkeluarga'] ?? 0;
-        $tunjapotek     = $rekap['tunjapotek'] ?? 0;
-        $tunjfungsional = $rekap['tunjfungsional'] ?? 0;
-
-        $jmlrujukan = $rekap['jmlrujukan'] ?? 0;
-        $rujukan    = $rekap['rujukan'] ?? 0;
-
+        // Nilai yang selalu ada
         $jmlabsensi = $rekap['jmlabsensi'] ?? 0;
-        $kehadiran  = $rekap['kehadiran'] ?? 0;
+        $kehadiran = $rekap['kehadiran'] ?? 0;
         $nilaiKehadiran = $jmlabsensi * $kehadiran;
 
-        $uangmakanNominal = $rekap['uangmakan'] ?? 0;
-        $uangMakan = $jmlabsensi * $uangmakanNominal;
-        if ($isDirektur) $uangMakan = 0;
-
-        $doubleshift     = $rekap['doubleshift'] ?? 0;
-        $tugasluar       = $rekap['tugasluar'] ?? 0;
-        $konversilembur  = $rekap['konversilembur'] ?? 0;
-        $konversioperasi = $rekap['konversioperasi'] ?? 0;
-        $lemburkhusus    = $rekap['lemburkhusus'] ?? 0;
-
-        $lemburRate = ($lemburkhusus > 0) ? $lemburkhusus : $kehadiran;
-
-        $lemburVal      = $konversilembur * $lemburRate;
-        $operasiVal     = $konversioperasi * $lemburRate;
-        $tugasLuarVal   = $tugasluar * $lemburRate;
-        $doubleShiftVal = $doubleshift * $lemburRate;
-
-        /* =========================
-        PENGHASILAN
-        ========================= */
-        if ($isHarian) {
-
-            $totalPenghasilan = $nilaiKehadiran;
-
-        } elseif ($isTraining) {
-
-            $totalPenghasilan = $nilaiKehadiran;
-
-            $gajipokok = $tunjstruktural = $tunjkeluarga = $tunjapotek = $tunjfungsional = 0;
-            $jmlrujukan = $rujukan = 0;
-            $uangMakan = 0;
-            $lemburVal = $operasiVal = $tugasLuarVal = $doubleShiftVal = 0;
-
+        // Logika perhitungan lembur dan operasi
+        if ($isTraining) {
+            $lemburVal = 0;
+            $operasiVal = 0;
         } else {
+            $lemburVal = (!empty($lemburkhusus) && $lemburkhusus > 0) 
+                     ? ($konversilembur ?? 0) * $lemburkhusus
+                     : ($konversilembur ?? 0) * $kehadiran;
+            
+            $operasiVal = (!empty($lemburkhusus) && $lemburkhusus > 0) 
+                     ? ($konversioperasi ?? 0) * $lemburkhusus
+                     : ($konversioperasi ?? 0) * $kehadiran;
+        }
 
+        // Total penghasilan
+        if($isTraining) {
+            $totalPenghasilan = $nilaiKehadiran;
+        } else {
             if ($rekap['use_new_system'] ?? false) {
-
+                // SISTEM BARU (termasuk operasi)
                 $totalPenghasilan =
                     $gajipokok +
                     $tunjstruktural +
@@ -83,17 +99,14 @@
                     $tunjapotek +
                     $tunjfungsional +
                     ($jmlrujukan * $rujukan) +
-                    $uangMakan +
-                    $nilaiKehadiran +
-                    $tugasLuarVal +
-                    $lemburVal +
+                    ($jmlabsensi * $uangmakan) +
+                    ($jmlabsensi * $kehadiran) +
+                    ($tugasluar * $lemburkhusus) +
+                    $lemburVal + 
                     $operasiVal +
-                    $doubleShiftVal;
-
+                    ($doubleshift * $kehadiran);
             } else {
-
-                $cuti = $rekap['cuti'] ?? 0;
-
+                // SISTEM LAMA (tanpa operasi)
                 $totalPenghasilan =
                     $gajipokok +
                     $tunjstruktural +
@@ -101,45 +114,32 @@
                     $tunjapotek +
                     $tunjfungsional +
                     ($jmlrujukan * $rujukan) +
-                    $uangMakan +
-                    $nilaiKehadiran +
+                    ($totalharikerja * $uangmakan) +
+                    ($jmlabsensi * $kehadiran) +
                     ($cuti * $kehadiran) +
-                    $tugasLuarVal +
+                    ($tugasluar * $kehadiran) +
                     $lemburVal +
-                    $doubleShiftVal;
-
+                    ($doubleshift * $kehadiran);
+                
                 $operasiVal = 0;
             }
         }
 
-        /* =========================
-        POTONGAN
-        ========================= */
-        if ($isTraining) {
-
-            $zis = $pph21 = $qurban = $potransport = $infaqPdm = $bpjs = $bpjstk = $koperasi = 0;
+        // Potongan
+        if($isTraining) {
+            $bpjs = 0;
+            $zis = 0;
+            $infaqPdm = 0;
             $totalPotongan = 0;
-
         } else {
-
-            $pph21      = $rekap['pph21'] ?? 0;
-            $qurban     = $rekap['qurban'] ?? 0;
-            $potransport= $rekap['potransport'] ?? 0;
-            $bpjs       = $rekap['bpjskes'] ?? 0;
-            $bpjstk     = $rekap['bpjstk'] ?? 0;
-            $koperasi   = $rekap['koperasi'] ?? 0;
-
+            $bpjs = ($totalPenghasilan > 4000000) ? 40000 : 28000;
             $zis = round($totalPenghasilan * 0.025);
             $infaqPdm = round($gajipokok * 0.01);
-
-            $totalPotongan =
-                $zis + $pph21 + $qurban + $potransport +
-                $infaqPdm + $bpjs + $bpjstk + $koperasi;
+            $totalPotongan = $zis + $pph21 + $qurban + $potransport + $infaqPdm + $bpjs + $bpjstk + $koperasi;
         }
-
+        
         $netto = $totalPenghasilan - $totalPotongan;
-
-        @endphp
+    @endphp
 
     {{-- HEADER --}}
     <div class="text-center mb-3">
@@ -228,9 +228,9 @@
                 @if($doubleshift > 0)
                 <tr>
                     <td style="padding: 5px 12px;">
-                        Doubleshift <span class="text-muted">{{ $doubleshift }} × Rp {{ number_format($lemburkhusus, 0, ',', '.') }}</span>
+                        Doubleshift <span class="text-muted">{{ $doubleshift }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span>
                     </td>
-                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($doubleshift * $lemburkhusus, 0, ',', '.') }}</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($doubleshift * $kehadiran, 0, ',', '.') }}</td>
                 </tr>
                 @endif
 
@@ -350,5 +350,4 @@
     </div>
 
 </div>
-
 @endsection
