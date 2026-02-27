@@ -17,7 +17,7 @@
 
 @php
 /* =========================
-   STATUS PEGAWAI
+   STATUS
 ========================= */
 $isHarian   = ($rekap['harian'] ?? 0) == 1;
 $isDirektur = ($rekap['direktur'] ?? 0) == 1;
@@ -48,6 +48,8 @@ $tugasluar       = $rekap['tugasluar'] ?? 0;
 $konversilembur  = $rekap['konversilembur'] ?? 0;
 $konversioperasi = $rekap['konversioperasi'] ?? 0;
 $lemburkhusus    = $rekap['lemburkhusus'] ?? 0;
+$cuti            = $rekap['cuti'] ?? 0;
+$totalharikerja  = $rekap['totalharikerja'] ?? 0;
 
 $lemburRate = ($lemburkhusus > 0) ? $lemburkhusus : $kehadiran;
 
@@ -57,7 +59,7 @@ $tugasLuarVal   = $tugasluar * $lemburRate;
 $doubleShiftVal = $doubleshift * $lemburRate;
 
 /* =========================
-   PERHITUNGAN PENGHASILAN
+   TOTAL PENGHASILAN
 ========================= */
 if ($isHarian) {
 
@@ -74,19 +76,40 @@ if ($isHarian) {
 
 } else {
 
-    $totalPenghasilan =
-        $gajipokok +
-        $tunjstruktural +
-        $tunjkeluarga +
-        $tunjapotek +
-        $tunjfungsional +
-        ($jmlrujukan * $rujukan) +
-        $uangMakan +
-        $nilaiKehadiran +
-        $tugasLuarVal +
-        $lemburVal +
-        $operasiVal +
-        $doubleShiftVal;
+    if ($rekap['use_new_system'] ?? false) {
+
+        $totalPenghasilan =
+            $gajipokok +
+            $tunjstruktural +
+            $tunjkeluarga +
+            $tunjapotek +
+            $tunjfungsional +
+            ($jmlrujukan * $rujukan) +
+            $uangMakan +
+            $nilaiKehadiran +
+            $tugasLuarVal +
+            $lemburVal +
+            $operasiVal +
+            $doubleShiftVal;
+
+    } else {
+
+        $totalPenghasilan =
+            $gajipokok +
+            $tunjstruktural +
+            $tunjkeluarga +
+            $tunjapotek +
+            $tunjfungsional +
+            ($jmlrujukan * $rujukan) +
+            ($totalharikerja * $uangmakanNominal) +
+            $nilaiKehadiran +
+            ($cuti * $kehadiran) +
+            $tugasLuarVal +
+            $lemburVal +
+            $doubleShiftVal;
+
+        $operasiVal = 0;
+    }
 }
 
 /* =========================
@@ -151,10 +174,45 @@ $netto = $totalPenghasilan - $totalPotongan;
 <tr><td>Tunj. Apotek</td><td class="text-end">Rp {{ number_format($tunjapotek,0,',','.') }}</td></tr>
 <tr><td>Tunj. Fungsional</td><td class="text-end">Rp {{ number_format($tunjfungsional,0,',','.') }}</td></tr>
 
+@if($jmlrujukan > 0)
+<tr>
+<td>Tunj. Rujukan ({{ $jmlrujukan }} × Rp {{ number_format($rujukan,0,',','.') }})</td>
+<td class="text-end">Rp {{ number_format($jmlrujukan*$rujukan,0,',','.') }}</td>
+</tr>
+@endif
+
 @if(!$isHarian && !$isTraining && !$isDirektur && $uangmakanNominal > 0)
 <tr>
 <td>Uang Makan ({{ $jmlabsensi }} × Rp {{ number_format($uangmakanNominal,0,',','.') }})</td>
 <td class="text-end">Rp {{ number_format($uangMakan,0,',','.') }}</td>
+</tr>
+@endif
+
+@if($cuti > 0 && !$isTraining)
+<tr>
+<td>Cuti ({{ $cuti }} × Rp {{ number_format($kehadiran,0,',','.') }})</td>
+<td class="text-end">Rp {{ number_format($cuti*$kehadiran,0,',','.') }}</td>
+</tr>
+@endif
+
+@if($tugasluar > 0)
+<tr>
+<td>Tugas Luar ({{ $tugasluar }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
+<td class="text-end">Rp {{ number_format($tugasLuarVal,0,',','.') }}</td>
+</tr>
+@endif
+
+@if($konversilembur > 0 && !$isTraining)
+<tr>
+<td>Lembur ({{ $konversilembur }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
+<td class="text-end">Rp {{ number_format($lemburVal,0,',','.') }}</td>
+</tr>
+@endif
+
+@if(($rekap['use_new_system'] ?? false) && $konversioperasi > 0 && !$isTraining)
+<tr>
+<td>Operasi ({{ $konversioperasi }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
+<td class="text-end">Rp {{ number_format($operasiVal,0,',','.') }}</td>
 </tr>
 @endif
 
@@ -165,9 +223,7 @@ $netto = $totalPenghasilan - $totalPotongan;
 
 <tr class="border-top">
 <td><strong>Total Penghasilan</strong></td>
-<td class="text-end text-primary fw-bold">
-Rp {{ number_format($totalPenghasilan,0,',','.') }}
-</td>
+<td class="text-end text-primary fw-bold">Rp {{ number_format($totalPenghasilan,0,',','.') }}</td>
 </tr>
 
 </table>
@@ -191,31 +247,34 @@ Rp {{ number_format($totalPenghasilan,0,',','.') }}
 
 <tr class="border-top">
 <td><strong>Total Potongan</strong></td>
-<td class="text-end text-danger fw-bold">
-Rp {{ number_format($totalPotongan,0,',','.') }}
-</td>
+<td class="text-end text-danger fw-bold">Rp {{ number_format($totalPotongan,0,',','.') }}</td>
 </tr>
 
 </table>
 </div>
 </div>
 
-{{-- TOTAL DITERIMA --}}
-    <div class="card mb-3 border-success">
-        <div class="card-body text-center py-3">
-            <h6 class="text-success mb-1">Total Diterima</h6>
-            <h4 class="text-success fw-bold mb-1">Rp {{ number_format($netto, 0, ',', '.') }}</h4>
-            <p class="text-muted small mb-0">Semoga Berkah!</p>
-        </div>
-    </div>
+{{-- NETTO --}}
+<div class="card border-success mb-3">
+<div class="card-body text-center">
+<h6 class="text-success">Total Diterima</h6>
+<h4 class="text-success fw-bold">
+Rp {{ number_format($netto,0,',','.') }}
+</h4>
+</div>
+</div>
 
-    {{-- TANGGAL & DOWNLOAD --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <small class="text-muted">Boja, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</small>
-        <a href="{{ route('slip.pdf', [\Carbon\Carbon::parse($periode)->format('Y'), \Carbon\Carbon::parse($periode)->format('m')]) }}" class="btn btn-sm btn-outline-primary">
-            <ion-icon name="download-outline"></ion-icon> Download
-        </a>
-    </div>
+{{-- TANGGAL & DOWNLOAD --}}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <small class="text-muted">
+        Boja, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+    </small>
+
+    <a href="{{ route('slip.pdf', [\Carbon\Carbon::parse($periode)->format('Y'), \Carbon\Carbon::parse($periode)->format('m')]) }}" 
+       class="btn btn-sm btn-outline-primary">
+        <ion-icon name="download-outline"></ion-icon> Download
+    </a>
+</div>
 
 </div>
 @endsection
