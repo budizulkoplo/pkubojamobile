@@ -104,7 +104,7 @@
                     ($tugasluar * $lemburkhusus) +
                     $lemburVal + 
                     $operasiVal +
-                    ($doubleshift * $kehadiran);
+                    ($doubleshift * $lemburkhusus);
             } else {
                 // SISTEM LAMA (tanpa operasi)
                 $totalPenghasilan =
@@ -119,7 +119,7 @@
                     ($cuti * $kehadiran) +
                     ($tugasluar * $kehadiran) +
                     $lemburVal +
-                    ($doubleshift * $kehadiran);
+                    ($doubleshift * $lemburkhusus);
                 
                 $operasiVal = 0;
             }
@@ -228,9 +228,9 @@
                 @if($doubleshift > 0)
                 <tr>
                     <td style="padding: 5px 12px;">
-                        Doubleshift <span class="text-muted">{{ $doubleshift }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span>
+                        Doubleshift <span class="text-muted">{{ $doubleshift }} × Rp {{ number_format($lemburkhusus, 0, ',', '.') }}</span>
                     </td>
-                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($doubleshift * $kehadiran, 0, ',', '.') }}</td>
+                    <td style="padding: 5px 12px;" class="text-end">Rp {{ number_format($doubleshift * $lemburkhusus, 0, ',', '.') }}</td>
                 </tr>
                 @endif
 
@@ -350,4 +350,5 @@
     </div>
 
 </div>
+
 @endsection
