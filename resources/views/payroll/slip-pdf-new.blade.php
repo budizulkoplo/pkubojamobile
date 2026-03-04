@@ -318,7 +318,7 @@
 
         @if($doubleshift > 0 && !$isTraining)
         <tr>
-        <td>Lembur ({{ $doubleshift }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
+        <td>Double Shift ({{ $doubleshift }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
         <td class="text-end">Rp {{ number_format($doubleShiftVal,0,',','.') }}</td>
         </tr>
         @endif
