@@ -169,7 +169,7 @@ class PayrollController extends Controller
                 'payroll.totalharikerja',
                 DB::raw('(SELECT rujukan FROM nominaldasar LIMIT 1) as rujukan'),
                 DB::raw('(SELECT uangmakan FROM nominaldasar LIMIT 1) as uangmakan'),
-                DB::raw('(SELECT koperasi FROM nominaldasar LIMIT 1) as koperasi'),
+                'mastergaji.koperasi',
                 'mastergaji.bpjstk',
                 'mastergaji.bpjskes',
                 'mastergaji.direktur',
