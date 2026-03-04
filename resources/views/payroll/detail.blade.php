@@ -209,6 +209,13 @@ $netto = $totalPenghasilan - $totalPotongan;
 </tr>
 @endif
 
+@if($doubleshift > 0 && !$isTraining)
+<tr>
+<td>Lembur ({{ $doubleshift }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
+<td class="text-end">Rp {{ number_format($doubleShiftVal,0,',','.') }}</td>
+</tr>
+@endif
+
 @if(($rekap['use_new_system'] ?? false) && $konversioperasi > 0 && !$isTraining)
 <tr>
 <td>Operasi ({{ $konversioperasi }} × Rp {{ number_format($lemburRate,0,',','.') }})</td>
