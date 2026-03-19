@@ -532,9 +532,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
     $ch = curl_init();
 
     try {
-        // =========================
-        // 1. LOGIN JIKA COOKIE BELUM ADA
-        // =========================
         if (!file_exists($cookieFile) || filesize($cookieFile) == 0) {
             curl_setopt_array($ch, [
                 CURLOPT_URL => $urlLogin,
@@ -544,8 +541,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_TIMEOUT => 15,
                 CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
             ]);
 
             $loginPage = curl_exec($ch);
@@ -578,8 +573,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_HTTPHEADER => [
                     'Content-Type: application/x-www-form-urlencoded'
                 ],
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
             ]);
 
             $loginResponse = curl_exec($ch);
@@ -588,13 +581,9 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 throw new \Exception('Login gagal: ' . curl_error($ch));
             }
 
-            // Reset method POST supaya request berikutnya benar-benar GET
             curl_setopt($ch, CURLOPT_POST, false);
         }
 
-        // =========================
-        // 2. AMBIL DATA PASIEN
-        // =========================
         curl_setopt_array($ch, [
             CURLOPT_URL => $urlPasien,
             CURLOPT_HTTPGET => true,
@@ -607,9 +596,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
             CURLOPT_HTTPHEADER => [
                 'Accept: application/json',
                 'X-Requested-With: XMLHttpRequest'
-            ],
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
+            ]
         ]);
 
         $response = curl_exec($ch);
@@ -618,11 +605,9 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
             throw new \Exception('Gagal ambil data pasien: ' . curl_error($ch));
         }
 
-        // Jika kena redirect ke login / session expired, coba login ulang sekali
         if (is_string($response) && str_contains(strtolower($response), '<html')) {
             @unlink($cookieFile);
 
-            // Ambil ulang halaman login
             curl_setopt_array($ch, [
                 CURLOPT_URL => $urlLogin,
                 CURLOPT_RETURNTRANSFER => true,
@@ -631,8 +616,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_TIMEOUT => 15,
                 CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
             ]);
 
             $loginPage = curl_exec($ch);
@@ -665,8 +648,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_HTTPHEADER => [
                     'Content-Type: application/x-www-form-urlencoded'
                 ],
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
             ]);
 
             $loginResponse = curl_exec($ch);
@@ -677,7 +658,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
 
             curl_setopt($ch, CURLOPT_POST, false);
 
-            // Ambil ulang data pasien
             curl_setopt_array($ch, [
                 CURLOPT_URL => $urlPasien,
                 CURLOPT_HTTPGET => true,
@@ -690,9 +670,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_HTTPHEADER => [
                     'Accept: application/json',
                     'X-Requested-With: XMLHttpRequest'
-                ],
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
+                ]
             ]);
 
             $response = curl_exec($ch);
@@ -714,12 +692,9 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
 
     curl_close($ch);
 
-    // =========================
-    // 3. VALIDASI RESPONSE JSON
-    // =========================
-    $dataPasien = json_decode($response, true);
+    $dataPasien = json_decode($response);
 
-    if (!is_array($dataPasien)) {
+    if (!$dataPasien || !is_array($dataPasien)) {
         if (is_string($response) && str_contains(strtolower($response), '<html')) {
             return view('presensi.pasien', [
                 'dataPasien' => [],
@@ -737,19 +712,16 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
         ]);
     }
 
-    // =========================
-    // 4. REKAP DATA
-    // =========================
     $rekapInstalasi = [];
     $rekapKelas = [];
 
     foreach ($dataPasien as $pasien) {
-        $instalasi = $pasien['mutasi_kamar_terakhir']['ruangan']['sub_pelayanan']['nama_instalasi']
-            ?? $pasien['label_instalasi']
+        $instalasi = $pasien->mutasi_kamar_terakhir?->ruangan?->sub_pelayanan?->nama_instalasi
+            ?? $pasien->label_instalasi
             ?? 'Tidak diketahui';
 
-        $kelas = $pasien['mutasi_kamar_terakhir']['ruangan']['nama']
-            ?? $pasien['poliklinik']
+        $kelas = $pasien->mutasi_kamar_terakhir?->ruangan?->nama
+            ?? $pasien->poliklinik
             ?? 'Tanpa Kelas';
 
         $rekapInstalasi[$instalasi] = ($rekapInstalasi[$instalasi] ?? 0) + 1;
