@@ -693,6 +693,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
     curl_close($ch);
 
     $decoded = json_decode($response);
+    dd($decoded);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
         return view('presensi.pasien', [
