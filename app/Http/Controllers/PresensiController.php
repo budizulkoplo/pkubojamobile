@@ -532,6 +532,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
     $ch = curl_init();
 
     try {
+        // login jika cookie belum ada / kosong
         if (!file_exists($cookieFile) || filesize($cookieFile) == 0) {
             curl_setopt_array($ch, [
                 CURLOPT_URL => $urlLogin,
@@ -571,7 +572,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_TIMEOUT => 15,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/x-www-form-urlencoded'
+                    'Content-Type: application/x-www-form-urlencoded',
                 ],
             ]);
 
@@ -584,6 +585,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
             curl_setopt($ch, CURLOPT_POST, false);
         }
 
+        // ambil data pasien
         curl_setopt_array($ch, [
             CURLOPT_URL => $urlPasien,
             CURLOPT_HTTPGET => true,
@@ -595,8 +597,8 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_HTTPHEADER => [
                 'Accept: application/json',
-                'X-Requested-With: XMLHttpRequest'
-            ]
+                'X-Requested-With: XMLHttpRequest',
+            ],
         ]);
 
         $response = curl_exec($ch);
@@ -605,6 +607,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
             throw new \Exception('Gagal ambil data pasien: ' . curl_error($ch));
         }
 
+        // kalau ternyata ke-redirect ke HTML login, login ulang sekali
         if (is_string($response) && str_contains(strtolower($response), '<html')) {
             @unlink($cookieFile);
 
@@ -646,7 +649,7 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_TIMEOUT => 15,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/x-www-form-urlencoded'
+                    'Content-Type: application/x-www-form-urlencoded',
                 ],
             ]);
 
@@ -669,8 +672,8 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_HTTPHEADER => [
                     'Accept: application/json',
-                    'X-Requested-With: XMLHttpRequest'
-                ]
+                    'X-Requested-With: XMLHttpRequest',
+                ],
             ]);
 
             $response = curl_exec($ch);
@@ -683,32 +686,40 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
         curl_close($ch);
 
         return view('presensi.pasien', [
-            'dataPasien' => [],
+            'dataPasien' => collect(),
             'rekapInstalasi' => [],
             'rekapKelas' => [],
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
+            'rawResponse' => null,
         ]);
     }
 
     curl_close($ch);
 
-    $dataPasien = json_decode($response);
+    $decoded = json_decode($response);
 
-    if (!$dataPasien || !is_array($dataPasien)) {
-        if (is_string($response) && str_contains(strtolower($response), '<html')) {
-            return view('presensi.pasien', [
-                'dataPasien' => [],
-                'rekapInstalasi' => [],
-                'rekapKelas' => [],
-                'error' => 'Response HTML (kemungkinan session habis / endpoint bukan JSON)'
-            ]);
-        }
-
+    if (json_last_error() !== JSON_ERROR_NONE) {
         return view('presensi.pasien', [
-            'dataPasien' => [],
+            'dataPasien' => collect(),
             'rekapInstalasi' => [],
             'rekapKelas' => [],
-            'error' => 'Data pasien tidak valid'
+            'error' => 'JSON tidak valid: ' . json_last_error_msg(),
+            'rawResponse' => $response,
+        ]);
+    }
+
+    // endpoint bisa saja langsung array, atau object dengan key data
+    if (is_array($decoded)) {
+        $dataPasien = collect($decoded);
+    } elseif (is_object($decoded) && isset($decoded->data) && is_array($decoded->data)) {
+        $dataPasien = collect($decoded->data);
+    } else {
+        return view('presensi.pasien', [
+            'dataPasien' => collect(),
+            'rekapInstalasi' => [],
+            'rekapKelas' => [],
+            'error' => 'Format data pasien tidak dikenali',
+            'rawResponse' => $response,
         ]);
     }
 
@@ -732,10 +743,11 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
     ksort($rekapKelas);
 
     return view('presensi.pasien', [
-        'dataPasien'     => $dataPasien,
+        'dataPasien' => $dataPasien,
         'rekapInstalasi' => $rekapInstalasi,
-        'rekapKelas'     => $rekapKelas,
-        'error'          => null
+        'rekapKelas' => $rekapKelas,
+        'error' => null,
+        'rawResponse' => null,
     ]);
 }
 
