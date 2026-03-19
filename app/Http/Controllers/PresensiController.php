@@ -723,18 +723,18 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
         ]);
     }
 
-    $rekapInstalasi = [];
+   $rekapInstalasi = [];
     $rekapKelas = [];
-
+    
     foreach ($dataPasien as $pasien) {
         $instalasi = $pasien->mutasi_kamar_terakhir?->ruangan?->sub_pelayanan?->nama_instalasi
             ?? $pasien->label_instalasi
             ?? 'Tidak diketahui';
-
+    
         $kelas = $pasien->mutasi_kamar_terakhir?->ruangan?->nama
             ?? $pasien->poliklinik
             ?? 'Tanpa Kelas';
-
+    
         $rekapInstalasi[$instalasi] = ($rekapInstalasi[$instalasi] ?? 0) + 1;
         $rekapKelas[$kelas] = ($rekapKelas[$kelas] ?? 0) + 1;
     }
