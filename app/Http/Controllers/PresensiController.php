@@ -516,85 +516,143 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
     }
 
     public function pasienList()
-    {
+{
     $urlLogin  = 'http://192.168.100.231/login';
     $urlPasien = 'http://192.168.100.231/emr/pasien?default_pelayanan=&status_pelayanan=0&instalasi=&q=&is_today=false&my_pasien=false';
 
     $username = 'dzulfikar';
     $password = 'm45uk147853';
 
-    $cookieFile = tempnam(sys_get_temp_dir(), 'cookie_');
+    // 🔥 simpan cookie permanen (biar gak login terus)
+    $cookieFile = storage_path('app/simrs_cookie.txt');
+
     $ch = curl_init();
 
     try {
-        // Ambil CSRF Token
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $urlLogin,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_COOKIEJAR => $cookieFile,
-            CURLOPT_FOLLOWLOCATION => true
-        ]);
 
-        $response = curl_exec($ch);
-        if (curl_errno($ch)) {
-            throw new \Exception('Gagal menghubungi server login.');
+        // =========================
+        // 1. LOGIN (HANYA SEKALI)
+        // =========================
+        if (!file_exists($cookieFile)) {
+
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $urlLogin,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_COOKIEJAR => $cookieFile,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 15,
+            ]);
+
+            $response = curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                throw new \Exception('Gagal ambil halaman login: ' . curl_error($ch));
+            }
+
+            preg_match('/name="_token" value="(.+?)"/', $response, $matches);
+            $token = $matches[1] ?? '';
+
+            if (!$token) {
+                throw new \Exception('Token CSRF tidak ditemukan.');
+            }
+
+            // LOGIN
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $urlLogin,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => http_build_query([
+                    '_token'   => $token,
+                    'username' => $username,
+                    'password' => $password,
+                ]),
+                CURLOPT_COOKIEFILE => $cookieFile,
+                CURLOPT_COOKIEJAR => $cookieFile,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 15,
+            ]);
+
+            curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                throw new \Exception('Login gagal: ' . curl_error($ch));
+            }
         }
 
-        preg_match('/name="_token" value="(.+?)"/', $response, $matches);
-        $token = $matches[1] ?? '';
-        if (!$token) {
-            throw new \Exception('Token CSRF tidak ditemukan.');
-        }
-
-        // Login ke SIMRS
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $urlLogin,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query([
-                '_token'   => $token,
-                'username' => $username,
-                'password' => $password,
-            ]),
-            CURLOPT_COOKIEFILE => $cookieFile,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        curl_exec($ch);
-
-        // Ambil Data Pasien
+        // =========================
+        // 2. AMBIL DATA PASIEN
+        // =========================
         curl_setopt_array($ch, [
             CURLOPT_URL => $urlPasien,
             CURLOPT_HTTPGET => true,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_CONNECTTIMEOUT => 25,
+            CURLOPT_COOKIEFILE => $cookieFile,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_HTTPHEADER => [
+                'Accept: application/json',
+                'X-Requested-With: XMLHttpRequest'
+            ]
         ]);
 
         $response = curl_exec($ch);
 
+        if (curl_errno($ch)) {
+            throw new \Exception('Gagal ambil data pasien: ' . curl_error($ch));
+        }
+
     } catch (\Exception $e) {
         curl_close($ch);
-        unlink($cookieFile);
-        return redirect()->back()->with('error', $e->getMessage());
+
+        // ❌ jangan redirect lagi
+        return view('presensi.pasien', [
+            'dataPasien' => [],
+            'rekapInstalasi' => [],
+            'rekapKelas' => [],
+            'error' => $e->getMessage()
+        ]);
     }
 
     curl_close($ch);
-    unlink($cookieFile);
 
+    // =========================
+    // 3. VALIDASI RESPONSE
+    // =========================
     $dataPasien = json_decode($response);
+
     if (!$dataPasien || !is_array($dataPasien)) {
-        return redirect()->back()->with('error', 'Data pasien tidak valid atau kosong.');
+
+        // 🔥 deteksi kalau HTML (biasanya kena redirect login)
+        if (str_contains($response, '<html')) {
+            return view('presensi.pasien', [
+                'dataPasien' => [],
+                'rekapInstalasi' => [],
+                'rekapKelas' => [],
+                'error' => 'Response HTML (kemungkinan session habis / endpoint bukan JSON)'
+            ]);
+        }
+
+        return view('presensi.pasien', [
+            'dataPasien' => [],
+            'rekapInstalasi' => [],
+            'rekapKelas' => [],
+            'error' => 'Data pasien tidak valid'
+        ]);
     }
 
-    // Rekap
+    // =========================
+    // 4. REKAP DATA (AMAN)
+    // =========================
     $rekapInstalasi = [];
     $rekapKelas = [];
 
     foreach ($dataPasien as $pasien) {
-        $instalasi = $pasien->mutasi_kamar_terakhir->ruangan->sub_pelayanan->nama_instalasi
+
+        $instalasi = optional($pasien->mutasi_kamar_terakhir->ruangan->sub_pelayanan)->nama_instalasi
             ?? $pasien->label_instalasi
             ?? 'Tidak diketahui';
 
-        $kelas = $pasien->mutasi_kamar_terakhir->ruangan->nama
+        $kelas = optional($pasien->mutasi_kamar_terakhir->ruangan)->nama
             ?? 'Tanpa Kelas';
 
         $rekapInstalasi[$instalasi] = ($rekapInstalasi[$instalasi] ?? 0) + 1;
@@ -606,38 +664,6 @@ $endDate   = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay()->toDateTime
         'rekapInstalasi' => $rekapInstalasi,
         'rekapKelas'     => $rekapKelas
     ]);
-}
-
-public function getPegawaiAPI(Request $request)
-{
-    try {
-        // Query data pegawai
-        $pegawai = DB::table('pegawai')
-            ->select(
-                'nik as pegawai_id',
-                'nama_lengkap as pegawai_nama',
-                'jabatan'
-            )
-            ->orderBy('nama_lengkap', 'asc')
-            ->get();
-
-        // Format response
-        $response = [
-            'status' => 'success',
-            'message' => 'Data pegawai berhasil diambil',
-            'data' => $pegawai,
-            'total' => $pegawai->count(),
-            'timestamp' => now()->toDateTimeString()
-        ];
-
-        return response()->json($response, 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-        ], 500);
-    }
 }
 
 }
