@@ -24,26 +24,13 @@ class NewKalenderController extends Controller
         $user = Auth::guard('karyawan')->user();
         
         if ($user) {
-            $pegawai = DB::table('pegawai')
-                ->select('pegawai_pin', 'pegawai_nama')
-                ->where('nik', $user->nik)
-                ->first();
-
-            if (!$pegawai) {
-                $pegawai = DB::table('pegawai')
-                    ->select('pegawai_pin', 'pegawai_nama')
-                    ->where('pegawai_pin', $user->id)
-                    ->first();
-            }
-
-            $this->pegawaiPin = $pegawai->pegawai_pin ?? $user->id;
+            // Gunakan id sebagai pegawai_pin
+            $this->pegawaiPin = $user->id;
             
             \Log::info('User data', [
                 'user_id' => $user->id,
-                'user_nik' => $user->nik ?? null,
                 'nama_lengkap' => $user->nama_lengkap,
-                'pegawai_pin' => $this->pegawaiPin,
-                'pegawai_match' => $pegawai->pegawai_nama ?? null,
+                'pegawai_pin' => $this->pegawaiPin
             ]);
         } else {
             \Log::warning('No user found with karyawan guard');
@@ -192,8 +179,6 @@ class NewKalenderController extends Controller
         }
     }
 
-    /* ================= STATISTIK ================= */
-
     protected function calculateStatistics(array $dataKalender): array
     {
         $stats = $this->initializeStats();
@@ -238,8 +223,12 @@ class NewKalenderController extends Controller
 
     protected function processLateStats(array &$stats, array $data): void
     {
-        if (empty($data['status_khusus']) && !empty($data['late_seconds'])) {
-            $stats['terlambat'] += (int) $data['late_seconds'];
+        if (empty($data['status_khusus']) && !empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
+            $masuk = strtotime($data['jam_masuk_actual']);
+            $shift = strtotime($data['jam_masuk_shift']);
+            if ($masuk > $shift) {
+                $stats['terlambat'] += ($masuk - $shift);
+            }
         }
     }
 

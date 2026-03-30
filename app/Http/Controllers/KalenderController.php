@@ -20,24 +20,7 @@ class KalenderController extends Controller
 
     protected function initializeEmployeeData(): void
     {
-        $user = Auth::guard('karyawan')->user();
-
-        $pegawai = null;
-        if ($user) {
-            $pegawai = DB::table('pegawai')
-                ->select('pegawai_pin', 'pegawai_nama')
-                ->where('nik', $user->nik)
-                ->first();
-
-            if (!$pegawai) {
-                $pegawai = DB::table('pegawai')
-                    ->select('pegawai_pin', 'pegawai_nama')
-                    ->where('pegawai_pin', $user->id)
-                    ->first();
-            }
-        }
-
-        $this->pegawaiPin = $pegawai->pegawai_pin ?? ($user->id ?? '');
+        $this->pegawaiPin = Auth::guard('karyawan')->user()->id ?? '';
         $this->employees = DB::table('pegawai')
             ->select('pegawai_pin', 'pegawai_nama')
             ->where('bagian', '<>', 'nonaktif')
@@ -395,7 +378,6 @@ class KalenderController extends Controller
             $seconds = $start->diffInSeconds($end);
             return min($seconds, 57600); // max 16 jam
         } catch (\Exception $e) {
-            logger()->error("Overtime calculation error: " . $e->getMessage());
             return 0;
         }
     }
@@ -420,7 +402,6 @@ class KalenderController extends Controller
         return $weeks;
     }
 
-    // tampilkan total jam (>=24 jam tidak dipotong)
     protected function secondsToTime(int $seconds): string
     {
         $sign   = $seconds < 0 ? '-' : '';
@@ -432,12 +413,13 @@ class KalenderController extends Controller
         return sprintf('%s%d:%02d', $sign, $hours, $minutes);
     }
 
-    // untuk rata-rata jam (selalu 0–23 jam)
-    protected function formatTimeFromSeconds(?float $seconds): ?string
+    protected function formatTimeFromSeconds(?float $time): ?string
     {
-        if ($seconds === null) return null;
-        $seconds = ((int)$seconds) % 86400;
-        return gmdate('H:i', $seconds);
+        if ($time === null) return null;
+
+        $hours = floor($time / 3600);
+        $minutes = floor(($time % 3600) / 60);
+        return sprintf('%02d:%02d', $hours, $minutes);
     }
 
     protected function calculateTimeDifference(?float $actual, ?float $shift): ?string
@@ -445,8 +427,12 @@ class KalenderController extends Controller
         if ($actual === null || $shift === null) return null;
 
         $diff = $actual - $shift;
-        $prefix = $diff > 0 ? '+' : ($diff < 0 ? '-' : '±');
+        $sign = $diff >= 0 ? '+' : '-';
+        $diff = abs($diff);
 
-        return $prefix . $this->secondsToTime(abs((int)$diff));
+        $hours = floor($diff / 3600);
+        $minutes = floor(($diff % 3600) / 60);
+
+        return sprintf('%s%02d:%02d', $sign, $hours, $minutes);
     }
 }
