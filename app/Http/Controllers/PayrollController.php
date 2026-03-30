@@ -134,6 +134,7 @@ class PayrollController extends Controller
 
     private function getPayrollDataNewSystem($pin, $periode)
     {
+<<<<<<< HEAD
         $masterGajiSubquery = DB::raw("
             (
                 SELECT m1.*
@@ -153,6 +154,28 @@ class PayrollController extends Controller
         return DB::table('payroll as p')
             ->join('pegawai', 'p.pegawai_pin', '=', 'pegawai.pegawai_pin')
             ->leftJoin($masterGajiSubquery, 'mg.pegawai_pin', '=', 'pegawai.pegawai_pin')
+=======
+        return DB::table('payroll as p')
+            ->join('pegawai', 'p.pegawai_pin', '=', 'pegawai.pegawai_pin')
+
+            // 🔥 MASTER GAJI TERAKHIR SESUAI PERIODE
+            ->leftJoin(DB::raw("
+                (
+                    SELECT m1.*
+                    FROM mastergaji m1
+                    JOIN (
+                        SELECT pegawai_pin, MAX(tglaktif) as tglaktif
+                        FROM mastergaji
+                        WHERE verifikasi = 1
+                        AND DATE_FORMAT(tglaktif, '%Y-%m') <= '{$periode}'
+                        GROUP BY pegawai_pin
+                    ) m2
+                    ON m1.pegawai_pin = m2.pegawai_pin
+                    AND m1.tglaktif = m2.tglaktif
+                ) as mg
+            "), 'mg.pegawai_pin', '=', 'pegawai.pegawai_pin')
+
+>>>>>>> 75467fc42813040203466a81773e35cd9f4f47c0
             ->select(
                 'p.periode',
                 'pegawai.pegawai_nip',
@@ -170,15 +193,19 @@ class PayrollController extends Controller
                 'mg.kehadiran',
                 'mg.pph21',
                 'mg.lemburkhusus',
+<<<<<<< HEAD
                 'mg.bpjstk',
                 'mg.bpjskes',
                 'mg.koperasi',
                 'mg.direktur',
                 'mg.harian',
+=======
+>>>>>>> 75467fc42813040203466a81773e35cd9f4f47c0
 
                 'p.jmlabsensi',
                 'p.jmlterlambat',
                 'p.konversilembur',
+<<<<<<< HEAD
                 'p.konversioperasi',
                 'p.cuti',
                 'p.tugasluar',
@@ -187,12 +214,29 @@ class PayrollController extends Controller
 
                 DB::raw('(SELECT rujukan FROM nominaldasar LIMIT 1) as rujukan'),
                 DB::raw('(SELECT uangmakan FROM nominaldasar LIMIT 1) as uangmakan')
+=======
+                'p.konversioperasi', 
+                'p.doubleshift',
+                'p.cuti',
+                'p.tugasluar',
+                'p.totalharikerja',
+
+                DB::raw('(SELECT rujukan FROM nominaldasar LIMIT 1) as rujukan'),
+                DB::raw('(SELECT uangmakan FROM nominaldasar LIMIT 1) as uangmakan'),
+
+                'mg.koperasi',
+                'mg.bpjstk',
+                'mg.bpjskes',
+                'mg.direktur',
+                'mg.harian',
+                'mg.verifikasi'
+>>>>>>> 75467fc42813040203466a81773e35cd9f4f47c0
             )
             ->where('p.periode', $periode)
             ->where('p.pegawai_pin', $pin)
             ->first();
     }
-
+    
     private function getPayrollDataOldSystem($pin, $periode)
     {
         $periodeEnd = \Carbon\Carbon::createFromFormat('Y-m', $periode)->endOfMonth()->toDateString();
