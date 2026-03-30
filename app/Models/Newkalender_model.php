@@ -42,6 +42,10 @@ class Newkalender_model extends Model
                 'jam_pulang' => '',
                 'status_khusus' => '',
                 'late_seconds' => 0,
+                'late_minutes' => 0,
+                'late_cutoff_time' => '',
+                'late_rule_text' => '',
+                'late_basis' => 'regular',
                 'lembur_data' => [],
                 'is_night_shift' => false,
                 'night_shift_check_out' => '',
@@ -51,16 +55,20 @@ class Newkalender_model extends Model
                 'has_schedule' => false,
                 'has_attendance' => false,
                 'is_office_shift' => false,
-                'is_default_office' => false
+                'is_default_office' => false,
+                'consumed_by_previous_night_shift' => false
             ];
             $currentDate = date('Y-m-d', strtotime($currentDate . ' +1 day'));
         }
         
+        // Get schedule data dasar pegawai
+        $this->getScheduleData($pegawaiPin, $startDate, $endDate, $dataKalender);
+
         // Get attendance data dengan penanganan shift malam
         $this->getAttendanceDataWithNightShift($pegawaiPin, $startDate, $endDate, $dataKalender);
-        
-        // Get schedule data - HARUS SETELAH getAttendanceDataWithNightShift
-        $this->getScheduleData($pegawaiPin, $startDate, $endDate, $dataKalender);
+
+        // Lengkapi fallback office untuk hari yang punya absensi tapi belum punya jadwal
+        $this->applyOfficeAttendanceDefaults($pegawaiPin, $dataKalender);
         
         // Get overtime data
         $this->getOvertimeData($pegawaiPin, $startDate, $endDate, $dataKalender);
@@ -152,10 +160,57 @@ class Newkalender_model extends Model
             $dataKalender[$tgl]['is_office_shift'] = $isOfficeShift;
         }
     }
+
+    private function applyOfficeAttendanceDefaults($pegawaiPin, &$dataKalender)
+    {
+        $pegawai = DB::select("
+            SELECT p.bagian
+            FROM pegawai p
+            WHERE p.pegawai_pin = ?
+        ", [$pegawaiPin]);
+
+        $bagian = $pegawai[0]->bagian ?? '';
+        if ($bagian === '') {
+            return;
+        }
+
+        $officeShift = DB::select("
+            SELECT shift, jammasuk, jampulang
+            FROM kelompokjam
+            WHERE bagian = ? AND shift = '-'
+            LIMIT 1
+        ", [$bagian]);
+
+        if (empty($officeShift)) {
+            return;
+        }
+
+        $defaultJamMasuk = $officeShift[0]->jammasuk ?? '08:00:00';
+        $defaultJamPulang = $officeShift[0]->jampulang ?? '16:00:00';
+
+        foreach ($dataKalender as $tgl => $data) {
+            $hasAttendance = !empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual']);
+            if (!$hasAttendance) {
+                continue;
+            }
+
+            if (empty($dataKalender[$tgl]['jam_masuk_shift'])) {
+                $dataKalender[$tgl]['shift'] = 'Office';
+                $dataKalender[$tgl]['jam_masuk_shift'] = $defaultJamMasuk;
+                $dataKalender[$tgl]['jam_pulang_shift'] = $defaultJamPulang;
+                $dataKalender[$tgl]['has_schedule'] = true;
+                $dataKalender[$tgl]['is_default_office'] = true;
+                $dataKalender[$tgl]['is_office_shift'] = true;
+            }
+        }
+    }
     
     private function getAttendanceDataWithNightShift($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
-        // Get all attendance data in one query untuk efisiensi
+        $attendanceStart = date('Y-m-d', strtotime($startDate . ' -1 day'));
+        $attendanceEnd = date('Y-m-d', strtotime($endDate . ' +1 day'));
+
+        // Get all attendance data termasuk 1 hari sebelum/sesudah untuk shift malam lintas cut off
         $allAttendance = DB::select("
             SELECT 
                 DATE(scan_date) as tgl,
@@ -167,18 +222,18 @@ class Newkalender_model extends Model
             AND DATE(scan_date) BETWEEN ? AND ?
             AND inoutmode IN (1, 2)
             ORDER BY scan_date ASC
-        ", [$pegawaiPin, $startDate, $endDate]);
+        ", [$pegawaiPin, $attendanceStart, $attendanceEnd]);
         
         // Convert to array for easier processing
         $attendanceArray = array_map(function($item) {
             return (array) $item;
         }, $allAttendance);
         
+        // Process shift malam lebih dulu agar checkout tidak tampil ganda
+        $this->processNightShift($attendanceArray, $dataKalender, $startDate, $endDate);
+
         // Process untuk mendapatkan data masuk dan pulang normal
         $this->processNormalAttendance($attendanceArray, $dataKalender);
-        
-        // Process untuk identifikasi shift malam
-        $this->processNightShift($attendanceArray, $dataKalender, $startDate, $endDate);
         
         // Tandai hari yang ada attendance
         foreach ($attendanceArray as $att) {
@@ -197,17 +252,22 @@ class Newkalender_model extends Model
             $jam = $att['jam'];
             
             if (!isset($dataKalender[$tgl])) continue;
-            
-            // Skip jika ini adalah shift malam (akan diproses di processNightShift)
-            if ($dataKalender[$tgl]['is_night_shift']) continue;
-            
-            // Skip jika tanggal ini memiliki check-out yang digunakan untuk shift malam hari sebelumnya
-            $prevDate = date('Y-m-d', strtotime($tgl . ' -1 day'));
-            if (isset($dataKalender[$prevDate]) && $dataKalender[$prevDate]['is_night_shift']) {
-                // Cek apakah jam ini adalah jam check-out yang digunakan untuk shift malam sebelumnya
-                $nightShiftCheckOut = $dataKalender[$prevDate]['night_shift_check_out'] ?? '';
-                if ($jam === $nightShiftCheckOut && in_array($inoutmode, [2])) {
-                    continue; // Skip jam check-out yang sudah digunakan untuk shift malam
+
+            // Skip jika absensi ini sudah dipakai sebagai checkout shift malam hari sebelumnya
+            if ($inoutmode == 2 && !empty($dataKalender[$tgl]['consumed_by_previous_night_shift'])) {
+                $consumedTime = $dataKalender[$tgl]['night_shift_checkout_time'] ?? '';
+                if ($jam === $consumedTime) {
+                    continue;
+                }
+            }
+
+            // Skip jika ini adalah pasangan absensi shift malam di tanggal yang sama
+            if ($dataKalender[$tgl]['is_night_shift']) {
+                if ($inoutmode == 1 && $jam === ($dataKalender[$tgl]['jam_masuk_actual'] ?? '')) {
+                    continue;
+                }
+                if ($inoutmode == 2 && $jam === ($dataKalender[$tgl]['jam_pulang_actual'] ?? '')) {
+                    continue;
                 }
             }
             
@@ -257,8 +317,8 @@ class Newkalender_model extends Model
             if ($lastNightCheckIn !== null) {
                 $nextDate = date('Y-m-d', strtotime($currentDate . ' +1 day'));
                 
-                // Cek apakah nextDate masih dalam range periode
-                if ($nextDate <= $endDate && isset($attendanceByDate[$nextDate])) {
+                // Cek apakah nextDate masih ada data attendance untuk dicocokkan
+                if (isset($attendanceByDate[$nextDate])) {
                     // Cari check-out pertama di hari berikutnya sebelum jam 10:00
                     $firstMorningCheckOut = null;
                     foreach ($attendanceByDate[$nextDate] as $att) {
@@ -271,39 +331,26 @@ class Newkalender_model extends Model
                     
                     // Jika ditemukan check-out pagi, maka ini adalah shift malam
                     if ($firstMorningCheckOut !== null) {
-                        // Update data tanggal check-in (hari ini) - SHIFT MALAM
-                        $dataKalender[$currentDate]['is_night_shift'] = true;
-                        $dataKalender[$currentDate]['night_shift_check_out'] = $firstMorningCheckOut['jam'];
-                        $dataKalender[$currentDate]['jam_pulang'] = $firstMorningCheckOut['jam'] . ' (esok)';
-                        $dataKalender[$currentDate]['jam_pulang_actual'] = $firstMorningCheckOut['jam'];
-                        
-                        // Set jam masuk untuk shift malam
-                        $dataKalender[$currentDate]['jam_masuk_actual'] = $lastNightCheckIn['jam'];
-                        $dataKalender[$currentDate]['jam_masuk'] = $lastNightCheckIn['jam'];
-                        
-                        // Hitung durasi kerja
-                        $checkInDateTime = $lastNightCheckIn['scan_date'];
-                        $checkOutDateTime = $firstMorningCheckOut['scan_date'];
-                        $workDuration = $this->calculateWorkDuration($checkInDateTime, $checkOutDateTime);
-                        $dataKalender[$currentDate]['work_duration'] = $workDuration;
-                        
-                        // Untuk tanggal check-out (hari berikutnya), hapus data masuk dan pulang karena sudah termasuk shift malam sebelumnya
+                        // Tampilkan shift malam di hari check-in jika masih dalam periode kalender
+                        if (isset($dataKalender[$currentDate])) {
+                            $dataKalender[$currentDate]['is_night_shift'] = true;
+                            $dataKalender[$currentDate]['night_shift_check_out'] = $firstMorningCheckOut['jam'];
+                            $dataKalender[$currentDate]['jam_pulang'] = $firstMorningCheckOut['jam'] . ' (esok)';
+                            $dataKalender[$currentDate]['jam_pulang_actual'] = $firstMorningCheckOut['jam'];
+                            $dataKalender[$currentDate]['jam_masuk_actual'] = $lastNightCheckIn['jam'];
+                            $dataKalender[$currentDate]['jam_masuk'] = $lastNightCheckIn['jam'];
+
+                            $checkInDateTime = $lastNightCheckIn['scan_date'];
+                            $checkOutDateTime = $firstMorningCheckOut['scan_date'];
+                            $workDuration = $this->calculateWorkDuration($checkInDateTime, $checkOutDateTime);
+                            $dataKalender[$currentDate]['work_duration'] = $workDuration;
+                        }
+
+                        // Tandai checkout pagi sebagai milik shift malam sebelumnya
                         if (isset($dataKalender[$nextDate])) {
-                            // Hapus jam masuk di hari berikutnya jika jam tersebut sama dengan check-out shift malam
-                            if ($dataKalender[$nextDate]['jam_masuk_actual'] === $firstMorningCheckOut['jam']) {
-                                $dataKalender[$nextDate]['jam_masuk'] = '';
-                                $dataKalender[$nextDate]['jam_masuk_actual'] = '';
-                            }
-                            
-                            // Hapus jam pulang di hari berikutnya jika jam tersebut sama dengan check-out shift malam
-                            if ($dataKalender[$nextDate]['jam_pulang_actual'] === $firstMorningCheckOut['jam']) {
-                                $dataKalender[$nextDate]['jam_pulang'] = '';
-                                $dataKalender[$nextDate]['jam_pulang_actual'] = '';
-                            }
-                            
-                            // Tandai bahwa tanggal berikutnya memiliki check-out yang digunakan untuk shift malam
                             $dataKalender[$nextDate]['has_night_shift_checkout'] = true;
                             $dataKalender[$nextDate]['night_shift_checkout_time'] = $firstMorningCheckOut['jam'];
+                            $dataKalender[$nextDate]['consumed_by_previous_night_shift'] = true;
                         }
                     }
                 }
@@ -326,17 +373,34 @@ class Newkalender_model extends Model
     private function calculateLateAndOther(&$dataKalender)
     {
         foreach ($dataKalender as $tgl => &$data) {
-            // Skip perhitungan terlambat untuk shift malam
-            if ($data['is_night_shift']) continue;
-            
+            $data['late_seconds'] = 0;
+            $data['late_minutes'] = 0;
+            $data['late_cutoff_time'] = '';
+            $data['late_rule_text'] = '';
+            $data['late_basis'] = 'regular';
+
             // Hitung keterlambatan jika ada jam masuk actual dan jam masuk shift
             if (!empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
                 $jamMasuk = strtotime($data['jam_masuk_actual']);
                 $jamMasukShift = strtotime($data['jam_masuk_shift']);
-                
-                if ($jamMasuk > $jamMasukShift) {
-                    $lateSeconds = $jamMasuk - $jamMasukShift;
+
+                $lateThreshold = $jamMasukShift;
+
+                // Pegawai shift wajib absen 30 menit sebelum shift dimulai untuk operan shift
+                if (!empty($data['has_schedule']) && empty($data['is_office_shift'])) {
+                    $lateThreshold = strtotime('-30 minutes', $jamMasukShift);
+                    $data['late_basis'] = 'shift_minus_30';
+                    $data['late_rule_text'] = 'Pegawai shift wajib absen masuk paling lambat 30 menit sebelum jam shift dimulai untuk operan shift.';
+                } else {
+                    $data['late_rule_text'] = 'Pegawai office/non-shift dinilai terlambat jika absen masuk melewati jam masuk shift.';
+                }
+
+                $data['late_cutoff_time'] = date('H:i:s', $lateThreshold);
+
+                if ($jamMasuk > $lateThreshold) {
+                    $lateSeconds = $jamMasuk - $lateThreshold;
                     $data['late_seconds'] = $lateSeconds;
+                    $data['late_minutes'] = (int) floor($lateSeconds / 60);
                     
                     // Format jam masuk dengan warna merah jika terlambat
                     $data['jam_masuk'] = '<span style="color:red;">' . $data['jam_masuk_actual'] . '</span>';

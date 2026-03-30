@@ -67,17 +67,9 @@ foreach ($dataKalender as $date => $data) {
     
     // Calculate lateness ONLY if there's no special status
     if (empty($data['status_khusus'])) {
-        if (!empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
-            $jamMasuk = $data['jam_masuk_actual'];
-            $jamMasukShift = $data['jam_masuk_shift'];
-            
-            $masukTime = strtotime($jamMasuk);
-            $shiftTime = strtotime($jamMasukShift);
-            
-            if ($masukTime > $shiftTime) {
-                $lateSeconds = $masukTime - $shiftTime;
-                $totalTerlambatSeconds += $lateSeconds;
-            }
+        $lateSeconds = (int) ($data['late_seconds'] ?? 0);
+        if ($lateSeconds > 0) {
+            $totalTerlambatSeconds += $lateSeconds;
         }
     }
     
@@ -151,6 +143,7 @@ function formatDurasi($durasiDetik) {
 .jam-label { color: #666; display: inline-block; width: 14px; font-weight: normal; flex-shrink: 0; text-align: left; font-size: 7px; }
 .jam-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: monospace; font-size: 8px; }
 .terlambat { font-size: 7px !important; color: #d32f2f; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #ffebee; padding: 1px 3px; border-radius: 2px; text-align: center; }
+.cutoff-info { font-size: 6px !important; color: #8d6e63; margin: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #fff8e1; padding: 1px 3px; border-radius: 2px; text-align: center; }
 .lembur-section { margin: 3px 0; padding: 2px; background: #f8f9fa; border-radius: 2px; border-left: 2px solid #00796b; }
 .lembur-header { font-size: 7px !important; font-weight: bold; color: #00796b; text-align: center; margin-bottom: 1px; background: #e0f2f1; padding: 1px 2px; border-radius: 1px; }
 .operasi-header { font-size: 7px !important; font-weight: bold; color: #7b1fa2; text-align: center; margin-bottom: 1px; background: #f3e5f5; padding: 1px 2px; border-radius: 1px; }
@@ -244,7 +237,7 @@ function formatDurasi($durasiDetik) {
                                         if (!(($tglDay >= 26 && $tglMonth == $prevMonth) || ($tglDay <= 25 && $tglMonth == $bulanMonth))) { $cellClass .= ' tanggal-nonaktif'; }
                                         $holidayName = $liburNasional[$tgl] ?? '';
                                         $shiftClass = '';
-                                        $lateSeconds = 0;
+                                        $lateSeconds = (int) ($data['late_seconds'] ?? 0);
                                         $showAttendance = false;
                                         $displayShift = '';
                                         if (!empty($data['shift'])) {
@@ -268,13 +261,6 @@ function formatDurasi($durasiDetik) {
                                             $shiftClass = 'shift-belum';
                                         }
                                         $showAttendance = !empty($displayShift) || !empty($data['status_khusus']) || !empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual']) || !empty($data['lembur_data']);
-                                        if (empty($data['status_khusus']) && !empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
-                                            $jamMasuk = $data['jam_masuk_actual'];
-                                            $jamMasukShift = $data['jam_masuk_shift'];
-                                            $masukTime = strtotime($jamMasuk);
-                                            $shiftTime = strtotime($jamMasukShift);
-                                            if ($masukTime > $shiftTime) { $lateSeconds = $masukTime - $shiftTime; }
-                                        }
                                         $formatWaktu = function($time) { if (empty($time)) return '-'; try { return \Carbon\Carbon::createFromFormat('H:i:s', $time)->format('H:i'); } catch (\Exception $e) { return $time; } };
                                         $jamMasuk = $formatWaktu($data['jam_masuk_actual'] ?? '');
                                         $jamPulang = $formatWaktu($data['jam_pulang_actual'] ?? '');
@@ -296,6 +282,7 @@ function formatDurasi($durasiDetik) {
                                                     <div class="jam-container"><span class="jam-label">OUT:</span><span class="jam-value">@if(!empty($jamPulang)){{ $jamPulang }}@else - @endif</span></div>
                                                 @endif
                                                 @if($lateSeconds > 0 && empty($data['status_khusus']))<div class="terlambat">+{{ secondsToTime($lateSeconds) }}</div>@endif
+                                                @if($lateSeconds > 0 && ($data['late_basis'] ?? '') === 'shift_minus_30')<div class="cutoff-info">Batas masuk {{ $formatWaktu($data['late_cutoff_time'] ?? '') }}</div>@endif
                                                 @if(!empty($lemburItems) || !empty($operasiItems))
                                                     <div class="lembur-section">
                                                         @if(!empty($lemburItems))
