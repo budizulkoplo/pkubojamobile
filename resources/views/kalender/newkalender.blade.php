@@ -65,20 +65,8 @@ foreach ($dataKalender as $date => $data) {
         $totalWorkDays++;
     }
     
-    // Calculate lateness ONLY if there's no special status
-    if (empty($data['status_khusus'])) {
-        if (!empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
-            $jamMasuk = $data['jam_masuk_actual'];
-            $jamMasukShift = $data['jam_masuk_shift'];
-            
-            $masukTime = strtotime($jamMasuk);
-            $shiftTime = strtotime($jamMasukShift);
-            
-            if ($masukTime > $shiftTime) {
-                $lateSeconds = $masukTime - $shiftTime;
-                $totalTerlambatSeconds += $lateSeconds;
-            }
-        }
+    if (empty($data['status_khusus']) && !empty($data['late_seconds'])) {
+        $totalTerlambatSeconds += $data['late_seconds'];
     }
     
     // Calculate overtime from lembur_data
@@ -688,8 +676,10 @@ function formatDurasi($durasiDetik) {
                                         $holidayName = $liburNasional[$tgl] ?? '';
                                         
                                         $shiftClass = '';
-                                        $lateSeconds = 0;
+                                        $lateSeconds = (int) ($data['late_seconds'] ?? 0);
                                         $showAttendance = false;
+                                        $hasAttendanceData = !empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual']);
+                                        $hasOtherInfo = !empty($data['status_khusus']) || !empty($data['lembur_data']);
                                         
                                         // Default shift untuk non-shift
                                         $displayShift = '';
@@ -711,30 +701,25 @@ function formatDurasi($durasiDetik) {
                                             }
                                             
                                             $displayShift = ucfirst(strtolower($data['shift']));
-                                        } elseif (!empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual'])) {
+                                            if (strtolower($displayShift) === 'office' && !$hasAttendanceData) {
+                                                $displayShift = '';
+                                            }
+                                        } elseif (!empty($data['is_office_shift']) && $hasAttendanceData) {
+                                            $displayShift = 'Office';
+                                            $shiftClass = 'shift-office';
+                                        } elseif ($hasAttendanceData) {
                                             $displayShift = 'Belum ada jadwal';
                                             $shiftClass = 'shift-belum';
+                                        }
+
+                                        if (!$hasAttendanceData && !$hasOtherInfo) {
+                                            $displayShift = '';
                                         }
                                         
                                         $showAttendance = 
                                             !empty($displayShift) || 
-                                            !empty($data['status_khusus']) || 
-                                            !empty($data['jam_masuk_actual']) || 
-                                            !empty($data['jam_pulang_actual']) || 
-                                            !empty($data['lembur_data']);
-                                        
-                                        // Calculate lateness only if no special status
-                                        if (empty($data['status_khusus']) && !empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
-                                            $jamMasuk = $data['jam_masuk_actual'];
-                                            $jamMasukShift = $data['jam_masuk_shift'];
-                                            
-                                            $masukTime = strtotime($jamMasuk);
-                                            $shiftTime = strtotime($jamMasukShift);
-                                            
-                                            if ($masukTime > $shiftTime) {
-                                                $lateSeconds = $masukTime - $shiftTime;
-                                            }
-                                        }
+                                            $hasOtherInfo || 
+                                            $hasAttendanceData;
 
                                         // Format waktu tanpa detik
                                         $formatWaktu = function($time) {
