@@ -134,53 +134,68 @@ class PayrollController extends Controller
 
     private function getPayrollDataNewSystem($pin, $periode)
     {
-        $periodeEnd = \Carbon\Carbon::createFromFormat('Y-m', $periode)->endOfMonth()->toDateString();
+        return DB::table('payroll as p')
+            ->join('pegawai', 'p.pegawai_pin', '=', 'pegawai.pegawai_pin')
 
-        return DB::table('payroll')
-            ->join('pegawai', 'payroll.pegawai_pin', '=', 'pegawai.pegawai_pin')
-            ->leftJoin('mastergaji', function($join) use ($periodeEnd) {
-                $join->on('mastergaji.pegawai_pin', '=', 'pegawai.pegawai_pin')
-                    ->where('mastergaji.verifikasi', '1')
-                    ->whereDate('mastergaji.tglaktif', '<=', $periodeEnd);
-            })
+            // 🔥 MASTER GAJI TERAKHIR SESUAI PERIODE
+            ->leftJoin(DB::raw("
+                (
+                    SELECT m1.*
+                    FROM mastergaji m1
+                    JOIN (
+                        SELECT pegawai_pin, MAX(tglaktif) as tglaktif
+                        FROM mastergaji
+                        WHERE verifikasi = 1
+                        AND DATE_FORMAT(tglaktif, '%Y-%m') <= '{$periode}'
+                        GROUP BY pegawai_pin
+                    ) m2
+                    ON m1.pegawai_pin = m2.pegawai_pin
+                    AND m1.tglaktif = m2.tglaktif
+                ) as mg
+            "), 'mg.pegawai_pin', '=', 'pegawai.pegawai_pin')
+
             ->select(
-                'payroll.periode',
+                'p.periode',
                 'pegawai.pegawai_nip',
                 'pegawai.pegawai_pin',
                 'pegawai.pegawai_nama',
                 'pegawai.nohp',
                 'pegawai.email',
                 'pegawai.jabatan',
-                'mastergaji.gajipokok',
-                'mastergaji.tunjstruktural',
-                'mastergaji.tunjfungsional',
-                'mastergaji.tunjkeluarga',
-                'mastergaji.tunjapotek',
-                'mastergaji.kehadiran',
-                'mastergaji.pph21',
-                'mastergaji.lemburkhusus',
-                'payroll.jmlabsensi',
-                'payroll.jmlterlambat',
-                'payroll.konversilembur',
-                'payroll.konversioperasi', // Kolom baru
-                'payroll.doubleshift',
-                'payroll.cuti',
-                'payroll.tugasluar',
-                'payroll.totalharikerja',
+
+                'mg.gajipokok',
+                'mg.tunjstruktural',
+                'mg.tunjfungsional',
+                'mg.tunjkeluarga',
+                'mg.tunjapotek',
+                'mg.kehadiran',
+                'mg.pph21',
+                'mg.lemburkhusus',
+
+                'p.jmlabsensi',
+                'p.jmlterlambat',
+                'p.konversilembur',
+                'p.konversioperasi', 
+                'p.doubleshift',
+                'p.cuti',
+                'p.tugasluar',
+                'p.totalharikerja',
+
                 DB::raw('(SELECT rujukan FROM nominaldasar LIMIT 1) as rujukan'),
                 DB::raw('(SELECT uangmakan FROM nominaldasar LIMIT 1) as uangmakan'),
-                'mastergaji.koperasi',
-                'mastergaji.bpjstk',
-                'mastergaji.bpjskes',
-                'mastergaji.direktur',
-                'mastergaji.harian',
-                'mastergaji.verifikasi'
+
+                'mg.koperasi',
+                'mg.bpjstk',
+                'mg.bpjskes',
+                'mg.direktur',
+                'mg.harian',
+                'mg.verifikasi'
             )
-            ->where('payroll.periode', $periode)
-            ->where('payroll.pegawai_pin', $pin)
+            ->where('p.periode', $periode)
+            ->where('p.pegawai_pin', $pin)
             ->first();
     }
-
+    
     private function getPayrollDataOldSystem($pin, $periode)
     {
         $periodeEnd = \Carbon\Carbon::createFromFormat('Y-m', $periode)->endOfMonth()->toDateString();
