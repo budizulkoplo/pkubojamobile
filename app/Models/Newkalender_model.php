@@ -64,6 +64,7 @@ class Newkalender_model extends Model
         $this->applyOfficeAttendanceDefaults($pegawaiPin, $dataKalender);
         $this->getOvertimeData($pegawaiPin, $startDate, $endDate, $dataKalender);
         $this->getSpecialStatusData($pegawaiPin, $startDate, $endDate, $dataKalender);
+        $this->applyOfficeAttendanceDefaults($pegawaiPin, $dataKalender);
         $this->calculateLateAndOther($dataKalender);
 
         ksort($dataKalender);
@@ -163,7 +164,7 @@ class Newkalender_model extends Model
                 continue;
             }
 
-            if (empty($dataKalender[$tgl]['jam_masuk_shift'])) {
+            if (empty($dataKalender[$tgl]['jam_masuk_shift']) || empty($dataKalender[$tgl]['shift'])) {
                 $dataKalender[$tgl]['shift'] = 'Office';
                 $dataKalender[$tgl]['jam_masuk_shift'] = $officeShift->jammasuk ?? '08:00:00';
                 $dataKalender[$tgl]['jam_pulang_shift'] = $officeShift->jampulang ?? '16:00:00';
@@ -334,6 +335,12 @@ class Newkalender_model extends Model
             $data['late_cutoff_time'] = '';
             $data['late_rule_text'] = '';
             $data['late_basis'] = 'regular';
+
+            if (!empty($data['is_office_shift']) && (!empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual']))) {
+                if (empty($data['shift'])) {
+                    $data['shift'] = 'Office';
+                }
+            }
 
             if (empty($data['jam_masuk_actual']) || empty($data['jam_masuk_shift'])) {
                 continue;
