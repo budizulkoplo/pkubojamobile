@@ -225,8 +225,12 @@ class NewKalenderController extends Controller
 
     protected function processLateStats(array &$stats, array $data): void
     {
-        if (empty($data['status_khusus']) && !empty($data['late_seconds'])) {
-            $stats['terlambat'] += (int) $data['late_seconds'];
+        if (empty($data['status_khusus']) && !empty($data['jam_masuk_actual']) && !empty($data['jam_masuk_shift'])) {
+            $masuk = strtotime($data['jam_masuk_actual']);
+            $shift = strtotime($data['jam_masuk_shift']);
+            if ($masuk > $shift) {
+                $stats['terlambat'] += ($masuk - $shift);
+            }
         }
     }
 
