@@ -20,7 +20,24 @@ class KalenderController extends Controller
 
     protected function initializeEmployeeData(): void
     {
-        $this->pegawaiPin = Auth::guard('karyawan')->user()->id ?? '';
+        $user = Auth::guard('karyawan')->user();
+
+        $pegawai = null;
+        if ($user) {
+            $pegawai = DB::table('pegawai')
+                ->select('pegawai_pin', 'pegawai_nama')
+                ->where('nik', $user->nik)
+                ->first();
+
+            if (!$pegawai) {
+                $pegawai = DB::table('pegawai')
+                    ->select('pegawai_pin', 'pegawai_nama')
+                    ->where('pegawai_pin', $user->id)
+                    ->first();
+            }
+        }
+
+        $this->pegawaiPin = $pegawai->pegawai_pin ?? ($user->id ?? '');
         $this->employees = DB::table('pegawai')
             ->select('pegawai_pin', 'pegawai_nama')
             ->where('bagian', '<>', 'nonaktif')

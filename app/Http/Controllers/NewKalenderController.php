@@ -24,13 +24,26 @@ class NewKalenderController extends Controller
         $user = Auth::guard('karyawan')->user();
         
         if ($user) {
-            // Gunakan id sebagai pegawai_pin
-            $this->pegawaiPin = $user->id;
+            $pegawai = DB::table('pegawai')
+                ->select('pegawai_pin', 'pegawai_nama')
+                ->where('nik', $user->nik)
+                ->first();
+
+            if (!$pegawai) {
+                $pegawai = DB::table('pegawai')
+                    ->select('pegawai_pin', 'pegawai_nama')
+                    ->where('pegawai_pin', $user->id)
+                    ->first();
+            }
+
+            $this->pegawaiPin = $pegawai->pegawai_pin ?? $user->id;
             
             \Log::info('User data', [
                 'user_id' => $user->id,
+                'user_nik' => $user->nik ?? null,
                 'nama_lengkap' => $user->nama_lengkap,
-                'pegawai_pin' => $this->pegawaiPin
+                'pegawai_pin' => $this->pegawaiPin,
+                'pegawai_match' => $pegawai->pegawai_nama ?? null,
             ]);
         } else {
             \Log::warning('No user found with karyawan guard');
