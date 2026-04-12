@@ -50,6 +50,8 @@
     </div>
 </div>
 
+@include('quran.partials.doa-pagi')
+
 {{-- Script filter pencarian --}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {

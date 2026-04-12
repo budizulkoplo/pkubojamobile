@@ -189,6 +189,8 @@
     </div>
 </div>
 
+@include('quran.partials.doa-pagi')
+
 {{-- Modal Pilihan Aktivitas --}}
 <div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
