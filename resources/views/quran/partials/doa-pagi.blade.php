@@ -24,7 +24,10 @@
 
 <button
     type="button"
+    id="doaPagiTrigger"
     class="btn btn-primary doa-pagi-trigger"
+    data-toggle="modal"
+    data-target="#doaPagiModal"
     data-bs-toggle="modal"
     data-bs-target="#doaPagiModal">
     Doa Pagi
@@ -35,7 +38,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="doaPagiModalLabel">Doa Pagi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="doa-pagi-text">بِسْمِ اللَّهِ الرَّحْمٰنِ الرَّحِيمِ
@@ -65,8 +70,21 @@
 رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً، وَفِي الْآخِرَةِ حَسَنَةً، وَقِنَا عَذَابَ النَّارِ.</div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const trigger = document.getElementById("doaPagiTrigger");
+    if (!trigger || typeof $ === "undefined") {
+        return;
+    }
+
+    trigger.addEventListener("click", function () {
+        $("#doaPagiModal").modal("show");
+    });
+});
+</script>
