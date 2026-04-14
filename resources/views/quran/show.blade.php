@@ -163,7 +163,7 @@
     ];
 @endphp
 
-<div class="p-3" style="margin-top: 40px">
+<div class="p-3" style="margin-top: 40px" id="quranPageTop">
     <div class="text-center mb-4">
         <h1 class="mb-0">{{ $surat['namaLatin'] }} <small class="text-muted">({{ $surat['arti'] }})</small></h1>
         <h2 class="mt-2" style="font-family: 'Scheherazade New', serif;">{{ $surat['nama'] }}</h2>
@@ -253,11 +253,25 @@
     <div class="text-center mt-4">
         <a href="/quran" class="btn btn-dark">Kembali ke Daftar Surat</a>
     </div>
+
+    <div id="quranPageBottom" style="height: 1px;"></div>
 </div>
 
 <div class="scroll-helper">
-    <button type="button" class="scroll-helper-btn" id="scrollUpButton" aria-label="Geser ke atas">↑</button>
-    <button type="button" class="scroll-helper-btn" id="scrollDownButton" aria-label="Geser ke bawah">↓</button>
+    <button
+        type="button"
+        class="scroll-helper-btn"
+        aria-label="Geser ke atas"
+        onclick="window.handleScrollHelper(-1, event)"
+        ontouchstart="window.handleScrollHelper(-1, event)"
+    >↑</button>
+    <button
+        type="button"
+        class="scroll-helper-btn"
+        aria-label="Geser ke bawah"
+        onclick="window.handleScrollHelper(1, event)"
+        ontouchstart="window.handleScrollHelper(1, event)"
+    >↓</button>
 </div>
 
 @include('quran.partials.doa-pagi')
@@ -291,8 +305,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const activityModal = new bootstrap.Modal(modalElement);
     const jumpAyatInput = document.getElementById("jumpAyatInput");
     const jumpAyatButton = document.getElementById("jumpAyatButton");
-    const scrollUpButton = document.getElementById("scrollUpButton");
-    const scrollDownButton = document.getElementById("scrollDownButton");
     const suratInfo = {
         idsurat: {{ (int) $surat['nomor'] }},
         surat: {!! json_encode($surat['namaLatin'], JSON_UNESCAPED_UNICODE) !!},
@@ -493,23 +505,15 @@ document.addEventListener("DOMContentLoaded", function () {
             behavior: "smooth"
         });
     }
+    window.handleScrollHelper = function(direction, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
 
-    scrollUpButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        scrollPage(-1);
-    });
-    scrollDownButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        scrollPage(1);
-    });
-    scrollUpButton.addEventListener("touchend", (event) => {
-        event.preventDefault();
-        scrollPage(-1);
-    }, { passive: false });
-    scrollDownButton.addEventListener("touchend", (event) => {
-        event.preventDefault();
-        scrollPage(1);
-    }, { passive: false });
+        scrollPage(direction);
+        return false;
+    };
 
     renderMarkers();
 
