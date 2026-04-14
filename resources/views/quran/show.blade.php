@@ -114,51 +114,9 @@
         background: rgba(25, 135, 84, 0.12);
         color: #198754;
     }
-    .scrollbar-helper {
-        position: fixed;
-        top: 120px;
-        right: 6px;
-        bottom: 110px;
-        width: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1030;
-    }
-    .scrollbar-helper-track {
-        width: 8px;
-        height: 100%;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.12);
-        position: relative;
-        overflow: hidden;
-        touch-action: none;
-    }
-    .scrollbar-helper-thumb {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 64px;
-        border-radius: 999px;
-        background: rgba(13, 110, 253, 0.75);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
-        cursor: grab;
-    }
-    .scrollbar-helper-thumb.dragging {
-        background: rgba(13, 110, 253, 0.95);
-        cursor: grabbing;
-    }
     @media (max-width: 576px) {
         .last-read-label {
             font-size: 0.64rem;
-        }
-        .scrollbar-helper {
-            right: 2px;
-            width: 24px;
-        }
-        .scrollbar-helper-track {
-            width: 6px;
         }
     }
 </style>
@@ -264,12 +222,6 @@
     </div>
 </div>
 
-<div class="scrollbar-helper" aria-hidden="true">
-    <div class="scrollbar-helper-track" id="scrollbarHelperTrack">
-        <div class="scrollbar-helper-thumb" id="scrollbarHelperThumb"></div>
-    </div>
-</div>
-
 @include('quran.partials.doa-pagi')
 
 <div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
@@ -301,8 +253,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const activityModal = new bootstrap.Modal(modalElement);
     const jumpAyatInput = document.getElementById("jumpAyatInput");
     const jumpAyatButton = document.getElementById("jumpAyatButton");
-    const scrollbarTrack = document.getElementById("scrollbarHelperTrack");
-    const scrollbarThumb = document.getElementById("scrollbarHelperThumb");
     const suratInfo = {
         idsurat: {{ (int) $surat['nomor'] }},
         surat: {!! json_encode($surat['namaLatin'], JSON_UNESCAPED_UNICODE) !!},
@@ -320,7 +270,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let currentAyat = null;
     let fontSize = 1.6;
-    let isDraggingScrollbar = false;
 
     window.handleAyatClick = function(no) {
         currentAyat = no;
@@ -368,37 +317,6 @@ document.addEventListener("DOMContentLoaded", function () {
         setTimeout(() => targetCard.classList.remove("focus-target"), 2200);
 
         return true;
-    }
-
-    function getScrollMetrics() {
-        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-        const trackHeight = scrollbarTrack.clientHeight;
-        const thumbHeight = Math.max(trackHeight * (window.innerHeight / Math.max(document.documentElement.scrollHeight, window.innerHeight)), 48);
-        const maxThumbTop = Math.max(trackHeight - thumbHeight, 0);
-
-        return { maxScroll, trackHeight, thumbHeight, maxThumbTop };
-    }
-
-    function syncScrollbarThumb() {
-        const { maxScroll, thumbHeight, maxThumbTop } = getScrollMetrics();
-        const scrollRatio = Math.min(window.scrollY / maxScroll, 1);
-        const thumbTop = maxThumbTop * scrollRatio;
-
-        scrollbarThumb.style.height = `${thumbHeight}px`;
-        scrollbarThumb.style.transform = `translateY(${thumbTop}px)`;
-    }
-
-    function moveScrollFromPointer(clientY) {
-        const rect = scrollbarTrack.getBoundingClientRect();
-        const { maxScroll, thumbHeight, maxThumbTop } = getScrollMetrics();
-        const pointerY = clientY - rect.top;
-        const desiredTop = Math.min(Math.max(pointerY - (thumbHeight / 2), 0), maxThumbTop);
-        const ratio = maxThumbTop > 0 ? desiredTop / maxThumbTop : 0;
-
-        window.scrollTo({
-            top: ratio * maxScroll,
-            behavior: "auto"
-        });
     }
 
     function saveMarker(ayatNo, activityType) {
@@ -529,49 +447,7 @@ document.addEventListener("DOMContentLoaded", function () {
         arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
 
-    scrollbarTrack.addEventListener("click", function(event) {
-        if (event.target === scrollbarThumb) {
-            return;
-        }
-
-        moveScrollFromPointer(event.clientY);
-    });
-
-    scrollbarThumb.addEventListener("pointerdown", function(event) {
-        isDraggingScrollbar = true;
-        scrollbarThumb.classList.add("dragging");
-        scrollbarThumb.setPointerCapture(event.pointerId);
-        event.preventDefault();
-    });
-
-    scrollbarThumb.addEventListener("pointermove", function(event) {
-        if (!isDraggingScrollbar) {
-            return;
-        }
-
-        moveScrollFromPointer(event.clientY);
-    });
-
-    function stopScrollbarDrag(event) {
-        if (!isDraggingScrollbar) {
-            return;
-        }
-
-        isDraggingScrollbar = false;
-        scrollbarThumb.classList.remove("dragging");
-
-        if (event && scrollbarThumb.hasPointerCapture(event.pointerId)) {
-            scrollbarThumb.releasePointerCapture(event.pointerId);
-        }
-    }
-
-    scrollbarThumb.addEventListener("pointerup", stopScrollbarDrag);
-    scrollbarThumb.addEventListener("pointercancel", stopScrollbarDrag);
-    window.addEventListener("scroll", syncScrollbarThumb, { passive: true });
-    window.addEventListener("resize", syncScrollbarThumb);
-
     renderMarkers();
-    syncScrollbarThumb();
 
     const ayatTujuan = hashAyat || targetAyat || (targetType && state[targetType] ? state[targetType] : 0);
 
