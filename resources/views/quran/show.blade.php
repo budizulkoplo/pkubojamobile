@@ -117,11 +117,12 @@
     .scroll-helper {
         position: fixed;
         right: 12px;
-        bottom: 92px;
-        z-index: 1030;
+        bottom: 148px;
+        z-index: 1080;
         display: flex;
         flex-direction: column;
         gap: 10px;
+        pointer-events: auto;
     }
     .scroll-helper-btn {
         width: 46px;
@@ -133,6 +134,7 @@
         font-size: 1.15rem;
         font-weight: 700;
         box-shadow: 0 10px 20px rgba(13, 110, 253, 0.24);
+        touch-action: manipulation;
     }
     .scroll-helper-btn:active {
         transform: scale(0.96);
@@ -143,7 +145,7 @@
         }
         .scroll-helper {
             right: 8px;
-            bottom: 86px;
+            bottom: 138px;
         }
         .scroll-helper-btn {
             width: 42px;
@@ -492,8 +494,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    scrollUpButton.addEventListener("click", () => scrollPage(-1));
-    scrollDownButton.addEventListener("click", () => scrollPage(1));
+    scrollUpButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        scrollPage(-1);
+    });
+    scrollDownButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        scrollPage(1);
+    });
     scrollUpButton.addEventListener("touchend", (event) => {
         event.preventDefault();
         scrollPage(-1);
