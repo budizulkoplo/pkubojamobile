@@ -114,42 +114,9 @@
         background: rgba(25, 135, 84, 0.12);
         color: #198754;
     }
-    .scroll-helper {
-        position: fixed;
-        right: 12px;
-        bottom: 148px;
-        z-index: 1080;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        pointer-events: auto;
-    }
-    .scroll-helper-btn {
-        width: 46px;
-        height: 46px;
-        border: 0;
-        border-radius: 50%;
-        background: rgba(13, 110, 253, 0.92);
-        color: #fff;
-        font-size: 1.15rem;
-        font-weight: 700;
-        box-shadow: 0 10px 20px rgba(13, 110, 253, 0.24);
-        touch-action: manipulation;
-    }
-    .scroll-helper-btn:active {
-        transform: scale(0.96);
-    }
     @media (max-width: 576px) {
         .last-read-label {
             font-size: 0.64rem;
-        }
-        .scroll-helper {
-            right: 8px;
-            bottom: 138px;
-        }
-        .scroll-helper-btn {
-            width: 42px;
-            height: 42px;
         }
     }
 </style>
@@ -163,7 +130,7 @@
     ];
 @endphp
 
-<div class="p-3" style="margin-top: 40px" id="quranPageTop">
+<div class="p-3" style="margin-top: 40px">
     <div class="text-center mb-4">
         <h1 class="mb-0">{{ $surat['namaLatin'] }} <small class="text-muted">({{ $surat['arti'] }})</small></h1>
         <h2 class="mt-2" style="font-family: 'Scheherazade New', serif;">{{ $surat['nama'] }}</h2>
@@ -253,25 +220,6 @@
     <div class="text-center mt-4">
         <a href="/quran" class="btn btn-dark">Kembali ke Daftar Surat</a>
     </div>
-
-    <div id="quranPageBottom" style="height: 1px;"></div>
-</div>
-
-<div class="scroll-helper">
-    <button
-        type="button"
-        class="scroll-helper-btn"
-        aria-label="Geser ke atas"
-        onclick="window.handleScrollHelper(-1, event)"
-        ontouchstart="window.handleScrollHelper(-1, event)"
-    >↑</button>
-    <button
-        type="button"
-        class="scroll-helper-btn"
-        aria-label="Geser ke bawah"
-        onclick="window.handleScrollHelper(1, event)"
-        ontouchstart="window.handleScrollHelper(1, event)"
-    >↓</button>
 </div>
 
 @include('quran.partials.doa-pagi')
@@ -498,22 +446,6 @@ document.addEventListener("DOMContentLoaded", function () {
         fontSize -= 0.2;
         arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
-
-    function scrollPage(direction) {
-        window.scrollBy({
-            top: window.innerHeight * 0.8 * direction,
-            behavior: "smooth"
-        });
-    }
-    window.handleScrollHelper = function(direction, event) {
-        if (event) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-
-        scrollPage(direction);
-        return false;
-    };
 
     renderMarkers();
 
