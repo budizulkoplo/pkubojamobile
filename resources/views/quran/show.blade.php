@@ -114,9 +114,40 @@
         background: rgba(25, 135, 84, 0.12);
         color: #198754;
     }
+    .scroll-helper {
+        position: fixed;
+        right: 12px;
+        bottom: 92px;
+        z-index: 1030;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .scroll-helper-btn {
+        width: 46px;
+        height: 46px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(13, 110, 253, 0.92);
+        color: #fff;
+        font-size: 1.15rem;
+        font-weight: 700;
+        box-shadow: 0 10px 20px rgba(13, 110, 253, 0.24);
+    }
+    .scroll-helper-btn:active {
+        transform: scale(0.96);
+    }
     @media (max-width: 576px) {
         .last-read-label {
             font-size: 0.64rem;
+        }
+        .scroll-helper {
+            right: 8px;
+            bottom: 86px;
+        }
+        .scroll-helper-btn {
+            width: 42px;
+            height: 42px;
         }
     }
 </style>
@@ -222,6 +253,11 @@
     </div>
 </div>
 
+<div class="scroll-helper">
+    <button type="button" class="scroll-helper-btn" id="scrollUpButton" aria-label="Geser ke atas">↑</button>
+    <button type="button" class="scroll-helper-btn" id="scrollDownButton" aria-label="Geser ke bawah">↓</button>
+</div>
+
 @include('quran.partials.doa-pagi')
 
 <div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
@@ -253,6 +289,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const activityModal = new bootstrap.Modal(modalElement);
     const jumpAyatInput = document.getElementById("jumpAyatInput");
     const jumpAyatButton = document.getElementById("jumpAyatButton");
+    const scrollUpButton = document.getElementById("scrollUpButton");
+    const scrollDownButton = document.getElementById("scrollDownButton");
     const suratInfo = {
         idsurat: {{ (int) $surat['nomor'] }},
         surat: {!! json_encode($surat['namaLatin'], JSON_UNESCAPED_UNICODE) !!},
@@ -446,6 +484,24 @@ document.addEventListener("DOMContentLoaded", function () {
         fontSize -= 0.2;
         arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
+
+    function scrollPage(direction) {
+        window.scrollBy({
+            top: window.innerHeight * 0.8 * direction,
+            behavior: "smooth"
+        });
+    }
+
+    scrollUpButton.addEventListener("click", () => scrollPage(-1));
+    scrollDownButton.addEventListener("click", () => scrollPage(1));
+    scrollUpButton.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        scrollPage(-1);
+    }, { passive: false });
+    scrollDownButton.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        scrollPage(1);
+    }, { passive: false });
 
     renderMarkers();
 
