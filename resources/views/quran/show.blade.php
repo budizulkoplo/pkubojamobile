@@ -271,6 +271,9 @@ document.addEventListener("DOMContentLoaded", function () {
     };
     const targetAyat = {{ (int) $targetAyat }};
     const targetType = {!! json_encode($targetType) !!};
+    const hashAyat = window.location.hash.startsWith("#ayat-")
+        ? parseInt(window.location.hash.replace("#ayat-", ""), 10)
+        : 0;
     const state = {
         senin: {{ $riwayatMap['senin'] ? (int) $riwayatMap['senin'] : 'null' }},
         rutin: {{ $riwayatMap['rutin'] ? (int) $riwayatMap['rutin'] : 'null' }}
@@ -315,6 +318,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return false;
         }
 
+        jumpAyatInput.value = ayat;
         targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
         targetCard.classList.add("focus-target");
         setTimeout(() => targetCard.classList.remove("focus-target"), 2200);
@@ -432,11 +436,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     renderMarkers();
 
-    if (targetAyat > 0) {
-        jumpAyatInput.value = targetAyat;
-        setTimeout(() => goToAyat(targetAyat), 250);
-    } else if (targetType && state[targetType]) {
-        setTimeout(() => goToAyat(state[targetType]), 250);
+    const ayatTujuan = hashAyat || targetAyat || (targetType && state[targetType] ? state[targetType] : 0);
+
+    if (ayatTujuan > 0) {
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                setTimeout(() => goToAyat(ayatTujuan), 350);
+            });
+        });
     }
 });
 </script>

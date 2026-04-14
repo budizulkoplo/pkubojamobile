@@ -95,7 +95,7 @@
                 @if($item)
                     @if($hasLink)
                     <a
-                        href="{{ route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) }}"
+                        href="{{ route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) }}#ayat-{{ $item['ayat'] }}"
                         class="history-link"
                     >
                     @else
