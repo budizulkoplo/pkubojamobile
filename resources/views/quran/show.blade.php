@@ -308,9 +308,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         jumpAyatInput.value = ayat;
-        const top = Math.max(targetCard.getBoundingClientRect().top + window.pageYOffset - 110, 0);
-        window.scrollTo({ top, behavior: "smooth" });
-        window.location.hash = `ayat-${ayat}`;
+        targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => {
+            window.scrollBy({ top: -110, behavior: "auto" });
+        }, 120);
+        history.replaceState(null, "", `#ayat-${ayat}`);
         targetCard.classList.add("focus-target");
         setTimeout(() => targetCard.classList.remove("focus-target"), 2200);
 
@@ -369,7 +371,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    jumpAyatButton.addEventListener("click", function() {
+    function handleJumpAyat(event) {
+        if (event) {
+            event.preventDefault();
+        }
+
         const ayat = parseInt(jumpAyatInput.value, 10);
 
         if (!ayat || ayat < 1 || ayat > suratInfo.jumlahAyat) {
@@ -378,12 +384,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         goToAyat(ayat);
-    });
+    }
+
+    jumpAyatButton.addEventListener("click", handleJumpAyat);
+    jumpAyatButton.addEventListener("touchend", handleJumpAyat, { passive: false });
 
     jumpAyatInput.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
-            jumpAyatButton.click();
+            handleJumpAyat(event);
         }
     });
 

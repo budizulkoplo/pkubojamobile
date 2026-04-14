@@ -91,13 +91,16 @@
         <div class="history-grid">
             @foreach(['rutin' => 'Ngaji Rutin', 'senin' => 'Senin Pagi'] as $type => $label)
                 @php($item = $riwayatTerakhir[$type] ?? null)
+                @php($detailHref = !empty($item['nomor_surat']) ? route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) . '#ayat-' . $item['ayat'] : null)
+                @php($fallbackHref = route('quran.history', ['type' => $type]))
+                @php($targetHref = $detailHref ?: $fallbackHref)
                 @php($hasLink = !empty($item))
 
                 @if($item)
                     @if($hasLink)
                     <a
-                        href="{{ route('quran.history', ['type' => $type]) }}"
-                        data-href="{{ route('quran.history', ['type' => $type]) }}"
+                        href="{{ $targetHref }}"
+                        data-href="{{ $targetHref }}"
                         class="history-link"
                     >
                     @else
