@@ -52,6 +52,28 @@
         border-radius: 14px;
         background: #f8f9fa;
     }
+    .history-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+    @media (max-width: 576px) {
+        .history-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .history-card .card-body,
+        .history-empty {
+            padding: 0.85rem;
+        }
+        .history-card strong {
+            display: inline-block;
+            line-height: 1.35;
+        }
+        .history-time {
+            display: block;
+            margin-top: 4px;
+        }
+    }
 </style>
 
 <div class="p-3" style="margin-top: 40px">
@@ -65,52 +87,51 @@
     <div class="mb-4">
         <h5 class="mb-3">Riwayat Bacaan Terakhir</h5>
 
-        @foreach(['rutin' => 'Ngaji Rutin', 'senin' => 'Senin Pagi'] as $type => $label)
-            @php($item = $riwayatTerakhir[$type] ?? null)
-            @php($hasLink = !empty($item['nomor_surat']))
+        <div class="history-grid">
+            @foreach(['rutin' => 'Ngaji Rutin', 'senin' => 'Senin Pagi'] as $type => $label)
+                @php($item = $riwayatTerakhir[$type] ?? null)
+                @php($hasLink = !empty($item['nomor_surat']))
 
-            @if($item)
-                @if($hasLink)
-                <a
-                    href="{{ route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) }}"
-                    class="history-link mb-3"
-                >
-                @else
-                <div class="history-link mb-3">
-                @endif
-                    <div class="card history-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                <div>
-                                    <span class="history-badge {{ $type }}">{{ $label }}</span>
-                                    <div class="mt-2">
-                                        <strong>{{ $item['surat'] }}</strong> ayat {{ $item['ayat'] }}
-                                    </div>
-                                    <small class="text-muted">
-                                        Terakhir dibaca {{ \Carbon\Carbon::parse($item['created_at'])->translatedFormat('d M Y H:i') }}
-                                    </small>
-                                    @if(!$hasLink)
-                                        <div class="small text-danger mt-1">Surat lama belum bisa dibuka otomatis. Silakan pilih surat manual sekali lagi.</div>
-                                    @endif
+                @if($item)
+                    @if($hasLink)
+                    <a
+                        href="{{ route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) }}"
+                        class="history-link"
+                    >
+                    @else
+                    <div class="history-link">
+                    @endif
+                        <div class="card history-card h-100">
+                            <div class="card-body">
+                                <span class="history-badge {{ $type }}">{{ $label }}</span>
+                                <div class="mt-2">
+                                    <strong>{{ $item['surat'] }}</strong>
+                                    <div>Ayat {{ $item['ayat'] }}</div>
                                 </div>
-                                <div class="arab-title">
-                                    {{ $item['nama_arab'] }}
-                                </div>
+                                @if(!empty($item['nama_arab']))
+                                    <div class="arab-title mt-2">{{ $item['nama_arab'] }}</div>
+                                @endif
+                                <small class="text-muted history-time">
+                                    {{ \Carbon\Carbon::parse($item['created_at'])->translatedFormat('d M Y H:i') }}
+                                </small>
+                                @if(!$hasLink)
+                                    <div class="small text-danger mt-1">Link otomatis belum tersedia untuk data lama.</div>
+                                @endif
                             </div>
                         </div>
+                    @if($hasLink)
+                    </a>
+                    @else
                     </div>
-                @if($hasLink)
-                </a>
+                    @endif
                 @else
-                </div>
+                    <div class="history-empty p-3">
+                        <span class="history-badge {{ $type }}">{{ $label }}</span>
+                        <div class="mt-2 text-muted">Belum ada riwayat.</div>
+                    </div>
                 @endif
-            @else
-                <div class="history-empty p-3 mb-3">
-                    <span class="history-badge {{ $type }}">{{ $label }}</span>
-                    <div class="mt-2 text-muted">Belum ada riwayat bacaan tersimpan.</div>
-                </div>
-            @endif
-        @endforeach
+            @endforeach
+        </div>
     </div>
 
     <div class="list-group" id="suratList">

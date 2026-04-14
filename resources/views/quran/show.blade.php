@@ -154,9 +154,11 @@
 </style>
 
 @php
+    $riwayatSenin = $riwayat['senin'] ?? null;
+    $riwayatRutin = $riwayat['rutin'] ?? null;
     $riwayatMap = [
-        'senin' => $riwayat['senin']['ayat'] ?? null,
-        'rutin' => $riwayat['rutin']['ayat'] ?? null,
+        'senin' => $riwayatSenin['ayat'] ?? null,
+        'rutin' => $riwayatRutin['ayat'] ?? null,
     ];
 @endphp
 
@@ -184,11 +186,11 @@
                 <div class="d-flex flex-wrap gap-2">
                     <span class="history-pill senin">
                         Senin Pagi:
-                        {{ $riwayat['senin']['ayat'] ? 'ayat ' . $riwayat['senin']['ayat'] : 'belum ada' }}
+                        {{ !empty($riwayatSenin['ayat']) ? 'ayat ' . $riwayatSenin['ayat'] : 'belum ada' }}
                     </span>
                     <span class="history-pill rutin">
                         Ngaji Rutin:
-                        {{ $riwayat['rutin']['ayat'] ? 'ayat ' . $riwayat['rutin']['ayat'] : 'belum ada' }}
+                        {{ !empty($riwayatRutin['ayat']) ? 'ayat ' . $riwayatRutin['ayat'] : 'belum ada' }}
                     </span>
                 </div>
             </div>
