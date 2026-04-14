@@ -37,8 +37,19 @@ class QuranController extends Controller
             }
 
             $suratInfo = collect($surat)->first(function ($item) use ($row) {
-                return (int) ($item['nomor'] ?? 0) === (int) ($row->idsurat ?? 0);
+                $nomorSurat = (int) ($item['nomor'] ?? 0);
+                $idsurat = (int) ($row->idsurat ?? 0);
+                $namaLatin = mb_strtolower(trim((string) ($item['namaLatin'] ?? '')));
+                $namaRow = mb_strtolower(trim((string) ($row->surat ?? '')));
+
+                if ($idsurat > 0 && $nomorSurat === $idsurat) {
+                    return true;
+                }
+
+                return $namaLatin !== '' && $namaLatin === $namaRow;
             });
+
+            $nomorSurat = (int) ($suratInfo['nomor'] ?? ($row->idsurat ?? 0));
 
             return [$type => [
                 'type' => $type,
@@ -46,7 +57,7 @@ class QuranController extends Controller
                 'surat' => $row->surat ?: ($suratInfo['namaLatin'] ?? '-'),
                 'ayat' => (int) $row->ayat,
                 'created_at' => $row->created_at,
-                'nomor_surat' => $suratInfo['nomor'] ?? $row->idsurat,
+                'nomor_surat' => $nomorSurat > 0 ? $nomorSurat : null,
                 'nama_arab' => $suratInfo['nama'] ?? null,
                 'jumlah_ayat' => $suratInfo['jumlahAyat'] ?? null,
             ]];

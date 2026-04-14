@@ -67,12 +67,17 @@
 
         @foreach(['rutin' => 'Ngaji Rutin', 'senin' => 'Senin Pagi'] as $type => $label)
             @php($item = $riwayatTerakhir[$type] ?? null)
+            @php($hasLink = !empty($item['nomor_surat']))
 
             @if($item)
+                @if($hasLink)
                 <a
                     href="{{ route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) }}"
                     class="history-link mb-3"
                 >
+                @else
+                <div class="history-link mb-3">
+                @endif
                     <div class="card history-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start gap-2">
@@ -84,6 +89,9 @@
                                     <small class="text-muted">
                                         Terakhir dibaca {{ \Carbon\Carbon::parse($item['created_at'])->translatedFormat('d M Y H:i') }}
                                     </small>
+                                    @if(!$hasLink)
+                                        <div class="small text-danger mt-1">Surat lama belum bisa dibuka otomatis. Silakan pilih surat manual sekali lagi.</div>
+                                    @endif
                                 </div>
                                 <div class="arab-title">
                                     {{ $item['nama_arab'] }}
@@ -91,7 +99,11 @@
                             </div>
                         </div>
                     </div>
+                @if($hasLink)
                 </a>
+                @else
+                </div>
+                @endif
             @else
                 <div class="history-empty p-3 mb-3">
                     <span class="history-badge {{ $type }}">{{ $label }}</span>
