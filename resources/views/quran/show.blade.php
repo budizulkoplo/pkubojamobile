@@ -114,41 +114,9 @@
         background: rgba(25, 135, 84, 0.12);
         color: #198754;
     }
-    .scroll-helper {
-        position: fixed;
-        right: 10px;
-        bottom: 90px;
-        z-index: 1030;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .scroll-helper-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .scroll-helper button {
-        width: 42px;
-        height: 42px;
-        border: 0;
-        border-radius: 50%;
-        background: rgba(13, 110, 253, 0.92);
-        color: #fff;
-        box-shadow: 0 8px 16px rgba(13, 110, 253, 0.22);
-    }
-    .scroll-helper input[type="range"] {
-        writing-mode: vertical-lr;
-        direction: rtl;
-        width: 26px;
-        height: 130px;
-    }
     @media (max-width: 576px) {
         .last-read-label {
             font-size: 0.64rem;
-        }
-        .scroll-helper {
-            right: 6px;
         }
     }
 </style>
@@ -174,8 +142,7 @@
         <div class="card-body">
             <div class="d-flex flex-column gap-3">
                 <div>
-                    <strong>Jalan pintas ayat</strong>
-                    <div class="text-muted small">Masukkan nomor ayat lalu langsung lompat tanpa scroll manual.</div>
+                    <div class="text-muted small">Masukkan nomor ayat.</div>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -240,8 +207,8 @@
                 Browser anda tidak mendukung pemutar audio.
             </audio>
 
-            <span class="last-read-label senin d-none">Terakhir Dibaca - Senin Pagi</span>
-            <span class="last-read-label rutin d-none">Terakhir Dibaca - Ngaji Rutin</span>
+            <span class="last-read-label senin d-none">Senin Pagi</span>
+            <span class="last-read-label rutin d-none">Ngaji Rutin</span>
         </div>
     </div>
     @endforeach
@@ -264,14 +231,6 @@
 
     <div class="text-center mt-4">
         <a href="/quran" class="btn btn-dark">Kembali ke Daftar Surat</a>
-    </div>
-</div>
-
-<div class="scroll-helper">
-    <input type="range" id="pageScroller" min="0" max="100" value="0" aria-label="Geser scroll halaman">
-    <div class="scroll-helper-buttons">
-        <button type="button" id="scrollTopBtn" aria-label="Ke atas">↑</button>
-        <button type="button" id="scrollDownBtn" aria-label="Geser ke bawah">↓</button>
     </div>
 </div>
 
@@ -303,7 +262,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const arabTexts = document.querySelectorAll(".arab-text");
     const audios = document.querySelectorAll(".ayat-audio");
     const activityModal = new bootstrap.Modal(document.getElementById("activityModal"));
-    const pageScroller = document.getElementById("pageScroller");
     const jumpAyatInput = document.getElementById("jumpAyatInput");
     const jumpAyatButton = document.getElementById("jumpAyatButton");
     const suratInfo = {
@@ -472,30 +430,7 @@ document.addEventListener("DOMContentLoaded", function () {
         arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
 
-    document.getElementById("scrollTopBtn").addEventListener("click", function() {
-        window.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
-    });
-
-    document.getElementById("scrollDownBtn").addEventListener("click", function() {
-        window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
-    });
-
-    function syncScrollerFromPage() {
-        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-        const progress = Math.min((window.scrollY / maxScroll) * 100, 100);
-        pageScroller.value = progress;
-    }
-
-    pageScroller.addEventListener("input", function() {
-        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-        const top = (parseInt(this.value, 10) / 100) * maxScroll;
-        window.scrollTo({ top, behavior: "auto" });
-    });
-
-    window.addEventListener("scroll", syncScrollerFromPage, { passive: true });
-
     renderMarkers();
-    syncScrollerFromPage();
 
     if (targetAyat > 0) {
         jumpAyatInput.value = targetAyat;
