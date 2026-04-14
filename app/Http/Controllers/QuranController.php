@@ -10,12 +10,9 @@ use Illuminate\Support\Facades\Http;
 
 class QuranController extends Controller
 {
-    // Halaman list semua surat
-    public function index()
+    protected function getDaftarSurat()
     {
-        $user = Auth::guard('karyawan')->user();
-
-        $surat = Cache::rememberForever('daftar_surat_quran', function () {
+        return Cache::rememberForever('daftar_surat_quran', function () {
             $response = Http::get('https://equran.id/api/v2/surat');
 
             if ($response->failed()) {
@@ -24,6 +21,29 @@ class QuranController extends Controller
 
             return $response->json('data');
         });
+    }
+
+    protected function findSuratInfo($surat, $row)
+    {
+        return collect($surat)->first(function ($item) use ($row) {
+            $nomorSurat = (int) ($item['nomor'] ?? 0);
+            $idsurat = (int) ($row->idsurat ?? 0);
+            $namaLatin = mb_strtolower(trim((string) ($item['namaLatin'] ?? '')));
+            $namaRow = mb_strtolower(trim((string) ($row->surat ?? '')));
+
+            if ($idsurat > 0 && $nomorSurat === $idsurat) {
+                return true;
+            }
+
+            return $namaLatin !== '' && $namaLatin === $namaRow;
+        });
+    }
+
+    // Halaman list semua surat
+    public function index()
+    {
+        $user = Auth::guard('karyawan')->user();
+        $surat = $this->getDaftarSurat();
 
         $riwayatTerakhir = collect(['rutin', 'senin'])->mapWithKeys(function ($type) use ($user, $surat) {
             $row = DB::table('ngaji')
@@ -36,18 +56,7 @@ class QuranController extends Controller
                 return [$type => null];
             }
 
-            $suratInfo = collect($surat)->first(function ($item) use ($row) {
-                $nomorSurat = (int) ($item['nomor'] ?? 0);
-                $idsurat = (int) ($row->idsurat ?? 0);
-                $namaLatin = mb_strtolower(trim((string) ($item['namaLatin'] ?? '')));
-                $namaRow = mb_strtolower(trim((string) ($row->surat ?? '')));
-
-                if ($idsurat > 0 && $nomorSurat === $idsurat) {
-                    return true;
-                }
-
-                return $namaLatin !== '' && $namaLatin === $namaRow;
-            });
+            $suratInfo = $this->findSuratInfo($surat, $row);
 
             $nomorSurat = (int) ($suratInfo['nomor'] ?? ($row->idsurat ?? 0));
 
@@ -64,6 +73,42 @@ class QuranController extends Controller
         });
 
         return view('quran.index', compact('surat', 'riwayatTerakhir'));
+    }
+
+    public function openHistory($type)
+    {
+        abort_unless(in_array($type, ['senin', 'rutin'], true), 404);
+
+        $user = Auth::guard('karyawan')->user();
+        $surat = $this->getDaftarSurat();
+
+        $row = DB::table('ngaji')
+            ->where('nik', $user->nik)
+            ->where('type', $type)
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (!$row) {
+            return redirect()
+                ->route('quran.index')
+                ->with('warning', 'Riwayat bacaan belum tersedia.');
+        }
+
+        $suratInfo = $this->findSuratInfo($surat, $row);
+        $nomorSurat = (int) ($suratInfo['nomor'] ?? ($row->idsurat ?? 0));
+        $ayat = max((int) ($row->ayat ?? 0), 1);
+
+        if ($nomorSurat <= 0) {
+            return redirect()
+                ->route('quran.index')
+                ->with('warning', 'Riwayat ditemukan, tetapi suratnya belum bisa dipetakan otomatis.');
+        }
+
+        return redirect()->to(route('quran.show', [
+            'nomor' => $nomorSurat,
+            'ayat' => $ayat,
+            'type' => $type,
+        ]) . '#ayat-' . $ayat);
     }
 
     // Halaman detail 1 surat

@@ -146,6 +146,7 @@ Route::middleware(['auth:karyawan'])->group(function () {
     Route::post('/losabsen', [LosAbsenController::class, 'store'])->name('losabsen.store');
 
     Route::get('/quran', [QuranController::class, 'index'])->name('quran.index');
+    Route::get('/quran/riwayat/{type}', [QuranController::class, 'openHistory'])->name('quran.history');
     Route::get('/quran/{nomor}', [QuranController::class, 'show'])->name('quran.show');
     Route::post('/quran/mark-rutin', [QuranController::class, 'markRutin'])
      ->name('quran.markRutin');

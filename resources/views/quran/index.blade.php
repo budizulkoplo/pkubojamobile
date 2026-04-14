@@ -90,12 +90,12 @@
         <div class="history-grid">
             @foreach(['rutin' => 'Ngaji Rutin', 'senin' => 'Senin Pagi'] as $type => $label)
                 @php($item = $riwayatTerakhir[$type] ?? null)
-                @php($hasLink = !empty($item['nomor_surat']))
+                @php($hasLink = !empty($item))
 
                 @if($item)
                     @if($hasLink)
                     <a
-                        href="{{ route('quran.show', ['nomor' => $item['nomor_surat'], 'ayat' => $item['ayat'], 'type' => $type]) }}#ayat-{{ $item['ayat'] }}"
+                        href="{{ route('quran.history', ['type' => $type]) }}"
                         class="history-link"
                     >
                     @else
@@ -114,9 +114,6 @@
                                 <small class="text-muted history-time">
                                     {{ \Carbon\Carbon::parse($item['created_at'])->translatedFormat('d M Y H:i') }}
                                 </small>
-                                @if(!$hasLink)
-                                    <div class="small text-danger mt-1">Link otomatis belum tersedia untuk data lama.</div>
-                                @endif
                             </div>
                         </div>
                     @if($hasLink)
