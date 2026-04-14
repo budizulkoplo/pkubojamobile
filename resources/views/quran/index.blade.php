@@ -32,6 +32,7 @@
         text-decoration: none;
         color: inherit;
         display: block;
+        cursor: pointer;
     }
     .history-badge {
         font-size: 0.75rem;
@@ -96,6 +97,7 @@
                     @if($hasLink)
                     <a
                         href="{{ route('quran.history', ['type' => $type]) }}"
+                        data-href="{{ route('quran.history', ['type' => $type]) }}"
                         class="history-link"
                     >
                     @else
@@ -155,6 +157,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const input = document.getElementById("searchSurat");
     const items = document.querySelectorAll(".surat-item");
+    const historyLinks = document.querySelectorAll(".history-link[data-href]");
 
     input.addEventListener("keyup", function () {
         const filter = input.value.toLowerCase();
@@ -166,6 +169,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 item.style.display = "none";
             }
         });
+    });
+
+    historyLinks.forEach(link => {
+        const go = function(event) {
+            event.preventDefault();
+            const target = this.dataset.href;
+            if (target) {
+                window.location.assign(target);
+            }
+        };
+
+        link.addEventListener("click", go);
+        link.addEventListener("touchend", go, { passive: false });
     });
 });
 </script>

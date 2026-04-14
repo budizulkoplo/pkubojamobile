@@ -144,21 +144,9 @@
                 <div>
                     <div class="text-muted small">Masukkan nomor ayat.</div>
                 </div>
-
                 <div class="d-flex gap-2">
                     <input type="number" min="1" max="{{ $surat['jumlahAyat'] }}" id="jumpAyatInput" class="form-control" placeholder="Contoh: 18">
-                    <button type="button" id="jumpAyatButton" class="btn btn-primary">Tuju Ayat</button>
-                </div>
-
-                <div class="d-flex flex-wrap gap-2">
-                    <span class="history-pill senin">
-                        Senin Pagi:
-                        {{ !empty($riwayatSenin['ayat']) ? 'ayat ' . $riwayatSenin['ayat'] : 'belum ada' }}
-                    </span>
-                    <span class="history-pill rutin">
-                        Ngaji Rutin:
-                        {{ !empty($riwayatRutin['ayat']) ? 'ayat ' . $riwayatRutin['ayat'] : 'belum ada' }}
-                    </span>
+                    <button type="button" id="jumpAyatButton" class="btn btn-primary">Buka</button>
                 </div>
             </div>
         </div>
@@ -257,11 +245,12 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const modalElement = document.getElementById("activityModal");
     const radios = document.querySelectorAll('input[name="mode"]');
     const cards = document.querySelectorAll(".ayat-card");
     const arabTexts = document.querySelectorAll(".arab-text");
     const audios = document.querySelectorAll(".ayat-audio");
-    const activityModal = new bootstrap.Modal(document.getElementById("activityModal"));
+    const activityModal = new bootstrap.Modal(modalElement);
     const jumpAyatInput = document.getElementById("jumpAyatInput");
     const jumpAyatButton = document.getElementById("jumpAyatButton");
     const suratInfo = {
@@ -319,7 +308,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         jumpAyatInput.value = ayat;
-        targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        const top = Math.max(targetCard.getBoundingClientRect().top + window.pageYOffset - 110, 0);
+        window.scrollTo({ top, behavior: "smooth" });
+        window.location.hash = `ayat-${ayat}`;
         targetCard.classList.add("focus-target");
         setTimeout(() => targetCard.classList.remove("focus-target"), 2200);
 
@@ -363,6 +354,19 @@ document.addEventListener("DOMContentLoaded", function () {
             activityModal.hide();
             saveMarker(currentAyat, activityType);
         });
+    });
+
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+        button.addEventListener("click", function(event) {
+            event.preventDefault();
+            activityModal.hide();
+        });
+    });
+
+    modalElement.addEventListener("click", function(event) {
+        if (event.target === modalElement) {
+            activityModal.hide();
+        }
     });
 
     jumpAyatButton.addEventListener("click", function() {
@@ -438,12 +442,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const ayatTujuan = hashAyat || targetAyat || (targetType && state[targetType] ? state[targetType] : 0);
 
+    function ensureGoToAyat(ayat, attemptsLeft = 5) {
+        if (!ayat || attemptsLeft < 1) {
+            return;
+        }
+
+        const ok = goToAyat(ayat);
+        if (!ok) {
+            setTimeout(() => ensureGoToAyat(ayat, attemptsLeft - 1), 400);
+        }
+    }
+
     if (ayatTujuan > 0) {
-        window.requestAnimationFrame(() => {
-            window.requestAnimationFrame(() => {
-                setTimeout(() => goToAyat(ayatTujuan), 350);
-            });
-        });
+        setTimeout(() => ensureGoToAyat(ayatTujuan, 6), 300);
+        window.addEventListener("load", () => setTimeout(() => ensureGoToAyat(ayatTujuan, 6), 500), { once: true });
+        window.addEventListener("pageshow", () => setTimeout(() => ensureGoToAyat(ayatTujuan, 6), 500), { once: true });
     }
 });
 </script>
