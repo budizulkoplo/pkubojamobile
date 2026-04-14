@@ -13,6 +13,8 @@ class QuranController extends Controller
     // Halaman list semua surat
     public function index()
     {
+        $user = Auth::guard('karyawan')->user();
+
         $surat = Cache::rememberForever('daftar_surat_quran', function () {
             $response = Http::get('https://equran.id/api/v2/surat');
 
@@ -23,7 +25,34 @@ class QuranController extends Controller
             return $response->json('data');
         });
 
-        return view('quran.index', compact('surat'));
+        $riwayatTerakhir = collect(['rutin', 'senin'])->mapWithKeys(function ($type) use ($user, $surat) {
+            $row = DB::table('ngaji')
+                ->where('nik', $user->nik)
+                ->where('type', $type)
+                ->orderByDesc('created_at')
+                ->first();
+
+            if (!$row) {
+                return [$type => null];
+            }
+
+            $suratInfo = collect($surat)->first(function ($item) use ($row) {
+                return (int) ($item['nomor'] ?? 0) === (int) ($row->idsurat ?? 0);
+            });
+
+            return [$type => [
+                'type' => $type,
+                'idsurat' => (int) ($row->idsurat ?? 0),
+                'surat' => $row->surat ?: ($suratInfo['namaLatin'] ?? '-'),
+                'ayat' => (int) $row->ayat,
+                'created_at' => $row->created_at,
+                'nomor_surat' => $suratInfo['nomor'] ?? $row->idsurat,
+                'nama_arab' => $suratInfo['nama'] ?? null,
+                'jumlah_ayat' => $suratInfo['jumlahAyat'] ?? null,
+            ]];
+        });
+
+        return view('quran.index', compact('surat', 'riwayatTerakhir'));
     }
 
     // Halaman detail 1 surat
@@ -49,31 +78,50 @@ class QuranController extends Controller
         // Ambil riwayat baca dari DB (nggak usah di-cache, karena ini data per user)
         $riwayat = DB::table('ngaji')
             ->where('nik', $user->nik)
-            ->where('surat', $surat['namaLatin'])
+            ->where('idsurat', $nomor)
+            ->orderByDesc('created_at')
             ->get()
-            ->map(function ($row) {
+            ->groupBy('type')
+            ->map(function ($rows, $type) {
+                $row = $rows->first();
+
                 return [
-                    'ayat'  => $row->ayat,
-                    'senin' => $row->type === 'senin',
-                    'rutin' => $row->type === 'rutin',
+                    'ayat' => (int) $row->ayat,
+                    'type' => $type,
+                    'created_at' => $row->created_at,
                 ];
             });
 
-        return view('quran.show', compact('surat', 'riwayat'));
+        $targetAyat = (int) request()->query('ayat', 0);
+        $targetType = request()->query('type');
+
+        return view('quran.show', compact('surat', 'riwayat', 'targetAyat', 'targetType'));
     }
 
     public function markRutin(Request $request)
     {
         $user = Auth::guard('karyawan')->user();
 
+        $validated = $request->validate([
+            'idsurat' => ['required', 'integer'],
+            'surat' => ['required', 'string', 'max:100'],
+            'ayat' => ['required', 'integer', 'min:1'],
+            'type' => ['required', 'in:senin,rutin'],
+        ]);
+
         DB::table('ngaji')->insert([
             'nik'          => $user->nik,
             'pegawai_nama' => $user->nama_lengkap,
-            'surat'        => $request->surat,
-            'ayat'         => $request->ayat,
+            'idsurat'      => $validated['idsurat'],
+            'surat'        => $validated['surat'],
+            'ayat'         => $validated['ayat'],
+            'type'         => $validated['type'],
             'created_at'   => now(),
         ]);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Penanda bacaan berhasil disimpan.',
+        ]);
     }
 }

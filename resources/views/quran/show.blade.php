@@ -27,86 +27,140 @@
         border-radius: 12px;
         position: relative;
         transition: all 0.3s ease;
+        scroll-margin-top: 88px;
     }
     .ayat-card.marked-senin {
         border: 2px solid #fd7e14;
-        box-shadow: 0 0 10px rgba(253, 126, 20, 0.4);
+        box-shadow: 0 0 10px rgba(253, 126, 20, 0.35);
     }
     .ayat-card.marked-rutin {
         border: 2px solid #198754;
-        box-shadow: 0 0 10px rgba(25, 135, 84, 0.4);
+        box-shadow: 0 0 10px rgba(25, 135, 84, 0.35);
+    }
+    .ayat-card.focus-target {
+        animation: pulseFocus 1.5s ease 2;
+    }
+    @keyframes pulseFocus {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+        100% { transform: scale(1); }
     }
     .last-read-label {
         position: absolute;
-        font-size: 0.7rem;
-        font-weight: bold;
-        padding: 2px 8px;
-        border-radius: 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
         white-space: nowrap;
-        z-index: 10;
+        z-index: 5;
     }
     .last-read-label.senin {
-        top: -10px;
-        left: 10px;
+        top: -12px;
+        left: 12px;
         color: #fff;
         background: #fd7e14;
     }
     .last-read-label.rutin {
-        top: -10px;
-        right: 10px;
+        top: -12px;
+        right: 12px;
         color: #fff;
         background: #198754;
-    }
-    .modal-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
     }
     .choice-btn {
         padding: 12px;
         margin: 10px 0;
-        border-radius: 8px;
+        border-radius: 10px;
         text-align: center;
         cursor: pointer;
         transition: all 0.2s;
         border: 2px solid transparent;
+        font-weight: 700;
     }
     .choice-btn.senin {
-        background-color: rgba(253, 126, 20, 0.1);
+        background-color: rgba(253, 126, 20, 0.12);
         color: #fd7e14;
     }
     .choice-btn.rutin {
-        background-color: rgba(25, 135, 84, 0.1);
+        background-color: rgba(25, 135, 84, 0.12);
         color: #198754;
     }
     .choice-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
-    .choice-btn.active {
-        border-color: currentColor;
-        font-weight: bold;
+    .form-check {
+        margin: 0 10px;
     }
-    .form-check { margin: 0 10px; }
-    .close-modal {
-        position: absolute;
-        top: 10px;
+    .shortcut-card {
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f8fafc, #eef6ff);
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+    .history-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.45rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .history-pill.senin {
+        background: rgba(253, 126, 20, 0.12);
+        color: #fd7e14;
+    }
+    .history-pill.rutin {
+        background: rgba(25, 135, 84, 0.12);
+        color: #198754;
+    }
+    .scroll-helper {
+        position: fixed;
         right: 10px;
-        font-size: 1.5rem;
-        cursor: pointer;
-        z-index: 1055;
+        bottom: 90px;
+        z-index: 1030;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    /* Perbaikan tampilan modal untuk Bootstrap */
-    .modal-backdrop {
-        z-index: 1040;
+    .scroll-helper-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
-    .modal {
-        z-index: 1050;
+    .scroll-helper button {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(13, 110, 253, 0.92);
+        color: #fff;
+        box-shadow: 0 8px 16px rgba(13, 110, 253, 0.22);
+    }
+    .scroll-helper input[type="range"] {
+        writing-mode: vertical-lr;
+        direction: rtl;
+        width: 26px;
+        height: 130px;
+    }
+    @media (max-width: 576px) {
+        .last-read-label {
+            font-size: 0.64rem;
+        }
+        .scroll-helper {
+            right: 6px;
+        }
     }
 </style>
 
-<div class="p-3" style="margin-top: 40px">
+@php
+    $riwayatMap = [
+        'senin' => $riwayat['senin']['ayat'] ?? null,
+        'rutin' => $riwayat['rutin']['ayat'] ?? null,
+    ];
+@endphp
 
-    {{-- Header Surat --}}
+<div class="p-3" style="margin-top: 40px">
     <div class="text-center mb-4">
         <h1 class="mb-0">{{ $surat['namaLatin'] }} <small class="text-muted">({{ $surat['arti'] }})</small></h1>
         <h2 class="mt-2" style="font-family: 'Scheherazade New', serif;">{{ $surat['nama'] }}</h2>
@@ -114,7 +168,33 @@
         <p><strong>Tempat Turun:</strong> {{ $surat['tempatTurun'] }}</p>
     </div>
 
-    {{-- Kontrol tampilan --}}
+    <div class="card shortcut-card mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-column gap-3">
+                <div>
+                    <strong>Jalan pintas ayat</strong>
+                    <div class="text-muted small">Masukkan nomor ayat lalu langsung lompat tanpa scroll manual.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <input type="number" min="1" max="{{ $surat['jumlahAyat'] }}" id="jumpAyatInput" class="form-control" placeholder="Contoh: 18">
+                    <button type="button" id="jumpAyatButton" class="btn btn-primary">Tuju Ayat</button>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="history-pill senin">
+                        Senin Pagi:
+                        {{ $riwayat['senin']['ayat'] ? 'ayat ' . $riwayat['senin']['ayat'] : 'belum ada' }}
+                    </span>
+                    <span class="history-pill rutin">
+                        Ngaji Rutin:
+                        {{ $riwayat['rutin']['ayat'] ? 'ayat ' . $riwayat['rutin']['ayat'] : 'belum ada' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="d-flex justify-content-center mb-4">
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="mode" id="modeFull" value="full" checked>
@@ -130,16 +210,15 @@
         </div>
     </div>
 
-    {{-- Kontrol ukuran font --}}
     <div class="text-center mb-4">
         <button id="fontIncrease" class="btn btn-outline-primary btn-sm me-2">Perbesar+</button>
         <button id="fontDecrease" class="btn btn-outline-primary btn-sm">Perkecil-</button>
     </div>
 
-    {{-- Daftar Ayat --}}
     @foreach($surat['ayat'] as $a)
-    <div class="card mb-3 shadow-sm ayat-card" 
-         data-ayat="{{ $a['nomorAyat'] }}" 
+    <div class="card mb-3 shadow-sm ayat-card"
+         id="ayat-{{ $a['nomorAyat'] }}"
+         data-ayat="{{ $a['nomorAyat'] }}"
          onclick="handleAyatClick({{ $a['nomorAyat'] }})">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -154,24 +233,21 @@
                 <p>{{ $a['teksIndonesia'] }}</p>
             </div>
 
-            {{-- Audio per ayat --}}
-            <audio controls preload="none" class="ayat-audio w-100" data-ayat="{{ $a['nomorAyat'] }}">
+            <audio controls preload="none" class="ayat-audio w-100" data-ayat="{{ $a['nomorAyat'] }}" onclick="event.stopPropagation()">
                 <source src="{{ $a['audio']['05'] }}" type="audio/mpeg">
                 Browser anda tidak mendukung pemutar audio.
             </audio>
-            
-            {{-- Label untuk kedua jenis aktivitas --}}
-            <span class="last-read-label senin d-none">Senin Pagi</span>
-            <span class="last-read-label rutin d-none">Ngaji Rutin</span>
+
+            <span class="last-read-label senin d-none">Terakhir Dibaca - Senin Pagi</span>
+            <span class="last-read-label rutin d-none">Terakhir Dibaca - Ngaji Rutin</span>
         </div>
     </div>
     @endforeach
 
-    {{-- Navigasi Surat --}}
     <div class="d-flex justify-content-between mt-4">
         @if($surat['suratSebelumnya'])
             <a href="{{ route('quran.show', $surat['suratSebelumnya']['nomor']) }}" class="btn btn-outline-secondary">
-                ← {{ $surat['suratSebelumnya']['namaLatin'] }}
+                &larr; {{ $surat['suratSebelumnya']['namaLatin'] }}
             </a>
         @else
             <div></div>
@@ -179,7 +255,7 @@
 
         @if($surat['suratSelanjutnya'])
             <a href="{{ route('quran.show', $surat['suratSelanjutnya']['nomor']) }}" class="btn btn-outline-primary">
-                {{ $surat['suratSelanjutnya']['namaLatin'] }} →
+                {{ $surat['suratSelanjutnya']['namaLatin'] }} &rarr;
             </a>
         @endif
     </div>
@@ -189,24 +265,27 @@
     </div>
 </div>
 
+<div class="scroll-helper">
+    <input type="range" id="pageScroller" min="0" max="100" value="0" aria-label="Geser scroll halaman">
+    <div class="scroll-helper-buttons">
+        <button type="button" id="scrollTopBtn" aria-label="Ke atas">↑</button>
+        <button type="button" id="scrollDownBtn" aria-label="Geser ke bawah">↓</button>
+    </div>
+</div>
+
 @include('quran.partials.doa-pagi')
 
-{{-- Modal Pilihan Aktivitas --}}
 <div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header position-relative">
+            <div class="modal-header">
                 <h5 class="modal-title">Pilih Jenis Aktivitas</h5>
-                <span class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <p>Pilih jenis aktivitas membaca:</p>
-                <div class="choice-btn senin" data-type="senin">
-                    Senin Pagi
-                </div>
-                <div class="choice-btn rutin" data-type="rutin">
-                    Ngaji Rutin
-                </div>
+                <p>Pilih penanda untuk ayat yang baru dibaca.</p>
+                <div class="choice-btn senin" data-type="senin">Senin Pagi</div>
+                <div class="choice-btn rutin" data-type="rutin">Ngaji Rutin</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Batal</button>
@@ -215,135 +294,75 @@
     </div>
 </div>
 
-{{-- Script --}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const radios = document.querySelectorAll('input[name="mode"]');
     const cards = document.querySelectorAll(".ayat-card");
     const arabTexts = document.querySelectorAll(".arab-text");
     const audios = document.querySelectorAll(".ayat-audio");
-    const storageKey = "lastRead-{{ $surat['nomor'] }}";
-    const activityModal = new bootstrap.Modal(document.getElementById('activityModal'));
-    let currentAyat = null;
+    const activityModal = new bootstrap.Modal(document.getElementById("activityModal"));
+    const pageScroller = document.getElementById("pageScroller");
+    const jumpAyatInput = document.getElementById("jumpAyatInput");
+    const jumpAyatButton = document.getElementById("jumpAyatButton");
+    const suratInfo = {
+        idsurat: {{ (int) $surat['nomor'] }},
+        surat: {!! json_encode($surat['namaLatin'], JSON_UNESCAPED_UNICODE) !!},
+        jumlahAyat: {{ (int) $surat['jumlahAyat'] }}
+    };
+    const targetAyat = {{ (int) $targetAyat }};
+    const targetType = {!! json_encode($targetType) !!};
+    const state = {
+        senin: {{ $riwayatMap['senin'] ? (int) $riwayatMap['senin'] : 'null' }},
+        rutin: {{ $riwayatMap['rutin'] ? (int) $riwayatMap['rutin'] : 'null' }}
+    };
 
-    // =========================
-    // HANDLE KLIK AYAT
-    // =========================
+    let currentAyat = null;
+    let fontSize = 1.6;
+
     window.handleAyatClick = function(no) {
         currentAyat = no;
         activityModal.show();
-
-        // Reset highlight pilihan sebelumnya
-        document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('active'));
     };
 
-    // =========================
-    // PILIH AKTIVITAS
-    // =========================
-    document.querySelectorAll('.choice-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const activityType = this.dataset.type;
-            activityModal.hide();
-            markAyat(currentAyat, activityType);
+    function getCard(ayat) {
+        return document.querySelector(`.ayat-card[data-ayat='${ayat}']`);
+    }
+
+    function renderMarkers() {
+        cards.forEach(card => {
+            card.classList.remove("marked-senin", "marked-rutin");
+            card.querySelector(".last-read-label.senin").classList.add("d-none");
+            card.querySelector(".last-read-label.rutin").classList.add("d-none");
         });
-    });
 
-    // =========================
-    // BATAL MODAL
-    // =========================
-    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(btn => {
-        btn.addEventListener('click', () => activityModal.hide());
-    });
+        ["senin", "rutin"].forEach(type => {
+            const ayat = state[type];
+            const card = getCard(ayat);
 
-    // =========================
-    // MARK AYAT
-    // =========================
-    function markAyat(no, activityType) {
-        const card = document.querySelector(`.ayat-card[data-ayat='${no}']`);
-        if(!card) return;
-
-        const seninLabel = card.querySelector(".last-read-label.senin");
-        const rutinLabel = card.querySelector(".last-read-label.rutin");
-
-        if(activityType === "senin") {
-            toggleMark(card, seninLabel, "marked-senin");
-        } 
-        else if(activityType === "rutin") {
-            const isMarked = card.classList.contains("marked-rutin");
-            toggleMark(card, rutinLabel, "marked-rutin");
-
-            // Hanya kirim ke server kalau baru ditandai rutin
-            if(!isMarked) {
-                saveRutinToServer(no);
+            if (!card) {
+                return;
             }
-        }
 
-        // Simpan offline di localStorage
-        saveToLocalStorage(no, activityType);
+            card.classList.add(type === "senin" ? "marked-senin" : "marked-rutin");
+            card.querySelector(`.last-read-label.${type}`).classList.remove("d-none");
+        });
     }
 
-    // Helper toggle class & label
-    function toggleMark(card, label, className) {
-        if(card.classList.contains(className)) {
-            card.classList.remove(className);
-            label.classList.add("d-none");
-        } else {
-            card.classList.add(className);
-            label.classList.remove("d-none");
+    function goToAyat(ayat) {
+        const targetCard = getCard(ayat);
+
+        if (!targetCard) {
+            return false;
         }
+
+        targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetCard.classList.add("focus-target");
+        setTimeout(() => targetCard.classList.remove("focus-target"), 2200);
+
+        return true;
     }
 
-    // =========================
-    // SIMPAN OFFLINE
-    // =========================
-    function saveToLocalStorage(ayat, activityType) {
-        let savedData = localStorage.getItem(storageKey);
-        let data = savedData ? JSON.parse(savedData) : {};
-
-        if(!data[ayat]) {
-            data[ayat] = { senin: false, rutin: false };
-        }
-
-        // Toggle status
-        data[ayat][activityType] = !data[ayat][activityType];
-
-        // Hapus jika kosong
-        if(!data[ayat].senin && !data[ayat].rutin) {
-            delete data[ayat];
-        }
-
-        localStorage.setItem(storageKey, JSON.stringify(data));
-    }
-
-    // =========================
-    // LOAD OFFLINE SAAT RELOAD
-    // =========================
-    function loadFromLocalStorage() {
-        const savedData = localStorage.getItem(storageKey);
-        if(!savedData) return;
-
-        try {
-            const data = JSON.parse(savedData);
-            for(const [ayat, activities] of Object.entries(data)) {
-                const card = document.querySelector(`.ayat-card[data-ayat='${ayat}']`);
-                if(!card) continue;
-
-                const seninLabel = card.querySelector(".last-read-label.senin");
-                const rutinLabel = card.querySelector(".last-read-label.rutin");
-
-                if(activities.senin) toggleMark(card, seninLabel, "marked-senin");
-                if(activities.rutin) toggleMark(card, rutinLabel, "marked-rutin");
-            }
-        } catch(e) {
-            console.error("Error parsing last read data:", e);
-        }
-    }
-    loadFromLocalStorage();
-
-    // =========================
-    // SIMPAN RUTIN KE SERVER
-    // =========================
-    function saveRutinToServer(ayatNo) {
+    function saveMarker(ayatNo, activityType) {
         fetch("{{ route('quran.markRutin') }}", {
             method: "POST",
             headers: {
@@ -351,46 +370,73 @@ document.addEventListener("DOMContentLoaded", function () {
                 "X-CSRF-TOKEN": "{{ csrf_token() }}"
             },
             body: JSON.stringify({
-                surat: {!! json_encode($surat['namaLatin'], JSON_UNESCAPED_UNICODE) !!},
-                ayat: ayatNo
+                idsurat: suratInfo.idsurat,
+                surat: suratInfo.surat,
+                ayat: ayatNo,
+                type: activityType
             })
-
-
-
         })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                console.log("✅ Tersimpan ke DB:", data);
-            } else {
-                console.warn("⚠️ Gagal simpan:", data.message || "Unknown error");
+        .then(async res => {
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Gagal menyimpan penanda.");
             }
+
+            return data;
         })
-        .catch(err => console.error("❌ Error saving:", err));
+        .catch(err => {
+            console.error(err);
+            alert("Penanda belum berhasil disimpan. Silakan coba lagi.");
+        });
     }
 
-    // =========================
-    // MODE TAMPILAN (ARAB / FULL / ARAB+TERJEMAH)
-    // =========================
+    document.querySelectorAll(".choice-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const activityType = this.dataset.type;
+            state[activityType] = currentAyat;
+            renderMarkers();
+            activityModal.hide();
+            saveMarker(currentAyat, activityType);
+        });
+    });
+
+    jumpAyatButton.addEventListener("click", function() {
+        const ayat = parseInt(jumpAyatInput.value, 10);
+
+        if (!ayat || ayat < 1 || ayat > suratInfo.jumlahAyat) {
+            alert(`Masukkan nomor ayat antara 1 sampai ${suratInfo.jumlahAyat}.`);
+            return;
+        }
+
+        goToAyat(ayat);
+    });
+
+    jumpAyatInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            jumpAyatButton.click();
+        }
+    });
+
     radios.forEach(radio => {
         radio.addEventListener("change", function () {
             const mode = this.value;
+
             cards.forEach(card => {
                 const latin = card.querySelector(".latin");
                 const terjemah = card.querySelector(".terjemah");
                 const audio = card.querySelector(".ayat-audio");
 
-                if(mode === "full"){
+                if (mode === "full") {
                     latin.style.display = "block";
                     terjemah.style.display = "block";
                     audio.style.display = "block";
-                }
-                else if(mode === "arab"){
+                } else if (mode === "arab") {
                     latin.style.display = "none";
                     terjemah.style.display = "none";
                     audio.style.display = "none";
-                }
-                else if(mode === "arab_terjemah"){
+                } else {
                     latin.style.display = "none";
                     terjemah.style.display = "block";
                     audio.style.display = "block";
@@ -399,33 +445,62 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // =========================
-    // AUTO PLAY AUDIO
-    // =========================
     audios.forEach((audio, index) => {
         audio.addEventListener("ended", () => {
             const next = audios[index + 1];
+
             if (next) {
                 next.play();
-                next.scrollIntoView({ behavior: "smooth", block: "center" });
+                next.closest(".ayat-card").scrollIntoView({ behavior: "smooth", block: "center" });
             }
         });
     });
 
-    // =========================
-    // ZOOM FONT ARAB
-    // =========================
-    let fontSize = 1.6;
     document.getElementById("fontIncrease").addEventListener("click", () => {
         fontSize += 0.2;
-        arabTexts.forEach(t => t.style.fontSize = fontSize + "rem");
+        arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
+
     document.getElementById("fontDecrease").addEventListener("click", () => {
-        if(fontSize > 1.2){
-            fontSize -= 0.2;
-            arabTexts.forEach(t => t.style.fontSize = fontSize + "rem");
+        if (fontSize <= 1.2) {
+            return;
         }
+
+        fontSize -= 0.2;
+        arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
+
+    document.getElementById("scrollTopBtn").addEventListener("click", function() {
+        window.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
+    });
+
+    document.getElementById("scrollDownBtn").addEventListener("click", function() {
+        window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
+    });
+
+    function syncScrollerFromPage() {
+        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+        const progress = Math.min((window.scrollY / maxScroll) * 100, 100);
+        pageScroller.value = progress;
+    }
+
+    pageScroller.addEventListener("input", function() {
+        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+        const top = (parseInt(this.value, 10) / 100) * maxScroll;
+        window.scrollTo({ top, behavior: "auto" });
+    });
+
+    window.addEventListener("scroll", syncScrollerFromPage, { passive: true });
+
+    renderMarkers();
+    syncScrollerFromPage();
+
+    if (targetAyat > 0) {
+        jumpAyatInput.value = targetAyat;
+        setTimeout(() => goToAyat(targetAyat), 250);
+    } else if (targetType && state[targetType]) {
+        setTimeout(() => goToAyat(state[targetType]), 250);
+    }
 });
 </script>
 
