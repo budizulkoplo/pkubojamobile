@@ -146,9 +146,19 @@
             const firebaseConfig = @json(collect($firebaseWeb)->except('vapidKey')->filter()->all());
             const vapidKey = @json($firebaseWeb['vapidKey']);
 
+            const getBase64UrlByteLength = (value) => {
+                const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+                const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+                return atob(padded).length;
+            };
+
             const saveFcmToken = async () => {
                 if (!window.isSecureContext) {
                     throw new Error('FCM membutuhkan HTTPS.');
+                }
+
+                if (getBase64UrlByteLength(vapidKey) !== 65) {
+                    throw new Error('VAPID Key Firebase belum valid. Salin ulang Key pair dari Firebase Cloud Messaging > Web Push certificates.');
                 }
 
                 if (!firebase.apps.length) {
