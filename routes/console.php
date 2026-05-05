@@ -9,10 +9,18 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-Artisan::command('ngaji:shift-reminders', function (FcmService $fcm) {
+Artisan::command('ngaji:shift-reminders {--time= : Simulasikan waktu HH:MM} {--force-random : Paksa kirim pengingat acak untuk test}', function (FcmService $fcm) {
     $now = now();
-    $currentTime = $now->format('H:i');
+    $timeOption = $this->option('time');
+    $currentTime = $timeOption ?: $now->format('H:i');
+
+    if (! preg_match('/^\d{2}:\d{2}$/', $currentTime)) {
+        $this->error('Format --time harus HH:MM, contoh: --time=08:00');
+        return 1;
+    }
+
     $today = $now->toDateString();
+    $forceRandom = (bool) $this->option('force-random');
     $randomReminderTimes = ['05:00', '08:00', '12:00', '14:00', '18:00', '21:00'];
     $randomReminderMessages = [
         "Titipan Allah ada di tanganmu. Baca Qur'an, pahami, resapi.",
@@ -31,11 +39,13 @@ Artisan::command('ngaji:shift-reminders', function (FcmService $fcm) {
 
     $totalSent = 0;
     $randomSent = 0;
+    $randomTokenCount = 0;
+    $randomSkippedReason = null;
 
-    if (in_array($currentTime, $randomReminderTimes, true)) {
+    if ($forceRandom || in_array($currentTime, $randomReminderTimes, true)) {
         $scopeKey = 'all|' . $currentTime;
 
-        $alreadySent = DB::table('notification_logs')
+        $alreadySent = ! $forceRandom && DB::table('notification_logs')
             ->where('type', 'ngaji_random_reminder')
             ->where('scope_key', $scopeKey)
             ->where('sent_date', $today)
@@ -47,6 +57,7 @@ Artisan::command('ngaji:shift-reminders', function (FcmService $fcm) {
                 ->pluck('token')
                 ->unique()
                 ->all();
+            $randomTokenCount = count($tokens);
 
             $randomSent = $fcm->sendToTokens(
                 $tokens,
@@ -59,15 +70,21 @@ Artisan::command('ngaji:shift-reminders', function (FcmService $fcm) {
                 ]
             );
 
-            DB::table('notification_logs')->insert([
-                'type' => 'ngaji_random_reminder',
-                'scope_key' => $scopeKey,
-                'sent_date' => $today,
-                'sent_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if (! $forceRandom) {
+                DB::table('notification_logs')->insert([
+                    'type' => 'ngaji_random_reminder',
+                    'scope_key' => $scopeKey,
+                    'sent_date' => $today,
+                    'sent_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } else {
+            $randomSkippedReason = 'sudah pernah dikirim hari ini untuk jam ' . $currentTime;
         }
+    } else {
+        $randomSkippedReason = 'jam ' . $currentTime . ' bukan jadwal pengingat acak';
     }
 
     foreach ($shifts as $shift) {
@@ -114,5 +131,12 @@ Artisan::command('ngaji:shift-reminders', function (FcmService $fcm) {
         $totalSent += $sent;
     }
 
+    $this->info("Checked time {$currentTime}.");
     $this->info("Shift reminders sent to {$totalSent} device(s). Random reminders sent to {$randomSent} device(s).");
+
+    if ($randomSkippedReason) {
+        $this->comment('Random reminder skipped: ' . $randomSkippedReason . '.');
+    } else {
+        $this->comment("Random reminder token count: {$randomTokenCount}.");
+    }
 })->purpose('Send Ngaji Shift reminders when shift starts');
