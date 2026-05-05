@@ -21,6 +21,12 @@ class FcmService
             }
         }
 
+        Log::info('FCM send summary.', [
+            'total_tokens' => count($tokens),
+            'sent' => $sent,
+            'title' => $title,
+        ]);
+
         return $sent;
     }
 
@@ -86,7 +92,13 @@ class FcmService
 
         $unsignedJwt = $header . '.' . $claim;
         $signature = '';
-        openssl_sign($unsignedJwt, $signature, $serviceAccount['private_key'], 'sha256WithRSAEncryption');
+        if (! openssl_sign($unsignedJwt, $signature, $serviceAccount['private_key'], OPENSSL_ALGO_SHA256)) {
+            Log::warning('FCM JWT signing failed.', [
+                'openssl_error' => openssl_error_string(),
+            ]);
+
+            return null;
+        }
 
         $jwt = $unsignedJwt . '.' . $this->base64UrlEncode($signature);
 

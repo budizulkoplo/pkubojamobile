@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Services\FcmService;
 
 class OperanShiftController extends Controller
@@ -188,7 +189,7 @@ class OperanShiftController extends Controller
             ->unique()
             ->all();
 
-        app(FcmService::class)->sendToTokens(
+        $sentNotifications = app(FcmService::class)->sendToTokens(
             $tokens,
             'Ngaji Shift selesai',
             $user->nama_lengkap . ' selesai membaca sampai ' . $validated['surat'] . ' ayat ' . $validated['ayat'] . '.',
@@ -198,6 +199,12 @@ class OperanShiftController extends Controller
                 'idkelompokkerja' => $kelompok->idkelompokkerja,
             ]
         );
+
+        Log::info('Ngaji Shift notification processed.', [
+            'idkelompokkerja' => $kelompok->idkelompokkerja,
+            'token_count' => count($tokens),
+            'sent' => $sentNotifications,
+        ]);
 
         return response()->json([
             'success' => true,

@@ -199,8 +199,19 @@
                 messaging.onMessage((payload) => {
                     const title = payload.notification?.title || payload.data?.title || 'HRIS';
                     const body = payload.notification?.body || payload.data?.body || '';
-                    if (document.visibilityState === 'visible') {
-                        console.log(title, body);
+                    const url = payload.data?.url || '/dashboard';
+
+                    if (Notification.permission === 'granted') {
+                        const notification = new Notification(title, {
+                            body,
+                            icon: '/assets/img/icon/logo.png',
+                            data: { url }
+                        });
+
+                        notification.onclick = () => {
+                            window.focus();
+                            window.location.href = url;
+                        };
                     }
                 });
             };
