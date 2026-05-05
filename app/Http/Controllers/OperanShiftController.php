@@ -191,7 +191,7 @@ class OperanShiftController extends Controller
 
         $sentNotifications = app(FcmService::class)->sendToTokens(
             $tokens,
-            'Ngaji Shift selesai',
+            'ASHOI - Al-Qur\'an',
             $user->nama_lengkap . ' selesai membaca sampai ' . $validated['surat'] . ' ayat ' . $validated['ayat'] . '.',
             [
                 'url' => route('operan.ngaji'),
