@@ -19,23 +19,35 @@ class NotificationController extends Controller
         $js = 'importScripts("/assets/js/firebase/firebase-app-compat.js");' . "\n"
             . 'importScripts("/assets/js/firebase/firebase-messaging-compat.js");' . "\n"
             . 'firebase.initializeApp(' . json_encode($config, JSON_UNESCAPED_SLASHES) . ');' . "\n"
-            . 'const messaging = firebase.messaging();' . "\n"
-            . 'messaging.onBackgroundMessage((payload) => {' . "\n"
-            . '  const title = payload.notification?.title || payload.data?.title || "HRIS";' . "\n"
-            . '  const options = {' . "\n"
-            . '    body: payload.notification?.body || payload.data?.body || "",' . "\n"
-            . '    icon: "/assets/img/icon/logo.png",' . "\n"
-            . '    data: { url: payload.data?.url || "/dashboard" }' . "\n"
-            . '  };' . "\n"
-            . '  self.registration.showNotification(title, options);' . "\n"
-            . '});' . "\n"
-            . 'self.addEventListener("notificationclick", (event) => {' . "\n"
+            . 'try {' . "\n"
+            . '  var messaging = firebase.messaging();' . "\n"
+            . '  messaging.onBackgroundMessage(function (payload) {' . "\n"
+            . '    payload = payload || {};' . "\n"
+            . '    var notification = payload.notification || {};' . "\n"
+            . '    var data = payload.data || {};' . "\n"
+            . '    var title = notification.title || data.title || "HRIS";' . "\n"
+            . '    var options = {' . "\n"
+            . '      body: notification.body || data.body || "",' . "\n"
+            . '      icon: "/assets/img/icon/logo.png",' . "\n"
+            . '      data: { url: data.url || "/dashboard" }' . "\n"
+            . '    };' . "\n"
+            . '    self.registration.showNotification(title, options);' . "\n"
+            . '  });' . "\n"
+            . '} catch (error) {' . "\n"
+            . '  console.warn("FCM background handler failed.", error);' . "\n"
+            . '}' . "\n"
+            . 'self.addEventListener("notificationclick", function (event) {' . "\n"
+            . '  var url = "/dashboard";' . "\n"
+            . '  if (event.notification && event.notification.data && event.notification.data.url) {' . "\n"
+            . '    url = event.notification.data.url;' . "\n"
+            . '  }' . "\n"
             . '  event.notification.close();' . "\n"
-            . '  event.waitUntil(clients.openWindow(event.notification.data?.url || "/dashboard"));' . "\n"
+            . '  event.waitUntil(clients.openWindow(url));' . "\n"
             . '});';
 
         return response($js, 200)
             ->header('Content-Type', 'application/javascript')
+            ->header('Service-Worker-Allowed', '/')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
