@@ -1,0 +1,12 @@
+[23-Jan-2025 13:14:39 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home/rumj8833/public_html/ahadpagi/tests/Unit/ExampleTest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/tests/Unit/ExampleTest.php on line 7
+[23-Jan-2025 13:19:56 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home/rumj8833/public_html/ahadpagi/tests/Unit/ExampleTest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/tests/Unit/ExampleTest.php on line 7
+[25-Jan-2025 19:52:54 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "PHPUnit\Framework\TestCase" not found in /home/rumj8833/public_html/ahadpagi/tests/Unit/ExampleTest.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/tests/Unit/ExampleTest.php on line 7

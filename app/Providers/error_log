@@ -1,0 +1,12 @@
+[24-Jan-2025 20:40:55 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home/rumj8833/public_html/ahadpagi/app/Providers/AppServiceProvider.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Providers/AppServiceProvider.php on line 7
+[24-Jan-2025 23:30:45 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home/rumj8833/public_html/ahadpagi/app/Providers/AppServiceProvider.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Providers/AppServiceProvider.php on line 7
+[27-Jan-2025 02:49:27 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\ServiceProvider" not found in /home/rumj8833/public_html/ahadpagi/app/Providers/AppServiceProvider.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/app/Providers/AppServiceProvider.php on line 7

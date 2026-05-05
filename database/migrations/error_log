@@ -1,0 +1,76 @@
+[23-Jan-2025 03:14:29 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php on line 7
+[23-Jan-2025 03:14:31 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php on line 7
+[23-Jan-2025 03:14:53 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php on line 7
+[23-Jan-2025 03:15:01 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php on line 7
+[24-Jan-2025 20:06:50 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php on line 7
+[24-Jan-2025 20:38:08 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php on line 7
+[24-Jan-2025 20:39:37 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php on line 7
+[24-Jan-2025 20:40:04 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php on line 7
+[24-Jan-2025 20:40:16 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php on line 7
+[25-Jan-2025 04:01:35 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php on line 7
+[25-Jan-2025 17:28:09 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php on line 7
+[26-Jan-2025 05:21:51 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php on line 7
+[26-Jan-2025 07:19:38 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php on line 7
+[27-Jan-2025 03:06:49 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000001_create_cache_table.php on line 7
+[27-Jan-2025 03:10:53 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000000_create_users_table.php on line 7
+[27-Jan-2025 06:15:13 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php on line 7
+[27-Jan-2025 06:15:14 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php on line 7
+[27-Jan-2025 08:49:56 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/2024_12_09_140726_create_personal_access_tokens_table.php on line 7
+[27-Jan-2025 08:50:18 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Migrations\Migration" not found in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/database/migrations/0001_01_01_000002_create_jobs_table.php on line 7

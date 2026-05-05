@@ -1,0 +1,120 @@
+[21-Jan-2025 01:50:58 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/logging.php on line 21
+[23-Jan-2025 00:48:08 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/queue.php on line 16
+[23-Jan-2025 03:05:47 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/cache.php on line 18
+[23-Jan-2025 03:05:50 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/queue.php on line 16
+[23-Jan-2025 03:06:26 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/filesystems.php on line 16
+[23-Jan-2025 03:06:51 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/sanctum.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/sanctum.php on line 18
+[23-Jan-2025 03:08:51 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/session.php on line 21
+[23-Jan-2025 03:10:45 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/logging.php:21
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/logging.php on line 21
+[23-Jan-2025 03:11:45 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/database.php on line 19
+[23-Jan-2025 03:13:45 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/services.php on line 18
+[23-Jan-2025 04:25:21 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/filesystems.php on line 16
+[24-Jan-2025 15:03:21 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/sanctum.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/sanctum.php on line 18
+[24-Jan-2025 15:04:16 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/session.php on line 21
+[24-Jan-2025 15:05:05 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/cache.php on line 18
+[24-Jan-2025 19:55:42 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/database.php on line 19
+[24-Jan-2025 19:56:02 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/mail.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/mail.php on line 17
+[24-Jan-2025 19:56:27 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/app.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/app.php on line 16
+[24-Jan-2025 19:56:53 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/services.php on line 18
+[25-Jan-2025 00:48:59 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/queue.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/queue.php on line 16
+[25-Jan-2025 19:49:30 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/filesystems.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/filesystems.php on line 16
+[27-Jan-2025 02:29:04 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/mail.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/mail.php on line 17
+[27-Jan-2025 02:29:40 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/database.php:19
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/database.php on line 19
+[27-Jan-2025 02:38:01 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/app.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/app.php on line 16
+[27-Jan-2025 02:39:08 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/services.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/services.php on line 18
+[27-Jan-2025 06:15:13 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/session.php on line 21
+[27-Jan-2025 06:15:13 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/sanctum.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/sanctum.php on line 18
+[27-Jan-2025 06:15:13 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/app.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/app.php on line 16
+[27-Jan-2025 12:53:12 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/sanctum.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/sanctum.php on line 18
+[27-Jan-2025 12:53:34 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/cache.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/cache.php on line 18
+[27-Jan-2025 12:53:56 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home/rumj8833/public_html/ahadpagi/config/session.php:21
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/config/session.php on line 21

@@ -1,0 +1,12 @@
+[21-Jan-2025 00:39:49 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Testing\TestCase" not found in /home/rumj8833/public_html/ahadpagi/tests/TestCase.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/tests/TestCase.php on line 7
+[24-Jan-2025 19:55:20 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Testing\TestCase" not found in /home/rumj8833/public_html/ahadpagi/tests/TestCase.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/tests/TestCase.php on line 7
+[27-Jan-2025 02:30:47 Asia/Jakarta] PHP Fatal error:  Uncaught Error: Class "Illuminate\Foundation\Testing\TestCase" not found in /home/rumj8833/public_html/ahadpagi/tests/TestCase.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/rumj8833/public_html/ahadpagi/tests/TestCase.php on line 7
