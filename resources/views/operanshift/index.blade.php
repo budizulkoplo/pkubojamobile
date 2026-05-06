@@ -235,32 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const showSuccessNotification = async (message) => {
-        if (!('Notification' in window) || Notification.permission !== 'granted') {
-            return;
-        }
-
-        try {
-            if ('serviceWorker' in navigator) {
-                const registration = await navigator.serviceWorker.ready;
-                await registration.showNotification('Target Taqwa', {
-                    body: message,
-                    icon: '/assets/img/icon/logo.png',
-                    badge: '/assets/img/icon/logo.png',
-                    data: { url: '{{ route('operan.index') }}' }
-                });
-                return;
-            }
-
-            new Notification('Target Taqwa', {
-                body: message,
-                icon: '/assets/img/icon/logo.png'
-            });
-        } catch (error) {
-            console.warn('Local notification failed.', error);
-        }
-    };
-
     const openModal = (button) => {
         const namaSholat = button.dataset.sholat;
         const jenis = button.dataset.jenis;
@@ -326,7 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal();
             const successMessage = data.message || 'Catatan sholat berhasil disimpan.';
             showAlert('success', successMessage);
-            showSuccessNotification(successMessage);
         } catch (error) {
             showAlert('error', error.message || 'Gagal menyimpan catatan sholat.');
         }

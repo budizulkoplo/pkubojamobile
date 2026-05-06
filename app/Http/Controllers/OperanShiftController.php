@@ -233,6 +233,19 @@ class OperanShiftController extends Controller
             }
         }
 
+        $alreadyExists = DB::table('sholat')
+            ->where('nik', $user->nik)
+            ->where('nama_sholat', $validated['nama_sholat'])
+            ->whereDate('created_at', now()->toDateString())
+            ->exists();
+
+        if ($alreadyExists) {
+            return response()->json([
+                'success' => false,
+                'message' => $validated['nama_sholat'] . ' sudah dicatat hari ini. Besok bisa dicatat lagi.',
+            ], 422);
+        }
+
         DB::table('sholat')->insert([
             'nik' => $user->nik,
             'nama' => $user->nama_lengkap,
