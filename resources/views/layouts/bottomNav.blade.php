@@ -253,7 +253,7 @@
         @endforeach
       <a href="/operan-shift" class="item {{ request()->is('operan-shift*') ? 'active' : '' }}">
         <div class="col">
-          <ion-icon name="swap-horizontal-outline"></ion-icon>
+          <ion-icon name="heart-outline"></ion-icon>
           <strong>Target Taqwa</strong>
         </div>
       </a>
