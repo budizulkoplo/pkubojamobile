@@ -212,4 +212,29 @@ class OperanShiftController extends Controller
             'redirect' => route('operan.ngaji'),
         ]);
     }
+
+    public function markSholat(Request $request)
+    {
+        $user = Auth::guard('karyawan')->user();
+
+        $validated = $request->validate([
+            'nama_sholat' => ['required', 'string', 'max:255'],
+            'jenis' => ['required', 'in:fardhu,sunnah'],
+            'jamaah' => ['required', 'in:ya,tidak'],
+        ]);
+
+        DB::table('sholat')->insert([
+            'nik' => $user->nik,
+            'nama' => $user->nama_lengkap,
+            'nama_sholat' => $validated['nama_sholat'],
+            'lokasi' => 'Target Taqwa',
+            'jenis' => $validated['jenis'],
+            'jamaah' => $validated['jamaah'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alhamdulillah, catatan ibadah berhasil disimpan.',
+        ]);
+    }
 }
