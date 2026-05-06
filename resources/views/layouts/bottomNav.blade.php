@@ -254,7 +254,7 @@
       <a href="/operan-shift" class="item {{ request()->is('operan-shift*') ? 'active' : '' }}">
         <div class="col">
           <ion-icon name="swap-horizontal-outline"></ion-icon>
-          <strong>Operan Shift</strong>
+          <strong>Target Taqwa</strong>
         </div>
       </a>
        @php
