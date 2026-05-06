@@ -223,6 +223,16 @@ class OperanShiftController extends Controller
             'jamaah' => ['required', 'in:ya,tidak'],
         ]);
 
+        if (strtolower($validated['nama_sholat']) === 'tahajud') {
+            $minutesNow = ((int) now()->format('H') * 60) + (int) now()->format('i');
+            if ($minutesNow > 240) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Maaf saat ini bukan waktunya sholat tahajud.',
+                ], 422);
+            }
+        }
+
         DB::table('sholat')->insert([
             'nik' => $user->nik,
             'nama' => $user->nama_lengkap,
@@ -230,11 +240,40 @@ class OperanShiftController extends Controller
             'lokasi' => 'Target Taqwa',
             'jenis' => $validated['jenis'],
             'jamaah' => $validated['jamaah'],
+            'created_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Alhamdulillah, catatan ibadah berhasil disimpan.',
+        ]);
+    }
+
+    public function laporanTaqwa(Request $request)
+    {
+        $user = Auth::guard('karyawan')->user();
+
+        $validated = $request->validate([
+            'tanggal' => ['required', 'date'],
+        ]);
+
+        $sholat = DB::table('sholat')
+            ->where('nik', $user->nik)
+            ->whereDate('created_at', $validated['tanggal'])
+            ->orderBy('created_at')
+            ->get();
+
+        $ngaji = DB::table('ngaji')
+            ->where('nik', $user->nik)
+            ->where('type', 'operan')
+            ->whereDate('created_at', $validated['tanggal'])
+            ->orderBy('created_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'sholat' => $sholat,
+            'ngaji' => $ngaji,
         ]);
     }
 }

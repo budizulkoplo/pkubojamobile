@@ -40,6 +40,7 @@
     .menu-icon.fardhu { background: #e9f2ff; color: #1769e0; }
     .menu-icon.sunnah { background: #fff7e6; color: #b77904; }
     .menu-icon.tahajud { background: #f0edff; color: #5f3dc4; }
+    .menu-icon.laporan { background: #ecfdf5; color: #15803d; }
     .menu-icon ion-icon { font-size: 26px; }
     .menu-title { font-weight: 800; margin-bottom: 4px; }
     .menu-subtitle { color: #6c757d; font-size: 0.86rem; line-height: 1.35; }
@@ -64,6 +65,33 @@
         padding: 9px 10px;
     }
     .choice-button:active { transform: translateY(1px); }
+    .report-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .report-form input {
+        border: 1px solid #dbe4ef;
+        border-radius: 10px;
+        min-height: 42px;
+        padding: 8px 10px;
+        background: #fff;
+    }
+    .report-form button {
+        border: 0;
+        border-radius: 10px;
+        min-height: 42px;
+        padding: 8px 14px;
+        background: #078f8a;
+        color: #fff;
+        font-weight: 800;
+    }
+    .report-list { display: grid; gap: 8px; margin-top: 12px; }
+    .report-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px 12px;
+    }
+    .report-item-title { font-weight: 800; color: #1f2937; }
+    .report-item-meta { color: #64748b; font-size: 0.82rem; margin-top: 3px; }
+    .report-empty { color: #64748b; font-weight: 700; padding: 8px 2px; }
     .taqwa-modal-backdrop {
         position: fixed;
         inset: 0;
@@ -131,7 +159,7 @@
                 </div>
                 <div>
                     <div class="menu-title">Sholat Fardhu</div>
-                    <div class="menu-subtitle">Catat sholat wajib harian dengan pilihan jamaah atau sendiri.</div>
+                    <div class="menu-subtitle">Catatan sholat wajib harian.</div>
                 </div>
             </div>
         </button>
@@ -154,7 +182,7 @@
                 </div>
                 <div>
                     <div class="menu-title">Sholat Sunnah</div>
-                    <div class="menu-subtitle">Catat sholat sunnah rawatib yang sudah ditunaikan.</div>
+                    <div class="menu-subtitle">Catat sholat sunnah rawatib.</div>
                 </div>
             </div>
         </button>
@@ -181,6 +209,27 @@
                 </div>
             </div>
         </button>
+
+        <button type="button" class="menu-card is-button" data-toggle-panel="laporanPanel">
+            <div class="card-body">
+                <div class="menu-icon laporan">
+                    <ion-icon name="document-text-outline"></ion-icon>
+                </div>
+                <div>
+                    <div class="menu-title">Laporan</div>
+                    <div class="menu-subtitle">Lihat catatan Target Taqwa yang sudah dijalankan pada tanggal tertentu.</div>
+                </div>
+            </div>
+        </button>
+
+        <div id="laporanPanel" class="choice-panel">
+            <div class="choice-title">Filter Tanggal</div>
+            <form id="reportForm" class="report-form">
+                <input type="date" id="reportDate" value="{{ now()->toDateString() }}" required>
+                <button type="submit">Tampil</button>
+            </form>
+            <div id="reportList" class="report-list"></div>
+        </div>
     </div>
 </div>
 
@@ -204,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalActions = document.getElementById('taqwaModalActions');
     const modalCancel = document.getElementById('taqwaModalCancel');
     const alertBox = document.getElementById('saveAlert');
+    const reportForm = document.getElementById('reportForm');
+    const reportDate = document.getElementById('reportDate');
+    const reportList = document.getElementById('reportList');
     let selectedPrayer = null;
 
     const showAlert = (type, message) => {
@@ -225,6 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const namaSholat = button.dataset.sholat;
         const jenis = button.dataset.jenis;
         const mode = button.dataset.mode;
+
+        if (mode === 'tahajud') {
+            const now = new Date();
+            const minutesNow = (now.getHours() * 60) + now.getMinutes();
+            if (minutesNow > 240) {
+                showAlert('error', 'Maaf saat ini bukan waktunya sholat tahajud.');
+                return;
+            }
+        }
 
         selectedPrayer = { nama_sholat: namaSholat, jenis };
 
@@ -272,8 +333,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
             closeModal();
             showAlert('success', data.message || 'Catatan sholat berhasil disimpan.');
+
+            if (Notification.permission === 'granted') {
+                new Notification('Target Taqwa', {
+                    body: data.message || 'Catatan sholat berhasil disimpan.',
+                    icon: '/assets/img/icon/logo.png'
+                });
+            }
         } catch (error) {
             showAlert('error', error.message || 'Gagal menyimpan catatan sholat.');
+        }
+    };
+
+    const formatTime = (value) => {
+        if (!value) {
+            return '';
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const renderReport = (data) => {
+        const items = [];
+
+        (data.sholat || []).forEach(row => {
+            items.push(`
+                <div class="report-item">
+                    <div class="report-item-title">${row.nama_sholat}</div>
+                    <div class="report-item-meta">Sholat ${row.jenis} • ${row.jamaah === 'ya' ? 'Jamaah' : 'Sendiri'} • ${formatTime(row.created_at)}</div>
+                </div>
+            `);
+        });
+
+        const ngajiSelesai = (data.ngaji || []).filter(row => row.flag === 'selesai' || row.flag === null);
+        ngajiSelesai.forEach(row => {
+            items.push(`
+                <div class="report-item">
+                    <div class="report-item-title">Ngaji Shift</div>
+                    <div class="report-item-meta">Sampai ${row.surat} ayat ${row.ayat} • ${formatTime(row.created_at)}</div>
+                </div>
+            `);
+        });
+
+        reportList.innerHTML = items.length ? items.join('') : '<div class="report-empty">Belum ada catatan Target Taqwa pada tanggal ini.</div>';
+    };
+
+    const loadReport = async () => {
+        reportList.innerHTML = '<div class="report-empty">Memuat laporan...</div>';
+
+        try {
+            const params = new URLSearchParams({ tanggal: reportDate.value });
+            const response = await fetch(`{{ route('operan.taqwa.report') }}?${params.toString()}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Gagal memuat laporan.');
+            }
+
+            renderReport(data);
+        } catch (error) {
+            reportList.innerHTML = `<div class="report-empty">${error.message || 'Gagal memuat laporan.'}</div>`;
         }
     };
 
@@ -297,6 +423,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === modalBackdrop) {
             closeModal();
         }
+    });
+
+    reportForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        loadReport();
     });
 });
 </script>
