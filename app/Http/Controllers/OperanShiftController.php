@@ -251,29 +251,51 @@ class OperanShiftController extends Controller
 
     public function laporanTaqwa(Request $request)
     {
-        $user = Auth::guard('karyawan')->user();
+        $tanggal = $request->query('tanggal', now()->toDateString());
+        $data = $this->getLaporanTaqwaData($tanggal);
 
+        return view('operanshift.laporan', [
+            'tanggal' => $tanggal,
+            'sholat' => $data['sholat'],
+            'ngaji' => $data['ngaji'],
+        ]);
+    }
+
+    public function laporanTaqwaData(Request $request)
+    {
         $validated = $request->validate([
             'tanggal' => ['required', 'date'],
         ]);
 
+        $data = $this->getLaporanTaqwaData($validated['tanggal']);
+
+        return response()->json([
+            'success' => true,
+            'sholat' => $data['sholat'],
+            'ngaji' => $data['ngaji'],
+        ]);
+    }
+
+    protected function getLaporanTaqwaData(string $tanggal): array
+    {
+        $user = Auth::guard('karyawan')->user();
+
         $sholat = DB::table('sholat')
             ->where('nik', $user->nik)
-            ->whereDate('created_at', $validated['tanggal'])
+            ->whereDate('created_at', $tanggal)
             ->orderBy('created_at')
             ->get();
 
         $ngaji = DB::table('ngaji')
             ->where('nik', $user->nik)
             ->where('type', 'operan')
-            ->whereDate('created_at', $validated['tanggal'])
+            ->whereDate('created_at', $tanggal)
             ->orderBy('created_at')
             ->get();
 
-        return response()->json([
-            'success' => true,
+        return [
             'sholat' => $sholat,
             'ngaji' => $ngaji,
-        ]);
+        ];
     }
 }

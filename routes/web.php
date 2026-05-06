@@ -162,6 +162,7 @@ Route::middleware(['auth:karyawan'])->group(function () {
     Route::post('/operan-shift/ngaji/mark', [OperanShiftController::class, 'markNgaji'])->name('operan.ngaji.mark');
     Route::post('/operan-shift/sholat/mark', [OperanShiftController::class, 'markSholat'])->name('operan.sholat.mark');
     Route::get('/operan-shift/laporan-taqwa', [OperanShiftController::class, 'laporanTaqwa'])->name('operan.taqwa.report');
+    Route::get('/operan-shift/laporan-taqwa/data', [OperanShiftController::class, 'laporanTaqwaData'])->name('operan.taqwa.report.data');
 
 });
 
