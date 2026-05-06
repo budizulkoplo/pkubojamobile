@@ -242,7 +242,7 @@ class OperanShiftController extends Controller
         if ($alreadyExists) {
             return response()->json([
                 'success' => false,
-                'message' => $validated['nama_sholat'] . ' sudah dicatat hari ini. Besok bisa dicatat lagi.',
+                'message' => $validated['nama_sholat'] . ' sudah dicatat hari ini.',
             ], 422);
         }
 
