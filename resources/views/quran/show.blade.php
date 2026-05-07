@@ -21,11 +21,10 @@
         font-family: 'UthmanicHafs', serif;
         font-size: 1.8rem;
         line-height: 3rem;
-
+        text-align: right;
         direction: rtl;
         font-weight: 200;
         word-spacing: 2px;
-        text-align: justify;
         letter-spacing: 0;
         color: #111;
     }
