@@ -13,15 +13,17 @@
 @endsection
 
 @section('content')
-<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New&display=swap" rel="stylesheet">
+<!-- <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New&display=swap" rel="stylesheet"> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/alif-type/quran-fonts@master/fonts/uthmanic-hafs.css">
 
 <style>
     .arab-text {
-        font-family: 'Scheherazade New', serif;
-        font-size: 1.6rem;
-        line-height: 2.6rem;
+        font-family: 'UthmanicHafs', serif;
+        font-size: 2.2rem;
+        line-height: 4rem;
         text-align: right;
         direction: rtl;
+        font-weight: normal;
     }
     .ayat-card {
         border-radius: 12px;
