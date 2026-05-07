@@ -19,7 +19,7 @@
 <style>
     .arab-text {
         font-family: 'UthmanicHafs', serif;
-        font-size: 2.2rem;
+        font-size: 1.8rem;
         line-height: 4rem;
         text-align: right;
         direction: rtl;
@@ -185,12 +185,7 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <span class="badge bg-primary px-3 py-2">Ayat {{ $a['nomorAyat'] }}</span>
-                <h3 class="arab-text flex-grow-1 ms-3">
-                    {{ $a['teksArab'] }}
-                    <span class="badge bg-warning text-dark rounded-pill">
-                        {{ $a['nomorAyat'] }}
-                    </span>
-                </h3>
+                <h3 class="arab-text flex-grow-1 ms-3">{{ $a['teksArab'] }}</h3>
             </div>
 
             <div class="latin mb-2">
