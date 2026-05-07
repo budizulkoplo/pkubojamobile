@@ -41,6 +41,7 @@
     .menu-icon.fardhu { background: #e9f2ff; color: #1769e0; }
     .menu-icon.sunnah { background: #fff7e6; color: #b77904; }
     .menu-icon.tahajud { background: #f0edff; color: #5f3dc4; }
+    .menu-icon.dhuha { background: #fff9db; color: #d97706; }
     .menu-icon.laporan { background: #ecfdf5; color: #15803d; }
     .menu-icon ion-icon { font-size: 26px; }
     .menu-title { font-weight: 800; margin-bottom: 4px; }
@@ -172,6 +173,18 @@
             </div>
         </div>
 
+        <button type="button" class="menu-card" data-sholat="Dhuha" data-jenis="sunnah" data-mode="dhuha">
+            <div class="card-body">
+                <div class="menu-icon dhuha">
+                    <ion-icon name="sunny-outline"></ion-icon>
+                </div>
+                <div>
+                    <div class="menu-title">Dhuha</div>
+                    <div class="menu-subtitle">luangkan di waktu dhuha sejenak.</div>
+                </div>
+            </div>
+        </button>
+
         <button type="button" class="menu-card" data-sholat="Tahajud" data-jenis="sunnah" data-mode="tahajud">
             <div class="card-body">
                 <div class="menu-icon tahajud">
@@ -257,6 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
             modalActions.innerHTML = '<button type="button" class="btn-jamaah" data-save-jamaah="ya">Jamaah</button><button type="button" class="btn-sendiri" data-save-jamaah="tidak">Sendiri</button>';
         } else if (mode === 'tahajud') {
             modalMessage.textContent = 'Bismillah saya sholat tahajud semoga memberi kebaikan kepada saya';
+            modalActions.classList.add('single');
+            modalActions.innerHTML = '<button type="button" class="btn-jamaah" data-save-jamaah="tidak">Simpan</button>';
+        } else if (mode === 'dhuha') {
+            modalMessage.textContent = 'Bismillah saya sholat dhuha semoga memberi kebaikan kepada saya';
             modalActions.classList.add('single');
             modalActions.innerHTML = '<button type="button" class="btn-jamaah" data-save-jamaah="tidak">Simpan</button>';
         } else {
