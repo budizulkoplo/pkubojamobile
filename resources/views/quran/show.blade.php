@@ -20,14 +20,13 @@
     .arab-text {
         font-family: 'UthmanicHafs', serif;
         font-size: 1.8rem;
-        line-height: 4.5rem;
+        line-height: 4rem;
+        text-align: right;
         direction: rtl;
-        text-align: justify;
-        word-spacing: 1px;
-        letter-spacing: 0.5px;
         font-weight: normal;
+        word-spacing: 2px;
+        letter-spacing: 0;
         color: #111;
-        width: 100%;
     }
     .ayat-card {
         border-radius: 12px;
