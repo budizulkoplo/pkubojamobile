@@ -20,7 +20,7 @@
     .arab-text {
         font-family: 'UthmanicHafs', serif;
         font-size: 1.8rem;
-        line-height: 4rem;
+        line-height: 2.5rem;
         text-align: right;
         direction: rtl;
         font-weight: 200;
