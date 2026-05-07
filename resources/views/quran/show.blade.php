@@ -14,20 +14,20 @@
 
 @section('content')
 <!-- <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New&display=swap" rel="stylesheet"> -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/alif-type/quran-fonts@master/fonts/uthmanic-hafs.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/alif-type/quran-fonts@master/fonts/uthmanic-hafs.css"> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lajnah-kemenag/fonts/font-lpmq.css">
 
 <style>
-    .arab-text {
-        font-family: 'UthmanicHafs', serif;
-        font-size: 1.8rem;
-        line-height: 4rem;
-        text-align: right;
-        direction: rtl;
-        font-weight: normal;
-        word-spacing: 2px;
-        letter-spacing: 0;
-        color: #111;
-    }
+.arab-text {
+    font-family: 'LPMQ Isep Misbah', serif;
+    font-size: 2.2rem;
+    line-height: 4.5rem;
+    text-align: right;
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-shadow: 0.1px 0.1px 0.1px rgba(0,0,0,0.05); /* Memberi sedikit ketebalan halus */
+}
     .ayat-card {
         border-radius: 12px;
         position: relative;
