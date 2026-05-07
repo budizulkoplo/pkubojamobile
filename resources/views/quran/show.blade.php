@@ -23,7 +23,7 @@
         line-height: 4.5rem;
         direction: rtl;
         text-align: justify;
-        word-spacing: 3px;
+        word-spacing: 1px;
         letter-spacing: 0.5px;
         font-weight: normal;
         color: #111;
