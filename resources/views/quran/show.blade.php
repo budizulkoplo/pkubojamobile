@@ -24,6 +24,9 @@
         text-align: right;
         direction: rtl;
         font-weight: normal;
+        word-spacing: 2px;
+        letter-spacing: 0;
+        color: #111;
     }
     .ayat-card {
         border-radius: 12px;
@@ -182,7 +185,12 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <span class="badge bg-primary px-3 py-2">Ayat {{ $a['nomorAyat'] }}</span>
-                <h3 class="arab-text flex-grow-1 ms-3">{{ $a['teksArab'] }}</h3>
+                <h3 class="arab-text flex-grow-1 ms-3">
+                    {{ $a['teksArab'] }}
+                    <span class="badge bg-warning text-dark rounded-pill">
+                        {{ $a['nomorAyat'] }}
+                    </span>
+                </h3>
             </div>
 
             <div class="latin mb-2">
