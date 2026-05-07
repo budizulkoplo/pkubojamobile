@@ -20,12 +20,12 @@
     .arab-text {
         font-family: 'UthmanicHafs', serif;
         font-size: 1.8rem;
-        line-height: 2.5rem;
-        text-align: right;
+        line-height: 3rem;
+
         direction: rtl;
         font-weight: 200;
         word-spacing: 2px;
-        text-align: justify
+        text-align: justify;
         letter-spacing: 0;
         color: #111;
     }
