@@ -161,7 +161,7 @@
     <div class="d-flex justify-content-center mb-4">
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="mode" id="modeFull" value="full" checked>
-            <label class="form-check-label" for="modeFull">Lengkap</label>
+            <!-- <label class="form-check-label" for="modeFull">Lengkap</label> -->
         </div>
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="mode" id="modeArab" value="arab">
@@ -194,9 +194,9 @@
                 </h3>
             </div>
 
-            <div class="latin mb-2">
+            <!-- <div class="latin mb-2">
                 <p><em>{{ $a['teksLatin'] }}</em></p>
-            </div>
+            </div> -->
             <div class="terjemah">
                 <p>{{ $a['teksIndonesia'] }}</p>
             </div>
