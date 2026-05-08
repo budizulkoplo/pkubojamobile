@@ -23,8 +23,8 @@
     }
     .arab-text {
         font-family: 'LPMQ Isep Misbah', 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
-        font-size: 2.05rem;
-        line-height: 4.25rem;
+        font-size: 1.9rem;
+        line-height: 4rem;
         direction: rtl;
         font-weight: 400;
         font-synthesis: none;
