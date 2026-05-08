@@ -13,25 +13,26 @@
 @endsection
 
 @section('content')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/alif-type/quran-fonts@master/fonts/uthmanic-hafs.css">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/kfgqpc-hafs-uthmanic-script">
 
 <style>
     .ngaji-reader { margin-top: 48px; padding: 16px; }
     .arab-text {
-        font-family: 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
-        font-size: 1.8rem;
-        line-height: 3.2rem;
+        font-family: 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        font-size: 2rem;
+        line-height: 4.4rem;
         direction: rtl;
-        font-weight: 500;
+        font-weight: 400;
         text-align: right;
         letter-spacing: 0;
-        color: #1e293b;
-        word-spacing: 4px;
-        margin-bottom: 0.5rem;
+        color: #111827;
+        word-spacing: 8px;
+        margin-bottom: 0.75rem;
     }
     .surah-arabic-title {
-        font-family: 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
-        line-height: 2.6rem;
+        font-family: 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        font-weight: 400;
+        line-height: 3rem;
     }
     .ayah-number {
         display: inline-flex;
@@ -39,7 +40,7 @@
         justify-content: center;
         width: 2.15rem;
         height: 2.15rem;
-        margin-right: 0.35rem;
+        margin-right: 0.45rem;
         border: 2px solid #c8a349;
         border-radius: 50%;
         background:
@@ -95,6 +96,11 @@
     }
     @media (max-width: 576px) {
         .ngaji-reader { padding: 12px; }
+        .arab-text {
+            font-size: 1.95rem;
+            line-height: 4.2rem;
+            word-spacing: 7px;
+        }
         .last-read-label { font-size: 0.64rem; }
     }
 </style>
@@ -243,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     let currentAyat = null;
-    let fontSize = 1.8;
+    let fontSize = 2;
 
     window.handleAyatClick = function(no) {
         currentAyat = no;
