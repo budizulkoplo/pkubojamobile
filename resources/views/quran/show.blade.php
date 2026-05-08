@@ -159,10 +159,10 @@
     </div>
 
     <div class="d-flex justify-content-center mb-4">
-        <!-- <div class="form-check form-check-inline">
+        <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="mode" id="modeFull" value="full" checked>
             <label class="form-check-label" for="modeFull">Lengkap</label>
-        </div> -->
+        </div>
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="mode" id="modeArab" value="arab">
             <label class="form-check-label" for="modeArab">Arab saja</label>
