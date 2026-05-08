@@ -194,9 +194,9 @@
                 </h3>
             </div>
 
-            <div class="latin mb-2">
+            <!-- <div class="latin mb-2">
                 <p><em>{{ $a['teksLatin'] }}</em></p>
-            </div>
+            </div> -->
             <div class="terjemah">
                 <p>{{ $a['teksIndonesia'] }}</p>
             </div>
@@ -412,20 +412,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const mode = this.value;
 
             cards.forEach(card => {
-                const latin = card.querySelector(".latin");
+                
                 const terjemah = card.querySelector(".terjemah");
                 const audio = card.querySelector(".ayat-audio");
 
                 if (mode === "full") {
-                    latin.style.display = "block";
+                    
                     terjemah.style.display = "block";
                     audio.style.display = "block";
                 } else if (mode === "arab") {
-                    latin.style.display = "none";
+                   
                     terjemah.style.display = "none";
                     audio.style.display = "none";
                 } else {
-                    latin.style.display = "none";
+                    
                     terjemah.style.display = "block";
                     audio.style.display = "block";
                 }
