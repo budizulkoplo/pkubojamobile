@@ -13,16 +13,45 @@
 @endsection
 
 @section('content')
-<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/alif-type/quran-fonts@master/fonts/uthmanic-hafs.css">
 
 <style>
     .ngaji-reader { margin-top: 48px; padding: 16px; }
     .arab-text {
-        font-family: 'Scheherazade New', serif;
-        font-size: 1.7rem;
-        line-height: 2.8rem;
-        text-align: right;
+        font-family: 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        font-size: 1.8rem;
+        line-height: 3.2rem;
         direction: rtl;
+        font-weight: 500;
+        text-align: right;
+        letter-spacing: 0;
+        color: #1e293b;
+        word-spacing: 4px;
+        margin-bottom: 0.5rem;
+    }
+    .surah-arabic-title {
+        font-family: 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        line-height: 2.6rem;
+    }
+    .ayah-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.15rem;
+        height: 2.15rem;
+        margin-right: 0.35rem;
+        border: 2px solid #c8a349;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle at center, #fffaf0 0 48%, transparent 49%),
+            conic-gradient(from 22deg, #f7d985, #fff7d7, #d8aa3c, #fff7d7, #f7d985);
+        color: #7c5f13;
+        font-family: 'Times New Roman', serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1;
+        vertical-align: middle;
+        box-shadow: 0 2px 5px rgba(124, 95, 19, 0.18), inset 0 0 0 3px #fff8df;
     }
     .ayat-card {
         border-radius: 12px;
@@ -61,6 +90,13 @@
         background: #f8fafc;
         box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
     }
+    .form-check {
+        margin: 0 10px;
+    }
+    @media (max-width: 576px) {
+        .ngaji-reader { padding: 12px; }
+        .last-read-label { font-size: 0.64rem; }
+    }
 </style>
 
 @php
@@ -70,7 +106,7 @@
 <div class="ngaji-reader">
     <div class="text-center mb-3">
         <h2 class="mb-0">{{ $surat['namaLatin'] }} <small class="text-muted">({{ $surat['arti'] }})</small></h2>
-        <h3 class="mt-2" style="font-family: 'Scheherazade New', serif;">{{ $surat['nama'] }}</h3>
+        <h3 class="mt-2 surah-arabic-title">{{ $surat['nama'] }}</h3>
         <div class="text-muted small">{{ $kelompok->namakelompok }}</div>
     </div>
 
@@ -87,6 +123,26 @@
         </div>
     </div>
 
+    <div class="d-flex justify-content-center mb-3">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="mode" id="modeFull" value="full" checked>
+            <label class="form-check-label" for="modeFull">Lengkap</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="mode" id="modeArab" value="arab">
+            <label class="form-check-label" for="modeArab">Arab saja</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="mode" id="modeArabTerjemah" value="arab_terjemah">
+            <label class="form-check-label" for="modeArabTerjemah">Arab + Terjemahan</label>
+        </div>
+    </div>
+
+    <div class="text-center mb-4">
+        <button id="fontIncrease" class="btn btn-outline-primary btn-sm me-2">Perbesar+</button>
+        <button id="fontDecrease" class="btn btn-outline-primary btn-sm">Perkecil-</button>
+    </div>
+
     @foreach($surat['ayat'] as $a)
         <div
             class="card mb-3 shadow-sm ayat-card {{ $latestAyat === (int) $a['nomorAyat'] ? 'latest-operan' : '' }}"
@@ -100,11 +156,13 @@
                 @endif
 
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-primary px-3 py-2">Ayat {{ $a['nomorAyat'] }}</span>
-                    <h3 class="arab-text flex-grow-1 ms-3">{{ $a['teksArab'] }}</h3>
+                    <h3 class="arab-text flex-grow-1 ms-3">
+                        {{ $a['teksArab'] }}
+                        <span class="ayah-number">{{ $a['nomorAyat'] }}</span>
+                    </h3>
                 </div>
 
-                <div class="latin mb-2">
+                <div class="latin mb-2 d-none">
                     <p><em>{{ $a['teksLatin'] }}</em></p>
                 </div>
                 <div class="terjemah">
@@ -169,6 +227,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const saveAyatButton = document.getElementById("saveAyatButton");
     const jumpAyatInput = document.getElementById("jumpAyatInput");
     const jumpAyatButton = document.getElementById("jumpAyatButton");
+    const radios = document.querySelectorAll('input[name="mode"]');
+    const cards = document.querySelectorAll(".ayat-card");
+    const arabTexts = document.querySelectorAll(".arab-text");
     const audios = document.querySelectorAll(".ayat-audio");
     const suratInfo = {
         idsurat: {{ (int) $surat['nomor'] }},
@@ -182,6 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     let currentAyat = null;
+    let fontSize = 1.8;
 
     window.handleAyatClick = function(no) {
         currentAyat = no;
@@ -265,8 +327,25 @@ document.addEventListener("DOMContentLoaded", function () {
     jumpAyatButton.addEventListener("touchend", handleJumpAyat, { passive: false });
     jumpAyatInput.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
+            event.preventDefault();
             handleJumpAyat(event);
         }
+    });
+
+    radios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            const mode = this.value;
+
+            cards.forEach(card => {
+                const latin = card.querySelector(".latin");
+                const terjemah = card.querySelector(".terjemah");
+                const audio = card.querySelector(".ayat-audio");
+
+                latin.style.display = mode === "full" ? "block" : "none";
+                terjemah.style.display = mode === "arab" ? "none" : "block";
+                audio.style.display = mode === "arab" ? "none" : "block";
+            });
+        });
     });
 
     audios.forEach((audio, index) => {
@@ -277,6 +356,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 next.closest(".ayat-card").scrollIntoView({ behavior: "smooth", block: "center" });
             }
         });
+    });
+
+    document.getElementById("fontIncrease").addEventListener("click", () => {
+        fontSize += 0.2;
+        arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
+    });
+
+    document.getElementById("fontDecrease").addEventListener("click", () => {
+        if (fontSize <= 1.2) {
+            return;
+        }
+
+        fontSize -= 0.2;
+        arabTexts.forEach(text => text.style.fontSize = fontSize + "rem");
     });
 
     const hashAyat = window.location.hash.startsWith("#ayat-")

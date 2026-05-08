@@ -29,6 +29,30 @@
         word-spacing: 4px;
         margin-bottom: 0.5rem;
     }
+    .surah-arabic-title {
+        font-family: 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        line-height: 2.6rem;
+    }
+    .ayah-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.15rem;
+        height: 2.15rem;
+        margin-right: 0.35rem;
+        border: 2px solid #c8a349;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle at center, #fffaf0 0 48%, transparent 49%),
+            conic-gradient(from 22deg, #f7d985, #fff7d7, #d8aa3c, #fff7d7, #f7d985);
+        color: #7c5f13;
+        font-family: 'Times New Roman', serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1;
+        vertical-align: middle;
+        box-shadow: 0 2px 5px rgba(124, 95, 19, 0.18), inset 0 0 0 3px #fff8df;
+    }
     .ayat-card {
         border-radius: 12px;
         position: relative;
@@ -139,7 +163,7 @@
 <div class="p-3" style="margin-top: 40px">
     <div class="text-center mb-4">
         <h1 class="mb-0">{{ $surat['namaLatin'] }} <small class="text-muted">({{ $surat['arti'] }})</small></h1>
-        <h2 class="mt-2" style="font-family: 'Scheherazade New', serif;">{{ $surat['nama'] }}</h2>
+        <h2 class="mt-2 surah-arabic-title">{{ $surat['nama'] }}</h2>
         <p class="mb-1"><strong>Jumlah Ayat:</strong> {{ $surat['jumlahAyat'] }}</p>
         <p><strong>Tempat Turun:</strong> {{ $surat['tempatTurun'] }}</p>
     </div>
@@ -188,9 +212,7 @@
                 <!-- <span class="badge bg-primary px-3 py-2">Ayat {{ $a['nomorAyat'] }}</span> -->
                 <h3 class="arab-text flex-grow-1 ms-3">
                     {{ $a['teksArab'] }}
-                    <span class="badge bg-warning text-dark rounded-pill">
-                        {{ $a['nomorAyat'] }}
-                    </span>
+                    <span class="ayah-number">{{ $a['nomorAyat'] }}</span>
                 </h3>
             </div>
 
@@ -280,7 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     let currentAyat = null;
-    let fontSize = 1.6;
+    let fontSize = 1.8;
 
     window.handleAyatClick = function(no) {
         currentAyat = no;
