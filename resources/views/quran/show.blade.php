@@ -194,9 +194,9 @@
                 </h3>
             </div>
 
-            <!-- <div class="latin mb-2">
+            <div class="latin mb-2">
                 <p><em>{{ $a['teksLatin'] }}</em></p>
-            </div> -->
+            </div>
             <div class="terjemah">
                 <p>{{ $a['teksIndonesia'] }}</p>
             </div>
