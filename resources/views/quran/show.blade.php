@@ -13,23 +13,29 @@
 @endsection
 
 @section('content')
-<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/kfgqpc-hafs-uthmanic-script">
-
 <style>
+    @font-face {
+        font-family: 'LPMQ Isep Misbah';
+        src: url("{{ asset('fonts/lpmq/LPMQ%20IsepMisbah.ttf') }}") format('truetype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+    }
     .arab-text {
-        font-family: 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
-        font-size: 2rem;
-        line-height: 4.4rem;
+        font-family: 'LPMQ Isep Misbah', 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        font-size: 2.05rem;
+        line-height: 4.25rem;
         direction: rtl;
         font-weight: 400;
+        font-synthesis: none;
         text-align: right;
         letter-spacing: 0;
         color: #111827;
-        word-spacing: 8px;
+        word-spacing: 7px;
         margin-bottom: 0.75rem;
     }
     .surah-arabic-title {
-        font-family: 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+        font-family: 'LPMQ Isep Misbah', 'KFGQPC HAFS Uthmanic Script', 'UthmanicHafs', 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
         font-weight: 400;
         line-height: 3rem;
     }
@@ -146,9 +152,9 @@
     }
     @media (max-width: 576px) {
         .arab-text {
-            font-size: 1.95rem;
-            line-height: 4.2rem;
-            word-spacing: 7px;
+            font-size: 2rem;
+            line-height: 4.1rem;
+            word-spacing: 6px;
         }
         .last-read-label {
             font-size: 0.64rem;
@@ -307,7 +313,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     let currentAyat = null;
-    let fontSize = 2;
+    let fontSize = 2.05;
 
     window.handleAyatClick = function(no) {
         currentAyat = no;
