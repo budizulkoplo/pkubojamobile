@@ -301,9 +301,10 @@ class OperanShiftController extends Controller
 
         $ngaji = DB::table('ngaji')
             ->where('nik', $user->nik)
-            ->where('type', 'operan')
+            ->whereIn('type', ['operan', 'rutin', 'senin'])
             ->whereDate('created_at', $tanggal)
             ->orderBy('created_at')
+            ->orderBy('id')
             ->get();
 
         return [

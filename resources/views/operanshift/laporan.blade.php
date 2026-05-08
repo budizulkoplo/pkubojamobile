@@ -15,11 +15,28 @@
 @section('content')
 @php
     $tanggalCarbon = \Carbon\Carbon::parse($tanggal);
-    $ngajiSelesai = $ngaji->filter(fn ($row) => ($row->flag ?? null) === 'selesai' || empty($row->flag));
+    $ngajiKegiatan = $ngaji->filter(function ($row) {
+        if (($row->type ?? null) === 'operan') {
+            return ($row->flag ?? null) === 'selesai' || empty($row->flag);
+        }
+
+        return in_array($row->type ?? null, ['rutin', 'senin'], true);
+    });
+    $ngajiLabels = [
+        'operan' => 'Ngaji Shift',
+        'rutin' => 'Ngaji Rutin',
+        'senin' => 'Senin Pagi',
+    ];
+    $ngajiMeta = [
+        'operan' => 'Bacaan operan shift',
+        'rutin' => 'Riwayat kegiatan ngaji rutin',
+        'senin' => 'Riwayat kegiatan Senin Pagi',
+    ];
     $totalFardhu = $sholat->where('jenis', 'fardhu')->count();
     $totalSunnah = $sholat->where('jenis', 'sunnah')->count();
     $totalJamaah = $sholat->where('jamaah', 'ya')->count();
-    $totalCatatan = $sholat->count() + $ngajiSelesai->count();
+    $totalNgaji = $ngajiKegiatan->count();
+    $totalCatatan = $sholat->count() + $totalNgaji;
 @endphp
 
 <style>
@@ -104,6 +121,8 @@
     }
     .item-icon.sunnah { background: #fff7e6; color: #b77904; }
     .item-icon.ngaji { background: #e7f7f6; color: #078f8a; }
+    .item-icon.ngaji-rutin { background: #ecfdf5; color: #15803d; }
+    .item-icon.ngaji-senin { background: #fff7ed; color: #ea580c; }
     .item-title { font-weight: 900; color: #1f2937; }
     .item-meta { color: #64748b; font-size: 0.82rem; margin-top: 3px; line-height: 1.35; }
     .item-time {
@@ -167,6 +186,10 @@
             <div class="summary-value">{{ $totalJamaah }}</div>
             <div class="summary-label">Berjamaah</div>
         </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ $totalNgaji }}</div>
+            <div class="summary-label">Riwayat Ngaji</div>
+        </div>
     </div>
 
     <div class="section-title">
@@ -191,14 +214,20 @@
                 </div>
             @endforeach
 
-            @foreach($ngajiSelesai as $item)
+            @foreach($ngajiKegiatan as $item)
+                @php
+                    $ngajiType = $item->type ?? 'operan';
+                    $iconClass = $ngajiType === 'rutin' ? 'ngaji-rutin' : ($ngajiType === 'senin' ? 'ngaji-senin' : 'ngaji');
+                @endphp
                 <div class="taqwa-item">
-                    <div class="item-icon ngaji">
+                    <div class="item-icon {{ $iconClass }}">
                         <ion-icon name="book-outline"></ion-icon>
                     </div>
                     <div>
-                        <div class="item-title">Ngaji Shift</div>
-                        <div class="item-meta">Sampai {{ $item->surat }} ayat {{ $item->ayat }}</div>
+                        <div class="item-title">{{ $ngajiLabels[$ngajiType] ?? 'Ngaji' }}</div>
+                        <div class="item-meta">
+                            {{ $ngajiMeta[$ngajiType] ?? 'Riwayat kegiatan ngaji' }} - Sampai {{ $item->surat }} ayat {{ $item->ayat }}
+                        </div>
                     </div>
                     <div class="item-time">{{ \Carbon\Carbon::parse($item->created_at)->format('H:i') }}</div>
                 </div>
