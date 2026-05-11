@@ -23,19 +23,19 @@
         return in_array($row->type ?? null, ['rutin', 'senin'], true);
     });
     $ngajiLabels = [
-        'operan' => 'Ngaji Shift',
-        'rutin' => 'Ngaji Rutin',
+        'operan' => 'Tadarus Shift',
+        'rutin' => 'Tadarus Rutin',
         'senin' => 'Senin Pagi',
     ];
     $ngajiMeta = [
         'operan' => 'Bacaan operan shift',
-        'rutin' => 'Riwayat kegiatan ngaji rutin',
+        'rutin' => 'Riwayat kegiatan Tadarus rutin',
         'senin' => 'Riwayat kegiatan Senin Pagi',
     ];
     $totalFardhu = $sholat->where('jenis', 'fardhu')->count();
     $totalSunnah = $sholat->where('jenis', 'sunnah')->count();
     $totalJamaah = $sholat->where('jamaah', 'ya')->count();
-    $totalNgaji = $ngajiKegiatan->count();
+    $totalTadarus = $ngajiKegiatan->count();
     $totalCatatan = $sholat->count() + $totalNgaji;
 @endphp
 
@@ -120,7 +120,7 @@
         color: #1769e0;
     }
     .item-icon.sunnah { background: #fff7e6; color: #b77904; }
-    .item-icon.ngaji { background: #e7f7f6; color: #078f8a; }
+    .item-icon.Tadarus { background: #e7f7f6; color: #078f8a; }
     .item-icon.ngaji-rutin { background: #ecfdf5; color: #15803d; }
     .item-icon.ngaji-senin { background: #fff7ed; color: #ea580c; }
     .item-title { font-weight: 900; color: #1f2937; }
@@ -187,8 +187,8 @@
             <div class="summary-label">Berjamaah</div>
         </div>
         <div class="summary-card">
-            <div class="summary-value">{{ $totalNgaji }}</div>
-            <div class="summary-label">Riwayat Ngaji</div>
+            <div class="summary-value">{{ $totalTadarus }}</div>
+            <div class="summary-label">Riwayat Tadarus</div>
         </div>
     </div>
 

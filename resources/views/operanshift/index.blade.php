@@ -121,7 +121,7 @@
                     <ion-icon name="book-outline"></ion-icon>
                 </div>
                 <div>
-                    <div class="menu-title">Ngaji Shift</div>
+                    <div class="menu-title">Tadarus Shift</div>
                     <div class="menu-subtitle">Lanjutkan bacaan Quran bersama dalam satu kelompok kerja.</div>
                 </div>
             </div>
