@@ -7,7 +7,7 @@
             <ion-icon name="chevron-back-outline"></ion-icon>
         </a>
     </div>
-    <div class="pageTitle">Ngaji Shift</div>
+    <div class="pageTitle">Tadarus Shift</div>
     <div class="right"></div>
 </div>
 @endsection
