@@ -603,6 +603,29 @@ class Newkalender_model extends Model
         return $summary;
     }
 
+    public function getLateSummaryForPeriod($pegawaiPin, $bulan): array
+    {
+        $dataKalender = $this->getDataKalenderWithNightShift($pegawaiPin, $bulan);
+
+        $totalSeconds = 0;
+        $totalDays = 0;
+
+        foreach ($dataKalender as $data) {
+            if (!empty($data['status_khusus']) || empty($data['late_seconds'])) {
+                continue;
+            }
+
+            $totalSeconds += (int) $data['late_seconds'];
+            $totalDays++;
+        }
+
+        return [
+            'total_seconds' => $totalSeconds,
+            'total_minutes' => (int) floor($totalSeconds / 60),
+            'total_days' => $totalDays,
+        ];
+    }
+
     // Method kompatibilitas
     public function getDataKalender($pegawaiPin, $bulan)
     {

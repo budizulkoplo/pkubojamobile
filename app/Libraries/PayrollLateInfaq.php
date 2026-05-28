@@ -10,7 +10,7 @@ class PayrollLateInfaq
             return 0;
         }
 
-        if ($lateMinutes < 10) {
+        if ($lateMinutes < 11) {
             return 0;
         }
 

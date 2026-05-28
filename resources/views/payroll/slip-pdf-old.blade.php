@@ -109,7 +109,7 @@
         $lateMinutes = (int) ($rekap['jmlterlambat'] ?? 0);
         $infaqTerlambat = \App\Libraries\PayrollLateInfaq::calculate(
             $lateMinutes,
-            (float) (($rekap['totalharikerja'] ?? 0) * ($rekap['uangmakan'] ?? 0)),
+            (float) (($rekap['jmlabsensi'] ?? 0) * ($rekap['uangmakan'] ?? 0)),
             $rekap['tgl_aktif_keterlambatan'] ?? null,
             $periode
         );

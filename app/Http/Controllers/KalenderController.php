@@ -66,7 +66,9 @@ class KalenderController extends Controller
 
             foreach ($data['dataKalender'] as $tgl => $row) {
                 $chartLabels[] = Carbon::parse($tgl)->translatedFormat('d M');
-                $chartValues[] = round(((int) ($row['late_seconds'] ?? 0)) / 60, 1);
+                $chartValues[] = empty($row['status_khusus'])
+                    ? round(((int) ($row['late_seconds'] ?? 0)) / 60, 1)
+                    : 0;
             }
 
             $lateInfaq = $this->calculateRunningLateInfaq(
@@ -326,14 +328,7 @@ class KalenderController extends Controller
                 return;
             }
 
-            $masuk = strtotime(strip_tags($data['jam_masuk']));
-            $shift = strtotime($data['jam_masuk_shift']);
-            if ($masuk > $shift) {
-                $stats['terlambat'] += ($masuk - $shift);
-                $stats['jumlahTerlambat']++;
-            } else {
-                $stats['jumlahTepatWaktu']++;
-            }
+            $stats['jumlahTepatWaktu']++;
         }
     }
 

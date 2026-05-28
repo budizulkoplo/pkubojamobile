@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Newkalender_model;
 
 class PayrollController extends Controller
 {
@@ -113,6 +114,7 @@ class PayrollController extends Controller
         $rekap = (array) $rekap;
         $rekap['jmlrujukan'] = $jmlrujukan;
         $rekap['use_new_system'] = $useNewSystem; // Flag untuk view
+        $rekap = $this->syncLateFromCalendar($rekap, $periode);
 
         $site = [
             'icon' => 'logopku.png',
@@ -275,6 +277,7 @@ class PayrollController extends Controller
         $rekap = (array) $rekap;
         $rekap['jmlrujukan'] = $jmlrujukan;
         $rekap['use_new_system'] = $useNewSystem;
+        $rekap = $this->syncLateFromCalendar($rekap, $periode);
 
         $site = [
             'icon' => 'logopku.png',
@@ -291,5 +294,18 @@ class PayrollController extends Controller
         ])->setPaper([0, 0, 226.77, 600], 'portrait');
 
         return $pdf->download('Slip-Gaji-'.$rekap['pegawai_nama'].'-'.$periode.'.pdf');
+    }
+
+    private function syncLateFromCalendar(array $rekap, string $periode): array
+    {
+        if (empty($rekap['pegawai_pin'])) {
+            return $rekap;
+        }
+
+        $kalenderModel = new Newkalender_model();
+        $lateSummary = $kalenderModel->getLateSummaryForPeriod($rekap['pegawai_pin'], $periode);
+        $rekap['jmlterlambat'] = $lateSummary['total_minutes'];
+
+        return $rekap;
     }
 }
