@@ -171,14 +171,14 @@
 
         } elseif ($isTraining) {
 
-            // Training hanya kehadiran
-            $totalPenghasilan = $nilaiKehadiran;
+            // Training tetap dapat tugas luar
+            $totalPenghasilan = $nilaiKehadiran + $tugasLuarVal;
 
             // Nolkan komponen lain
             $gajipokok = $tunjstruktural = $tunjkeluarga = $tunjapotek = $tunjfungsional = 0;
             $jmlrujukan = $rujukan = 0;
             $uangmakan = 0;
-            $lemburVal = $operasiVal = $tugasLuarVal = $doubleShiftVal = 0;
+            $lemburVal = $operasiVal = $doubleShiftVal = 0;
 
         } else {
 
@@ -315,8 +315,8 @@
 
         @if($tugasluar > 0)
         <tr>
-            <td class="label">Tugas Luar <span class="text-muted small">{{ $tugasluar }} × Rp {{ number_format($lemburkhusus, 0, ',', '.') }}</span></td>
-            <td class="value">Rp {{ number_format($tugasluar * $lemburkhusus, 0, ',', '.') }}</td>
+            <td class="label">Tugas Luar <span class="text-muted small">{{ $tugasluar }} × Rp {{ number_format($lemburRate, 0, ',', '.') }}</span></td>
+            <td class="value">Rp {{ number_format($tugasLuarVal, 0, ',', '.') }}</td>
         </tr>
         @endif
 

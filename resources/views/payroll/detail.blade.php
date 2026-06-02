@@ -76,12 +76,12 @@ if ($isHarian) {
 
 } elseif ($isTraining) {
 
-    $totalPenghasilan = $nilaiKehadiran;
+    $totalPenghasilan = $nilaiKehadiran + $tugasLuarVal;
 
     $gajipokok = $tunjstruktural = $tunjkeluarga = $tunjapotek = $tunjfungsional = 0;
     $jmlrujukan = $rujukan = 0;
     $uangMakan = 0;
-    $lemburVal = $operasiVal = $tugasLuarVal = $doubleShiftVal = 0;
+    $lemburVal = $operasiVal = $doubleShiftVal = 0;
 
 } else {
 
