@@ -85,9 +85,10 @@
     </p>
 
     @php
-        $lemburVal = (!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0) 
-                 ? ($rekap['konversilembur'] ?? 0) * ($rekap['lemburkhusus'] ?? 0)
-                 : ($rekap['konversilembur'] ?? 0) * ($rekap['kehadiran'] ?? 0);
+        $lemburRate = (!empty($rekap['lemburkhusus']) && $rekap['lemburkhusus'] > 0)
+                 ? ($rekap['lemburkhusus'] ?? 0)
+                 : ($rekap['kehadiran'] ?? 0);
+        $lemburVal = ($rekap['konversilembur'] ?? 0) * $lemburRate;
 
         $totalPenghasilan =
             $rekap['gajipokok'] +
@@ -96,12 +97,11 @@
             $rekap['tunjapotek'] +
             $rekap['tunjfungsional'] +
             (($rekap['jmlrujukan'] ?? 0) * $rekap['rujukan']) +
-            (($rekap['totalharikerja'] ?? 0) * $rekap['uangmakan']) +
+            (($rekap['jmlabsensi'] ?? 0) * $rekap['uangmakan']) +
             ($rekap['jmlabsensi'] * $rekap['kehadiran']) +
-            ($rekap['cuti'] * $rekap['kehadiran']) +
-            ($rekap['tugasluar'] * $rekap['kehadiran']) +
+            ($rekap['tugasluar'] * $lemburRate) +
             $lemburVal +
-            (($rekap['doubleshift'] ?? 0) * ($rekap['kehadiran'] ?? 0));
+            (($rekap['doubleshift'] ?? 0) * $lemburRate);
 
         $bpjs = ($totalPenghasilan > 4000000) ? 40000 : 28000;
         $zis = round($totalPenghasilan * 0.025);
@@ -147,10 +147,10 @@
     @endif
 
     <tr>
-        <td class="label">Uang Makan {{ $rekap['totalharikerja'] ?? 0 }} x Rp {{ number_format($rekap['uangmakan'] ?? 0) }} </td>
+        <td class="label">Uang Makan {{ $rekap['jmlabsensi'] ?? 0 }} x Rp {{ number_format($rekap['uangmakan'] ?? 0) }} </td>
         <td class="value">
             
-            Rp {{ number_format(($rekap['totalharikerja'] ?? 0) * ($rekap['uangmakan'] ?? 0)) }}
+            Rp {{ number_format(($rekap['jmlabsensi'] ?? 0) * ($rekap['uangmakan'] ?? 0)) }}
         </td>
     </tr>
 
@@ -162,26 +162,17 @@
     </tr>
     @if(($rekap['doubleshift'] ?? 0) > 0)
     <tr>
-        <td class="label">Doubleshift {{ $rekap['doubleshift'] ?? 0 }} x Rp {{ number_format($rekap['kehadiran'] ?? 0) }}</td>
+        <td class="label">Double Shift {{ $rekap['doubleshift'] ?? 0 }} x Rp {{ number_format($lemburRate) }}</td>
         <td class="value">
-            Rp {{ number_format($rekap['doubleshift'] * ($rekap['kehadiran'] ?? 0)) }}
+            Rp {{ number_format(($rekap['doubleshift'] ?? 0) * $lemburRate) }}
         </td>
     </tr>
     @endif
-    @if(($rekap['cuti'] ?? 0) > 0)
-    <tr>
-        <td class="label">Cuti {{ $rekap['cuti'] ?? 0 }} x Rp {{ number_format($rekap['kehadiran'] ?? 0) }}</td>
-        <td class="value">
-            Rp {{ number_format($rekap['cuti'] * ($rekap['kehadiran'] ?? 0)) }}
-        </td>
-    </tr>
-    @endif    
-
     @if(($rekap['tugasluar'] ?? 0) > 0)
     <tr>
-        <td class="label">Tugas Luar {{ $rekap['tugasluar'] ?? 0 }} x Rp {{ number_format($rekap['kehadiran'] ?? 0) }}</td>
+        <td class="label">Tugas Luar {{ $rekap['tugasluar'] ?? 0 }} x Rp {{ number_format($lemburRate) }}</td>
         <td class="value">
-            Rp {{ number_format($rekap['tugasluar'] * ($rekap['kehadiran'] ?? 0)) }}
+            Rp {{ number_format(($rekap['tugasluar'] ?? 0) * $lemburRate) }}
         </td>
     </tr>
     @endif

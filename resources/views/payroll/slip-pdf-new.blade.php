@@ -207,9 +207,8 @@
                     $tunjapotek +
                     $tunjfungsional +
                     ($jmlrujukan * $rujukan) +
-                    ($totalharikerja * $uangmakanNominal) +
+                    $uangmakan +
                     $nilaiKehadiran +
-                    ($cuti * $kehadiran) +
                     $tugasLuarVal +
                     $lemburVal +
                     $doubleShiftVal;
@@ -296,20 +295,6 @@
         <tr>
             <td class="label">Uang Makan <span class="text-muted small">{{ $jmlabsensi }} × Rp {{ number_format($uangmakanNominal, 0, ',', '.') }}</span></td>
             <td class="value">Rp {{ number_format($uangmakan, 0, ',', '.') }}</td>
-        </tr>
-        @endif
-
-        @if($doubleshift > 0)
-        <tr>
-            <td class="label">Doubleshift <span class="text-muted small">{{ $doubleshift }} × Rp {{ number_format($lemburkhusus, 0, ',', '.') }}</span></td>
-            <td class="value">Rp {{ number_format($doubleshift * $lemburkhusus, 0, ',', '.') }}</td>
-        </tr>
-        @endif
-
-        @if(!($rekap['use_new_system'] ?? false) && $cuti > 0 && !$isTraining)
-        <tr>
-            <td class="label">Cuti <span class="text-muted small">{{ $cuti }} × Rp {{ number_format($kehadiran, 0, ',', '.') }}</span></td>
-            <td class="value">Rp {{ number_format($cuti * $kehadiran, 0, ',', '.') }}</td>
         </tr>
         @endif
 

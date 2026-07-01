@@ -110,9 +110,8 @@ if ($isHarian) {
             $tunjapotek +
             $tunjfungsional +
             ($jmlrujukan * $rujukan) +
-            ($totalharikerja * $uangmakanNominal) +
+            $uangMakan +
             $nilaiKehadiran +
-            ($cuti * $kehadiran) +
             $tugasLuarVal +
             $lemburVal +
             $doubleShiftVal;
@@ -194,13 +193,6 @@ $netto = $totalPenghasilan - $totalPotongan;
 <tr>
 <td>Uang Makan ({{ $jmlabsensi }} × Rp {{ number_format($uangmakanNominal,0,',','.') }})</td>
 <td class="text-end">Rp {{ number_format($uangMakan,0,',','.') }}</td>
-</tr>
-@endif
-
-@if($cuti > 0 && !$isTraining)
-<tr>
-<td>Cuti ({{ $cuti }} × Rp {{ number_format($kehadiran,0,',','.') }})</td>
-<td class="text-end">Rp {{ number_format($cuti*$kehadiran,0,',','.') }}</td>
 </tr>
 @endif
 
