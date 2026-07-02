@@ -86,15 +86,9 @@ class Newkalender_model extends Model
     
     private function getScheduleData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
-        // 1. Cek bagian pegawai dan tentukan apakah menggunakan Office shift
-        $pegawai = DB::select("
-            SELECT p.bagian 
-            FROM pegawai p 
-            WHERE p.pegawai_pin = ?
-        ", [$pegawaiPin]);
-        
-        $bagian = $pegawai[0]->bagian ?? '';
-        
+        // 1. Cek bagian pegawai pada tanggal periode agar histori bagian tetap konsisten
+        $bagian = $this->resolveBagianAtDate($pegawaiPin, $endDate);
+
         $kelompokJam = DB::select("
             SELECT shift, jammasuk, jampulang 
             FROM kelompokjam 
@@ -163,13 +157,8 @@ class Newkalender_model extends Model
 
     private function applyOfficeAttendanceDefaults($pegawaiPin, &$dataKalender)
     {
-        $pegawai = DB::select("
-            SELECT p.bagian
-            FROM pegawai p
-            WHERE p.pegawai_pin = ?
-        ", [$pegawaiPin]);
-
-        $bagian = $pegawai[0]->bagian ?? '';
+        $endDate = !empty($dataKalender) ? array_key_last($dataKalender) : null;
+        $bagian = $endDate ? $this->resolveBagianAtDate($pegawaiPin, $endDate) : '';
         if ($bagian === '') {
             return;
         }
@@ -412,6 +401,47 @@ class Newkalender_model extends Model
                 }
             }
         }
+    }
+
+    private function resolveBagianAtDate($pegawaiPin, ?string $date = null): string
+    {
+        $pegawaiPin = (string) $pegawaiPin;
+
+        if ($pegawaiPin === '') {
+            return '';
+        }
+
+        $date = $date ?: date('Y-m-d');
+
+        $history = DB::table('pegawai_bagian_history')
+            ->where('pegawai_pin', $pegawaiPin)
+            ->orderBy('effective_from', 'asc')
+            ->orderBy('id', 'asc')
+            ->get(['bagian_lama', 'bagian_baru', 'effective_from']);
+
+        if ($history->isNotEmpty()) {
+            $latest = null;
+            foreach ($history as $row) {
+                if ($row->effective_from <= $date) {
+                    $latest = $row;
+                } else {
+                    break;
+                }
+            }
+
+            if ($latest) {
+                return !empty($latest->bagian_baru) ? (string) $latest->bagian_baru : (string) ($latest->bagian_lama ?? '');
+            }
+
+            $earliest = $history->first();
+            return !empty($earliest->bagian_lama) ? (string) $earliest->bagian_lama : (string) ($earliest->bagian_baru ?? '');
+        }
+
+        $pegawai = DB::table('pegawai')
+            ->where('pegawai_pin', $pegawaiPin)
+            ->value('bagian');
+
+        return (string) ($pegawai ?? '');
     }
 
     private function getTanggalAktifKeterlambatan(): ?string
