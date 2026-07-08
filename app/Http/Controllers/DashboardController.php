@@ -99,7 +99,10 @@ class DashboardController extends Controller
 
         // Ambil data tiket dari API eksternal
         try {
-            $response = Http::timeout(5)->get('https://memo.rspkuboja.com/api/tickets/latest-status');
+            $response = Http::timeout(5)->get('https://smart.rspkuboja.com/api/memo/tickets/latest-status', [
+                'user_id' => $user->id,
+                'nik' => $nik,
+            ]);
 
             if ($response->successful()) {
                 $tickets = collect($response->json());

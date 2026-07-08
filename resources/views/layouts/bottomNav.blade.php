@@ -277,7 +277,7 @@
         {{-- Contoh dua item, satu lokal dan satu eksternal --}}
         
         {{-- Item 1: Link eksternal ke Project Management --}}
-        <a href="https://memo.rspkuboja.com/external/{{ $token }}" 
+        <a href="https://smart.rspkuboja.com/hris/memo/project-board"
            style="all: unset; display: contents; cursor: pointer;" 
            target="_blank">
             <div class="item">
