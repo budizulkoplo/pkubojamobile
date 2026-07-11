@@ -111,6 +111,20 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'simrs_farmasi' => [
+            'driver' => 'pgsql',
+            'host' => env('SIMRS_FARMASI_DB_HOST', '192.168.1.119'),
+            'port' => env('SIMRS_FARMASI_DB_PORT', '5432'),
+            'database' => env('SIMRS_FARMASI_DB_DATABASE', 'db_muhammadhiyah_boja'),
+            'username' => env('SIMRS_FARMASI_DB_USERNAME', 'dbadmin'),
+            'password' => env('SIMRS_FARMASI_DB_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('SIMRS_FARMASI_DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

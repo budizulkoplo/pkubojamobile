@@ -374,10 +374,89 @@ class HrisController extends Controller
         ]);
     }
 
-        /**
+    private function queryJadwalOperasiBaru($whereSql = '', array $bindings = [])
+    {
+        $sql = "
+            SELECT
+                so.norec::text AS id,
+                so.norec::text AS order_id,
+                so.noorder,
+
+                so.tglorder AS tanggal_rencana,
+                so.tglorder AS tgl_rencana_pelaksanaan,
+                so.tglorder::date AS tanggal_rencana_date,
+                TO_CHAR(so.tglorder, 'HH24:MI') AS jam_rencana,
+
+                pd.noregistrasi,
+                ps.nocm AS no_rm,
+                ps.namapasien AS nama_pasien,
+                ps.tgllahir,
+                jk.jeniskelamin,
+
+                ru.namaruangan AS ruangan_asal,
+                pg.namalengkap AS dokter_operator,
+
+                jo.jenisoperasi,
+                ko.namakamarok AS nama_kamar,
+                ko.namakamarok AS kamar_operasi,
+
+                so.estimasiwaktuoperasi AS estimasi_durasi,
+                so.keteranganorder,
+                so.keteranganlainnya AS rencana_tindakan
+
+            FROM strukorder_t so
+
+            LEFT JOIN pasiendaftar_t pd
+                ON pd.norec = so.noregistrasifk
+
+            LEFT JOIN pasien_m ps
+                ON ps.id = pd.nocmfk
+
+            LEFT JOIN jeniskelamin_m jk
+                ON jk.id = ps.objectjeniskelaminfk
+
+            LEFT JOIN ruangan_m ru
+                ON ru.id = so.objectruanganfk
+
+            LEFT JOIN pegawai_m pg
+                ON pg.id = so.objectpegawaiorderfk
+
+            LEFT JOIN jenisoperasi_m jo
+                ON jo.id = so.jenisoperasifk
+
+            LEFT JOIN kamaroperasi_m ko
+                ON ko.id = so.objectkamaroperasifk
+
+            WHERE COALESCE(so.statusenabled, TRUE) = TRUE
+              AND (
+                  so.keteranganorder ILIKE '%jadwal operasi%'
+                  OR so.jenisoperasifk IS NOT NULL
+                  OR so.objectkamaroperasifk IS NOT NULL
+              )
+              {$whereSql}
+
+            ORDER BY so.tglorder ASC
+        ";
+
+        return DB::connection('simrs_farmasi')->select($sql, $bindings);
+    }
+
+    private function getJadwalOperasiById($id)
+    {
+        $result = $this->queryJadwalOperasiBaru('AND so.norec::text = ?', [$id]);
+
+        return $result[0] ?? null;
+    }
+
+    private function getJadwalOperasiByTanggal($tanggal)
+    {
+        return collect($this->queryJadwalOperasiBaru('AND so.tglorder::date = ?', [$tanggal]));
+    }
+
+    /**
      * === JADWAL OPERASI PEGAWAI ===
      * Tampilkan daftar operasi yang bisa diabsen oleh pegawai login.
-     * Sumber data dari view: vwjadwaloperasi
+     * Sumber data dari SIMRS Farmasi PostgreSQL.
      */
     public function jadwalOperasi(Request $request)
     {
@@ -388,11 +467,8 @@ class HrisController extends Controller
         $tanggal = $request->get('tanggal') ?? date('Y-m-d');
         $hariIni = date('Y-m-d');
 
-        // Ambil data operasi berdasarkan tanggal filter
-        $operasi = DB::table('vwjadwaloperasi')
-            ->whereDate('tanggal_rencana', $tanggal)
-            ->orderBy('tanggal_rencana', 'asc')
-            ->get();
+        // Ambil data operasi berdasarkan tanggal filter dari SIMRS baru
+        $operasi = $this->getJadwalOperasiByTanggal($tanggal);
 
         // Ambil data presensi operasi (in/out)
         $user = Auth::guard('karyawan')->user();
@@ -426,9 +502,7 @@ class HrisController extends Controller
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        $operasi = DB::table('vwjadwaloperasi')
-            ->where('id', $id)
-            ->first();
+        $operasi = $this->getJadwalOperasiById($id);
 
         if (!$operasi) {
             return redirect()->route('hris.jadwal_operasi')->with('error', 'Data operasi tidak ditemukan.');
@@ -469,7 +543,7 @@ class HrisController extends Controller
         }
 
         // Validasi data operasi
-        $operasi = DB::table('vwjadwaloperasi')->where('id', $id)->first();
+        $operasi = $this->getJadwalOperasiById($id);
         if (!$operasi) {
             return response()->json(['status' => 'error', 'message' => 'Data operasi tidak valid.']);
         }
