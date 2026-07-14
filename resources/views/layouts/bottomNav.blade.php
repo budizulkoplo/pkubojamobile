@@ -215,6 +215,11 @@
     <span>Agenda</span>
   </a>
 
+  <a href="/pengantaran-obat" class="quick-item {{ request()->is('pengantaran-obat') ? 'active' : '' }}">
+    <ion-icon name="bicycle-outline"></ion-icon>
+    <span>Antaran</span>
+  </a>
+
   <button class="quick-item menu-main" id="menuToggle">
     <ion-icon id="menuIcon" name="apps-outline"></ion-icon>
   </button>
@@ -251,6 +256,12 @@
             </div>
           </a>
         @endforeach
+      <a href="/pengantaran-obat" class="item {{ request()->is('pengantaran-obat') ? 'active' : '' }}">
+        <div class="col">
+          <ion-icon name="bicycle-outline"></ion-icon>
+          <strong>Pengantaran Obat</strong>
+        </div>
+      </a>
       <a href="/operan-shift" class="item {{ request()->is('operan-shift*') ? 'active' : '' }}">
         <div class="col">
           <ion-icon name="heart-outline"></ion-icon>

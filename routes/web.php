@@ -19,6 +19,7 @@ use App\Http\Controllers\OperanShiftController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\HrisController;
 use App\Http\Controllers\NewKalenderController;
+use App\Http\Controllers\PharmacyDeliveryController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -163,6 +164,10 @@ Route::middleware(['auth:karyawan'])->group(function () {
     Route::post('/operan-shift/sholat/mark', [OperanShiftController::class, 'markSholat'])->name('operan.sholat.mark');
     Route::get('/operan-shift/laporan-taqwa', [OperanShiftController::class, 'laporanTaqwa'])->name('operan.taqwa.report');
     Route::get('/operan-shift/laporan-taqwa/data', [OperanShiftController::class, 'laporanTaqwaData'])->name('operan.taqwa.report.data');
+
+    Route::get('/pengantaran-obat', [PharmacyDeliveryController::class, 'index'])->name('pharmacy-deliveries.index');
+    Route::post('/pengantaran-obat/{deliveryId}/ambil', [PharmacyDeliveryController::class, 'take'])->name('pharmacy-deliveries.take');
+    Route::post('/pengantaran-obat/{deliveryId}/selesai', [PharmacyDeliveryController::class, 'complete'])->name('pharmacy-deliveries.complete');
 
 });
 

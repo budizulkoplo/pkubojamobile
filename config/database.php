@@ -125,6 +125,22 @@ return [
             'sslmode' => env('SIMRS_FARMASI_DB_SSLMODE', 'prefer'),
         ],
 
+        'smartrs' => [
+            'driver' => env('SMART_RS_DB_CONNECTION', 'mariadb'),
+            'host' => env('SMART_RS_DB_HOST', '192.168.1.115'),
+            'port' => env('SMART_RS_DB_PORT', '3306'),
+            'database' => env('SMART_RS_DB_DATABASE', 'smartrs'),
+            'username' => env('SMART_RS_DB_USERNAME', 'budizul'),
+            'password' => env('SMART_RS_DB_PASSWORD', 'masuk'),
+            'unix_socket' => env('SMART_RS_DB_SOCKET', ''),
+            'charset' => env('SMART_RS_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('SMART_RS_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
