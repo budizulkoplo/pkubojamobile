@@ -215,10 +215,10 @@
     <span>Agenda</span>
   </a>
 
-  <a href="/pengantaran-obat" class="quick-item {{ request()->is('pengantaran-obat') ? 'active' : '' }}">
+  <!-- <a href="/pengantaran-obat" class="quick-item {{ request()->is('pengantaran-obat') ? 'active' : '' }}">
     <ion-icon name="bicycle-outline"></ion-icon>
     <span>Antaran</span>
-  </a>
+  </a> -->
 
   <button class="quick-item menu-main" id="menuToggle">
     <ion-icon id="menuIcon" name="apps-outline"></ion-icon>
