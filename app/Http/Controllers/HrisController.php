@@ -450,7 +450,7 @@ class HrisController extends Controller
 
     private function getJadwalOperasiByTanggal($tanggal)
     {
-        return collect($this->queryJadwalOperasiBaru('AND so.tglorder::date = ?', [$tanggal]));
+        return collect($this->queryJadwalOperasiBaru('AND so.tglpelayananawal::date = ?', [$tanggal]));
     }
 
     /**
