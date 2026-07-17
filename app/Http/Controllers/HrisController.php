@@ -382,10 +382,10 @@ class HrisController extends Controller
                 so.norec::text AS order_id,
                 so.noorder,
 
-                so.tglorder AS tanggal_rencana,
-                so.tglorder AS tgl_rencana_pelaksanaan,
-                so.tglorder::date AS tanggal_rencana_date,
-                TO_CHAR(so.tglorder, 'HH24:MI') AS jam_rencana,
+                so.tglpelayananawal AS tanggal_rencana,
+                so.tglpelayananawal AS tgl_rencana_pelaksanaan,
+                so.tglpelayananawal::date AS tanggal_rencana_date,
+                TO_CHAR(so.tglpelayananawal, 'HH24:MI') AS jam_rencana,
 
                 pd.noregistrasi,
                 ps.nocm AS no_rm,
@@ -435,7 +435,7 @@ class HrisController extends Controller
               )
               {$whereSql}
 
-            ORDER BY so.tglorder ASC
+            ORDER BY so.tglpelayananawal ASC
         ";
 
         return DB::connection('simrs_farmasi')->select($sql, $bindings);
