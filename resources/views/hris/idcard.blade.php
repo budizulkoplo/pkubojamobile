@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.presensi')
 
 @section('title', 'ID Card Pegawai')
 
