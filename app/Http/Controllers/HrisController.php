@@ -5,11 +5,67 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class HrisController extends Controller
 {
+    public function idCard(): View|\Illuminate\Http\RedirectResponse
+    {
+        if (!Auth::guard('karyawan')->check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        $pegawai = $this->currentPegawai();
+
+        if (!$pegawai) {
+            abort(404, 'Data pegawai tidak ditemukan.');
+        }
+
+        return view('hris.idcard', [
+            'pegawai' => $pegawai,
+            'photoUrl' => $this->pegawaiPhotoUrl($pegawai),
+            'savedCardUrl' => $this->savedIdCardUrl($pegawai),
+        ]);
+    }
+
+    public function saveIdCard(Request $request): JsonResponse
+    {
+        if (!Auth::guard('karyawan')->check()) {
+            return response()->json(['message' => 'Silakan login terlebih dahulu.'], 401);
+        }
+
+        $data = $request->validate([
+            'image' => ['required', 'string'],
+        ]);
+
+        if (!preg_match('/^data:image\/png;base64,/', $data['image'])) {
+            return response()->json(['message' => 'Format gambar ID card tidak valid.'], 422);
+        }
+
+        $image = base64_decode(substr($data['image'], strpos($data['image'], ',') + 1), true);
+
+        if ($image === false) {
+            return response()->json(['message' => 'Gambar ID card gagal diproses.'], 422);
+        }
+
+        $pegawai = $this->currentPegawai();
+
+        if (!$pegawai) {
+            return response()->json(['message' => 'Data pegawai tidak ditemukan.'], 404);
+        }
+
+        $path = $this->savedIdCardPath($pegawai);
+        Storage::disk('public')->put($path, $image);
+
+        return response()->json([
+            'message' => 'ID card berhasil disimpan.',
+            'url' => Storage::url($path).'?v='.time(),
+        ]);
+    }
+
     /**
      * === INDEX LEMBUR ===
      * Tampilkan data lembur per tanggal (default: hari ini)
@@ -836,6 +892,66 @@ class HrisController extends Controller
             ]);
 
         return back()->with('success', 'Lembur berhasil diverifikasi.');
+    }
+
+    private function currentPegawai(): ?object
+    {
+        $user = Auth::guard('karyawan')->user();
+
+        if (!$user) {
+            return null;
+        }
+
+        return DB::table('pegawai')
+            ->where(function ($query) use ($user): void {
+                $query->where('nik', $user->nik ?? null)
+                    ->orWhere('pegawai_pin', $user->pegawai_pin ?? $user->id ?? null);
+            })
+            ->first();
+    }
+
+    private function pegawaiPhotoUrl(object $pegawai): string
+    {
+        $photo = trim((string) ($pegawai->fotomobile ?? $pegawai->gambar ?? ''));
+
+        if ($photo === '') {
+            return asset('assets/img/icon/logo.png');
+        }
+
+        if (str_starts_with($photo, 'http://') || str_starts_with($photo, 'https://')) {
+            return $photo;
+        }
+
+        if (str_starts_with($photo, '/')) {
+            return $photo;
+        }
+
+        if (Storage::disk('public')->exists('uploads/karyawan/'.$photo)) {
+            return Storage::url('uploads/karyawan/'.$photo);
+        }
+
+        if (Storage::disk('public')->exists($photo)) {
+            return Storage::url($photo);
+        }
+
+        return asset('assets/img/icon/logo.png');
+    }
+
+    private function savedIdCardPath(object $pegawai): string
+    {
+        $identifier = (string) ($pegawai->pegawai_id ?? $pegawai->nik ?? $pegawai->pegawai_pin ?? 'pegawai');
+        return 'hris/idcards/pegawai-'.$identifier.'.png';
+    }
+
+    private function savedIdCardUrl(object $pegawai): ?string
+    {
+        $path = $this->savedIdCardPath($pegawai);
+
+        if (!Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return Storage::url($path).'?v='.Storage::disk('public')->lastModified($path);
     }
 
 }

@@ -268,6 +268,12 @@
           <strong>Target Taqwa</strong>
         </div>
       </a>
+      <a href="{{ route('hris.idcard') }}" class="item {{ request()->is('hris/id-card') ? 'active' : '' }}">
+        <div class="col">
+          <ion-icon name="id-card-outline"></ion-icon>
+          <strong>ID Card</strong>
+        </div>
+      </a>
        @php
             use Illuminate\Support\Facades\Crypt;
             use Illuminate\Support\Facades\Auth;
