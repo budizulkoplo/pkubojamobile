@@ -2,16 +2,27 @@
 
 @section('title', 'ID Card Pegawai')
 
+@section('header')
+<div class="appHeader bg-primary text-light">
+    <div class="left">
+        <a href="javascript:;" class="headerButton goBack">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+        </a>
+    </div>
+    <div class="pageTitle">ID Card Pegawai</div>
+    <div class="right"></div>
+</div>
+@endsection
+
 @section('content')
 <div class="idcard-page">
     <div class="idcard-shell">
-        <div class="idcard-header">
+        <div class="mobile-summary">
             <div>
-                <div class="eyebrow">HRIS Mobile</div>
-                <h1>ID Card Pegawai</h1>
-                <p>Atur foto dan posisi kartu secara mandiri, lalu simpan hasilnya.</p>
+                <strong>{{ $pegawai->pegawai_nama ?: '-' }}</strong>
+                <span>{{ $pegawai->bagian ?: '-' }}</span>
             </div>
-            <a href="/dashboard" class="back-link">Kembali</a>
+            <ion-icon name="id-card-outline"></ion-icon>
         </div>
 
         <div class="grid">
@@ -52,7 +63,7 @@
                     <div class="adjust-title">Atur Foto</div>
                     <div class="field">
                         <label>Geser Horizontal</label>
-                        <input type="range" id="offsetX" min="-120" max="120" value="24">
+                        <input type="range" id="offsetX" min="-120" max="120" value="26">
                     </div>
                     <div class="field">
                         <label>Geser Vertikal</label>
@@ -75,13 +86,9 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
-@parent
 <script>
 (() => {
-    const card = document.getElementById('cardPreview');
     const photo = document.getElementById('cardPhoto');
     const placeholder = document.getElementById('photoPlaceholder');
     const upload = document.getElementById('photoUpload');
@@ -98,6 +105,7 @@
     const saveUrl = @json(route('hris.idcard.save'));
     const currentSavedUrl = @json($savedCardUrl);
     const currentPhotoUrl = @json($photoUrl);
+    const templateUrl = @json($templateUrl);
     let selectedFile = null;
 
     function setStatus(message, tone = '') {
@@ -115,7 +123,7 @@
     }
 
     function resetValues() {
-        offsetX.value = 24;
+        offsetX.value = 26;
         offsetY.value = 0;
         scale.value = 100;
         applyAdjust();
@@ -141,24 +149,6 @@
         output.height = 612;
         const ctx = output.getContext('2d');
 
-        const drawBackground = () => {
-            const gradient = ctx.createLinearGradient(0, 0, 0, output.height);
-            gradient.addColorStop(0, '#f4fbff');
-            gradient.addColorStop(1, '#eef7f7');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, output.width, output.height);
-
-            ctx.fillStyle = 'rgba(11, 143, 137, 0.12)';
-            ctx.beginPath();
-            ctx.arc(-20, -10, 150, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = 'rgba(255, 159, 67, 0.12)';
-            ctx.beginPath();
-            ctx.arc(420, 0, 120, 0, Math.PI * 2);
-            ctx.fill();
-        };
-
         const loadImage = (src) => new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
@@ -177,22 +167,23 @@
             const width = img.width * zoom;
             const height = img.height * zoom;
             const x = (output.width - width) / 2 + Number(offsetX.value);
-            const y = 74 + Number(offsetY.value);
+            const y = 82 + Number(offsetY.value);
 
             ctx.drawImage(img, x, y, width, height);
         };
 
-        drawBackground();
+        const template = await loadImage(templateUrl);
+        ctx.drawImage(template, 0, 0, output.width, output.height);
 
         if (photo.src && !photo.classList.contains('hidden')) {
             await drawPhoto();
         } else {
             ctx.fillStyle = 'rgba(11, 143, 137, 0.12)';
-            ctx.fillRect(8, 74, output.width - 16, 512);
+            ctx.fillRect(8, 82, output.width - 16, 514);
             ctx.strokeStyle = 'rgba(255,255,255,0.8)';
             ctx.lineWidth = 2;
             ctx.setLineDash([8, 6]);
-            ctx.strokeRect(18, 84, output.width - 36, 492);
+            ctx.strokeRect(18, 92, output.width - 36, 494);
             ctx.setLineDash([]);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 18px sans-serif';
@@ -312,11 +303,8 @@
 <style>
     .idcard-page {
         min-height: 100vh;
-        padding: 14px;
-        background:
-            radial-gradient(circle at top left, rgba(7, 184, 178, .18), transparent 34%),
-            radial-gradient(circle at top right, rgba(255, 159, 67, .12), transparent 28%),
-            linear-gradient(180deg, #f6fbff 0%, #eef7f7 100%);
+        padding: 76px 14px 96px;
+        background: #f6f7fb;
     }
 
     .idcard-shell {
@@ -324,44 +312,44 @@
         margin: 0 auto;
     }
 
-    .idcard-header {
+    .mobile-summary {
         display: flex;
         justify-content: space-between;
         gap: 12px;
         align-items: center;
         margin-bottom: 14px;
-        padding: 16px 18px;
-        border-radius: 20px;
-        background: rgba(255,255,255,.86);
-        box-shadow: 0 16px 40px rgba(15, 23, 42, .08);
+        padding: 14px;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, .08);
     }
 
-    .eyebrow {
-        color: #0b8f89;
-        font-size: 12px;
+    .mobile-summary strong {
+        display: block;
+        color: #1f2937;
+        font-size: 16px;
         font-weight: 800;
-        letter-spacing: .12em;
-        text-transform: uppercase;
+        line-height: 1.2;
     }
 
-    .idcard-header h1 {
-        margin: 4px 0 6px;
-        font-size: 28px;
-        line-height: 1;
-    }
-
-    .idcard-header p {
-        margin: 0;
-        color: #63738a;
+    .mobile-summary span {
+        display: block;
+        margin-top: 3px;
+        color: #6b7280;
         font-size: 13px;
         font-weight: 600;
     }
 
-    .back-link,
+    .mobile-summary ion-icon {
+        flex: 0 0 auto;
+        color: #0b8f89;
+        font-size: 30px;
+    }
+
     .primary,
     .secondary {
         border: 0;
-        border-radius: 14px;
+        border-radius: 8px;
         padding: 11px 16px;
         font: inherit;
         font-weight: 800;
@@ -369,7 +357,6 @@
         cursor: pointer;
     }
 
-    .back-link,
     .secondary {
         color: #16334f;
         background: #edf3f7;
@@ -389,16 +376,16 @@
     .preview-panel,
     .editor-panel {
         padding: 16px;
-        border-radius: 20px;
-        background: rgba(255,255,255,.9);
-        box-shadow: 0 16px 40px rgba(15, 23, 42, .08);
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, .08);
     }
 
     .preview-frame {
         display: flex;
         justify-content: center;
         padding: 12px;
-        border-radius: 18px;
+        border-radius: 8px;
         background: #f4f7fb;
         border: 1px solid rgba(15, 23, 42, .06);
     }
@@ -408,33 +395,22 @@
         width: 396px;
         height: 612px;
         overflow: hidden;
-        border-radius: 18px;
-        background:
-            linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.72)),
-            linear-gradient(135deg, rgba(11,143,137,.18), rgba(33,168,107,.12));
+        border-radius: 8px;
+        background: #fff url('{{ $templateUrl }}') center center / cover no-repeat;
         box-shadow: 0 18px 40px rgba(15, 23, 42, .16);
     }
 
     .card-preview::before {
-        position: absolute;
-        inset: 0;
-        content: "";
-        background-image:
-            linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px);
-        background-size: 42px 42px;
-        opacity: .35;
-        pointer-events: none;
+        display: none;
     }
 
     .card-photo,
-    .photo-placeholder,
-    .saved-overlay {
+    .photo-placeholder {
         position: absolute;
-        top: 74px;
+        top: 82px;
         left: 50%;
         width: 396px;
-        height: 512px;
+        height: 514px;
         transform: translate(-172px, 0) scale(1);
         transform-origin: center bottom;
     }
@@ -459,14 +435,18 @@
     }
 
     .saved-overlay {
+        position: absolute;
         z-index: 5;
+        inset: 0;
+        width: 100%;
+        height: 100%;
         object-fit: contain;
         background: #fff;
     }
 
     .identity-bar {
         position: absolute;
-        z-index: 6;
+        z-index: 2;
         right: 8px;
         left: 8px;
         bottom: 15px;
@@ -588,11 +568,6 @@
     }
 
     @media (max-width: 480px) {
-        .idcard-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
         .card-preview {
             width: 100%;
             max-width: 396px;
@@ -601,15 +576,13 @@
         }
 
         .card-photo,
-        .photo-placeholder,
-        .saved-overlay {
+        .photo-placeholder {
             width: 100%;
             height: 100%;
         }
 
         .actions .primary,
-        .actions .secondary,
-        .back-link {
+        .actions .secondary {
             width: 100%;
             text-align: center;
         }

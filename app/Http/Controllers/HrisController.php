@@ -28,6 +28,7 @@ class HrisController extends Controller
             'pegawai' => $pegawai,
             'photoUrl' => $this->pegawaiPhotoUrl($pegawai),
             'savedCardUrl' => $this->savedIdCardUrl($pegawai),
+            'templateUrl' => asset('idcard/background.jpg'),
         ]);
     }
 
@@ -58,11 +59,17 @@ class HrisController extends Controller
         }
 
         $path = $this->savedIdCardPath($pegawai);
-        Storage::disk('public')->put($path, $image);
+        $absolutePath = $this->smartIdCardAbsolutePath($pegawai);
+
+        if (!is_dir(dirname($absolutePath))) {
+            mkdir(dirname($absolutePath), 0775, true);
+        }
+
+        file_put_contents($absolutePath, $image);
 
         return response()->json([
             'message' => 'ID card berhasil disimpan.',
-            'url' => Storage::url($path).'?v='.time(),
+            'url' => $this->smartStorageUrl($path).'?v='.time(),
         ]);
     }
 
@@ -902,17 +909,36 @@ class HrisController extends Controller
             return null;
         }
 
+        $nik = trim((string) ($user->nik ?? ''));
+        $pin = trim((string) ($user->pegawai_pin ?? $user->id ?? ''));
+
+        if ($nik === '' && $pin === '') {
+            return null;
+        }
+
         return DB::table('pegawai')
-            ->where(function ($query) use ($user): void {
-                $query->where('nik', $user->nik ?? null)
-                    ->orWhere('pegawai_pin', $user->pegawai_pin ?? $user->id ?? null);
+            ->where(function ($query) use ($nik, $pin): void {
+                if ($nik !== '') {
+                    $query->where('nik', $nik);
+                }
+
+                if ($pin !== '') {
+                    $query->orWhere('pegawai_pin', $pin);
+                }
             })
             ->first();
     }
 
     private function pegawaiPhotoUrl(object $pegawai): string
     {
-        $photo = trim((string) ($pegawai->fotomobile ?? $pegawai->gambar ?? ''));
+        $photos = [
+            trim((string) ($pegawai->pas_photo ?? '')),
+            trim((string) ($pegawai->fotomobile ?? '')),
+            trim((string) ($pegawai->gambar ?? '')),
+            trim((string) ($pegawai->foto ?? '')),
+        ];
+
+        $photo = collect($photos)->first(fn (string $value): bool => $value !== '') ?? '';
 
         if ($photo === '') {
             return asset('assets/img/icon/logo.png');
@@ -924,6 +950,12 @@ class HrisController extends Controller
 
         if (str_starts_with($photo, '/')) {
             return $photo;
+        }
+
+        $smartPhotoPath = $this->smartStoragePublicPath($photo);
+        if (is_file($smartPhotoPath)) {
+            $mime = mime_content_type($smartPhotoPath) ?: 'image/jpeg';
+            return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($smartPhotoPath));
         }
 
         if (Storage::disk('public')->exists('uploads/karyawan/'.$photo)) {
@@ -940,18 +972,40 @@ class HrisController extends Controller
     private function savedIdCardPath(object $pegawai): string
     {
         $identifier = (string) ($pegawai->pegawai_id ?? $pegawai->nik ?? $pegawai->pegawai_pin ?? 'pegawai');
-        return 'hris/idcards/pegawai-'.$identifier.'.png';
+        return 'hris/employees/id-cards/pegawai-'.$identifier.'.png';
     }
 
     private function savedIdCardUrl(object $pegawai): ?string
     {
         $path = $this->savedIdCardPath($pegawai);
 
-        if (!Storage::disk('public')->exists($path)) {
+        $absolutePath = $this->smartStoragePublicPath($path);
+
+        if (!is_file($absolutePath)) {
             return null;
         }
 
-        return Storage::url($path).'?v='.Storage::disk('public')->lastModified($path);
+        return $this->smartStorageUrl($path).'?v='.filemtime($absolutePath);
+    }
+
+    private function smartIdCardAbsolutePath(object $pegawai): string
+    {
+        return $this->smartStoragePublicPath($this->savedIdCardPath($pegawai));
+    }
+
+    private function smartStoragePublicPath(string $path = ''): string
+    {
+        $base = rtrim((string) env('SMART_HRIS_STORAGE_PUBLIC_PATH', base_path('../smartrs/storage/app/public')), DIRECTORY_SEPARATOR);
+        $relative = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($path, '/\\'));
+
+        return $relative === '' ? $base : $base.DIRECTORY_SEPARATOR.$relative;
+    }
+
+    private function smartStorageUrl(string $path): string
+    {
+        $base = rtrim((string) env('SMART_HRIS_URL', 'https://smart.rspkuboja.com'), '/');
+
+        return $base.'/storage/'.ltrim($path, '/');
     }
 
 }
