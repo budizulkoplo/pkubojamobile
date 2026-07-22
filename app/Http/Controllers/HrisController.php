@@ -12,6 +12,8 @@ use Illuminate\View\View;
 
 class HrisController extends Controller
 {
+    private const MAKSIMAL_JAM_LEMBUR_AKTIF = 12;
+
     public function idCard(): View|\Illuminate\Http\RedirectResponse
     {
         if (!Auth::guard('karyawan')->check()) {
@@ -264,20 +266,31 @@ class HrisController extends Controller
         $user = Auth::guard('karyawan')->user();
         $pin  = $user->id;
         $tanggal = $request->get('tanggal') ?? date('Y-m-d');
+        $batasSesiAktif = Carbon::now()
+            ->subHours(self::MAKSIMAL_JAM_LEMBUR_AKTIF)
+            ->format('Y-m-d H:i:s');
 
         // Ambil jadwal lembur pada tanggal itu + sesi aktif lintas hari
         $lembur = DB::table('lembur')
             ->where('pegawai_pin', $pin)
             ->where('jenis', 'lembur')
             ->whereNull('deleted_at')
-            ->where(function ($query) use ($tanggal): void {
+            ->where(function ($query) use ($tanggal, $pin, $batasSesiAktif): void {
                 $query->whereDate('tgllembur', $tanggal)
-                    ->orWhere(function ($subQuery): void {
+                    ->orWhere(function ($subQuery) use ($pin, $batasSesiAktif): void {
                         $subQuery->whereNotExists(function ($existsQuery) {
                             $existsQuery->select(DB::raw(1))
                                 ->from('presensi as p2')
                                 ->whereColumn('p2.idlembur', 'lembur.idlembur')
                                 ->where('p2.inoutmode', 6);
+                        })
+                        ->whereExists(function ($existsQuery) use ($pin, $batasSesiAktif) {
+                            $existsQuery->select(DB::raw(1))
+                                ->from('presensi as p_in')
+                                ->whereColumn('p_in.idlembur', 'lembur.idlembur')
+                                ->where('p_in.nik', $pin)
+                                ->where('p_in.inoutmode', 5)
+                                ->whereRaw("CONCAT(p_in.tgl_presensi, ' ', p_in.jam_in) >= ?", [$batasSesiAktif]);
                         });
                     });
             })
@@ -402,6 +415,13 @@ class HrisController extends Controller
                 ->first();
             if (!$cekIn) {
                 return response()->json(['status' => 'error', 'message' => 'Anda belum melakukan Lembur In.']);
+            }
+
+            if (!$this->isWaktuPresensiMasihAktif($cekIn->tgl_presensi, $cekIn->jam_in)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Sesi Lembur In sudah melewati batas 12 jam.'
+                ]);
             }
         }
 
@@ -646,6 +666,13 @@ class HrisController extends Controller
             if (!$cekIn) {
                 return response()->json(['status' => 'error', 'message' => 'Anda belum melakukan Operasi In.']);
             }
+
+            if (!$this->isWaktuPresensiMasihAktif($cekIn->tgl_presensi, $cekIn->jam_in)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Sesi Operasi In sudah melewati batas 12 jam.'
+                ]);
+            }
         }
 
         // Proses simpan foto base64
@@ -803,29 +830,7 @@ class HrisController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Alasan lembur wajib diisi.']);
         }
 
-        // Ambil sesi lembur aktif terakhir, walaupun IN dibuat di hari sebelumnya
-        $lembur = DB::table('lembur')
-            ->where('pegawai_pin', $pin)
-            ->where('jenis', 'lembur')
-            ->whereNull('deleted_at')
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('presensi as p2')
-                    ->whereColumn('p2.idlembur', 'lembur.idlembur')
-                    ->where('p2.inoutmode', 6);
-            })
-            ->orderByDesc('tgllembur')
-            ->orderByDesc('idlembur')
-            ->first();
-
-        // Cek apakah sesi aktif tadi sudah OUT
-        $lemburSudahOut = false;
-        if ($lembur) {
-            $lemburSudahOut = DB::table('presensi')
-                ->where('idlembur', $lembur->idlembur)
-                ->where('inoutmode', 6)
-                ->exists();
-        }
+        $lembur = $this->getSesiLemburAktif($pin);
 
         // ================================
         // ✅ PROSES IN
@@ -833,7 +838,7 @@ class HrisController extends Controller
         if ($inoutmode == 5) {
 
             // ❌ Jika lembur sebelumnya belum OUT → larang IN baru
-            if ($lembur && !$lemburSudahOut) {
+            if ($lembur) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Anda masih dalam sesi lembur sebelumnya. Silakan Lembur Out dahulu.'
@@ -857,7 +862,10 @@ class HrisController extends Controller
         if ($inoutmode == 6) {
 
             if (!$lembur) {
-                return response()->json(['status' => 'error', 'message' => 'Anda belum memiliki sesi Lembur In yang aktif.']);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda belum memiliki sesi Lembur In aktif, atau sesi sebelumnya sudah melewati batas 12 jam.'
+                ]);
             }
 
             $idlembur = $lembur->idlembur;
@@ -902,6 +910,48 @@ class HrisController extends Controller
 
         $pesan = $inoutmode == 5 ? 'Lembur In berhasil dicatat!' : 'Lembur Out berhasil dicatat!';
         return response()->json(['status' => 'success', 'message' => $pesan]);
+    }
+
+    private function getSesiLemburAktif($pin): ?object
+    {
+        $lembur = DB::table('lembur')
+            ->join('presensi as p_in', function ($join) use ($pin) {
+                $join->on('p_in.idlembur', '=', 'lembur.idlembur')
+                    ->where('p_in.nik', '=', $pin)
+                    ->where('p_in.inoutmode', '=', 5);
+            })
+            ->where('lembur.pegawai_pin', $pin)
+            ->where('lembur.jenis', 'lembur')
+            ->whereNull('lembur.deleted_at')
+            ->whereNotExists(function ($query) use ($pin) {
+                $query->select(DB::raw(1))
+                    ->from('presensi as p_out')
+                    ->whereColumn('p_out.idlembur', 'lembur.idlembur')
+                    ->where('p_out.nik', $pin)
+                    ->where('p_out.inoutmode', 6);
+            })
+            ->select('lembur.*', 'p_in.tgl_presensi as lembur_in_tanggal', 'p_in.jam_in as lembur_in_jam')
+            ->orderByDesc('p_in.tgl_presensi')
+            ->orderByDesc('p_in.jam_in')
+            ->orderByDesc('lembur.idlembur')
+            ->first();
+
+        if (!$lembur) {
+            return null;
+        }
+
+        if (!$this->isWaktuPresensiMasihAktif($lembur->lembur_in_tanggal, $lembur->lembur_in_jam)) {
+            return null;
+        }
+
+        return $lembur;
+    }
+
+    private function isWaktuPresensiMasihAktif($tanggal, $jam): bool
+    {
+        $waktuIn = Carbon::createFromFormat('Y-m-d H:i:s', "{$tanggal} {$jam}");
+
+        return $waktuIn->diffInMinutes(Carbon::now()) <= self::MAKSIMAL_JAM_LEMBUR_AKTIF * 60;
     }
 
     public function verifyLembur($id)
