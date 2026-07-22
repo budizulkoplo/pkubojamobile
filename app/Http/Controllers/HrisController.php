@@ -265,11 +265,24 @@ class HrisController extends Controller
         $pin  = $user->id;
         $tanggal = $request->get('tanggal') ?? date('Y-m-d');
 
-        // Ambil semua jadwal lembur pegawai pada tanggal itu
+        // Ambil jadwal lembur pada tanggal itu + sesi aktif lintas hari
         $lembur = DB::table('lembur')
             ->where('pegawai_pin', $pin)
-            ->whereDate('tgllembur', $tanggal)
             ->where('jenis', 'lembur')
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($tanggal): void {
+                $query->whereDate('tgllembur', $tanggal)
+                    ->orWhere(function ($subQuery): void {
+                        $subQuery->whereNotExists(function ($existsQuery) {
+                            $existsQuery->select(DB::raw(1))
+                                ->from('presensi as p2')
+                                ->whereColumn('p2.idlembur', 'lembur.idlembur')
+                                ->where('p2.inoutmode', 6);
+                        });
+                    });
+            })
+            ->orderByDesc('tgllembur')
+            ->orderByDesc('idlembur')
             ->get();
 
         // Ambil semua ID lembur
@@ -790,23 +803,28 @@ class HrisController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Alasan lembur wajib diisi.']);
         }
 
-        // ✅ Ambil lembur terakhir hari ini
+        // Ambil sesi lembur aktif terakhir, walaupun IN dibuat di hari sebelumnya
         $lembur = DB::table('lembur')
             ->where('pegawai_pin', $pin)
-            ->whereDate('tgllembur', $tgl_presensi)
+            ->where('jenis', 'lembur')
             ->whereNull('deleted_at')
-            ->orderBy('idlembur', 'desc')
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('presensi as p2')
+                    ->whereColumn('p2.idlembur', 'lembur.idlembur')
+                    ->where('p2.inoutmode', 6);
+            })
+            ->orderByDesc('tgllembur')
+            ->orderByDesc('idlembur')
             ->first();
 
-        // ✅ Cek apakah lembur terakhir sudah OUT
+        // Cek apakah sesi aktif tadi sudah OUT
         $lemburSudahOut = false;
         if ($lembur) {
-            $cekOut = DB::table('presensi')
+            $lemburSudahOut = DB::table('presensi')
                 ->where('idlembur', $lembur->idlembur)
                 ->where('inoutmode', 6)
-                ->first();
-
-            $lemburSudahOut = $cekOut ? true : false;
+                ->exists();
         }
 
         // ================================
@@ -839,11 +857,7 @@ class HrisController extends Controller
         if ($inoutmode == 6) {
 
             if (!$lembur) {
-                return response()->json(['status' => 'error', 'message' => 'Anda belum melakukan Lembur In.']);
-            }
-
-            if ($lemburSudahOut) {
-                return response()->json(['status' => 'error', 'message' => 'Lembur sebelumnya sudah selesai. Silakan Lembur In lagi.']);
+                return response()->json(['status' => 'error', 'message' => 'Anda belum memiliki sesi Lembur In yang aktif.']);
             }
 
             $idlembur = $lembur->idlembur;
