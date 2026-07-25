@@ -192,6 +192,7 @@ class DashboardController extends Controller
             'present_days' => 0,
             'late_days' => 0,
             'late_minutes' => 0,
+            'late_seconds' => 0,
             'leave_days' => 0,
             'outside_duty_days' => 0,
             'double_shift_days' => 0,
@@ -204,7 +205,7 @@ class DashboardController extends Controller
             $hasAttendance = !empty($day['jam_masuk_actual'] ?? '') || !empty($day['jam_pulang_actual'] ?? '');
             $hasSchedule = !empty($day['has_schedule']);
             $isSpecialDay = !empty($day['status_khusus'] ?? '');
-            $lateMinutes = (int) ($day['late_minutes'] ?? 0);
+            $lateSeconds = (int) ($day['late_seconds'] ?? 0);
 
             if ($hasSchedule) {
                 $summary['scheduled_days']++;
@@ -214,9 +215,9 @@ class DashboardController extends Controller
                 $summary['present_days']++;
             }
 
-            if ($hasSchedule && $hasAttendance && !$isSpecialDay && $lateMinutes > 0) {
+            if ($hasSchedule && $hasAttendance && !$isSpecialDay && $lateSeconds > 0) {
                 $summary['late_days']++;
-                $summary['late_minutes'] += $lateMinutes;
+                $summary['late_seconds'] += $lateSeconds;
             }
 
             if (str_contains($status, 'cuti')) {
@@ -239,6 +240,8 @@ class DashboardController extends Controller
         if ($summary['scheduled_days'] > 0) {
             $summary['attendance_rate'] = (int) round(($summary['present_days'] / $summary['scheduled_days']) * 100);
         }
+
+        $summary['late_minutes'] = (int) floor($summary['late_seconds'] / 60);
 
         return [$summary, $calendar];
     }
