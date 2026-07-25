@@ -334,6 +334,13 @@ class KalenderController extends Controller
 
     protected function processOvertimeStats(array &$stats, array $data): void
     {
+        if (!empty($data['lembur_data'])) {
+            foreach ($data['lembur_data'] as $lembur) {
+                $stats['lembur'] += ((int) ($lembur['durasi'] ?? 0)) * 60;
+            }
+            return;
+        }
+
         if (!empty($data['alasan_lembur']) && !empty($data['lembur_masuk']) && !empty($data['lembur_pulang'])) {
             $stats['lembur'] += $this->calculateOvertimeSeconds(
                 $data['lembur_masuk'],

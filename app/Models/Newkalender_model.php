@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Newkalender_model extends Model
 {
@@ -75,6 +76,9 @@ class Newkalender_model extends Model
         
         // Get special status data (cuti, tugas luar, double shift)
         $this->getSpecialStatusData($pegawaiPin, $startDate, $endDate, $dataKalender);
+
+        // Terapkan koreksi presensi dari admin SMART RS sebelum hitung statistik/telat.
+        $this->applyAttendanceAdjustments($pegawaiPin, $startDate, $endDate, $dataKalender);
         
         // Calculate late and other calculations
         $this->calculateLateAndOther($dataKalender, $this->getTanggalAktifKeterlambatan());
@@ -488,6 +492,99 @@ class Newkalender_model extends Model
                 ];
             }
         }
+    }
+
+    private function applyAttendanceAdjustments($pegawaiPin, $startDate, $endDate, &$dataKalender)
+    {
+        if (!Schema::hasTable('attendance_adjustments')) {
+            return;
+        }
+
+        $adjustments = DB::table('attendance_adjustments')
+            ->where('pegawai_pin', $pegawaiPin)
+            ->whereBetween('tgl', [$startDate, $endDate])
+            ->orderBy('tgl')
+            ->get();
+
+        foreach ($adjustments as $adjustment) {
+            $tgl = (string) $adjustment->tgl;
+            if (!isset($dataKalender[$tgl])) {
+                continue;
+            }
+
+            $entryType = (string) $adjustment->entry_type;
+            $time = !empty($adjustment->time) ? substr((string) $adjustment->time, 0, 8) : '';
+
+            if (in_array($entryType, ['regular_in', 'regular_out'], true)) {
+                if ($entryType === 'regular_in') {
+                    $dataKalender[$tgl]['jam_masuk_actual'] = $time;
+                    $dataKalender[$tgl]['jam_masuk'] = $time;
+                } else {
+                    $dataKalender[$tgl]['jam_pulang_actual'] = $time;
+                    $dataKalender[$tgl]['jam_pulang'] = !empty($dataKalender[$tgl]['is_night_shift']) ? $time . ' (esok)' : $time;
+                }
+
+                $dataKalender[$tgl]['has_attendance'] = !empty($dataKalender[$tgl]['jam_masuk_actual'])
+                    || !empty($dataKalender[$tgl]['jam_pulang_actual']);
+                $dataKalender[$tgl]['attendance_adjustment_note'] = (string) ($adjustment->note ?? '');
+                continue;
+            }
+
+            if (!in_array($entryType, ['overtime_in', 'overtime_out', 'operation_in', 'operation_out'], true)) {
+                continue;
+            }
+
+            $tipe = str_starts_with($entryType, 'operation_') ? 'operasi' : 'lembur';
+            $targetId = $tipe === 'operasi'
+                ? (int) ($adjustment->idoperasi ?? $adjustment->idlembur ?? 0)
+                : (int) ($adjustment->idlembur ?? 0);
+
+            foreach ($dataKalender[$tgl]['lembur_data'] as &$lembur) {
+                if (($lembur['tipe'] ?? '') !== $tipe) {
+                    continue;
+                }
+
+                $lemburId = (int) ($lembur['idlembur'] ?? 0);
+                if ($lemburId !== $targetId) {
+                    continue;
+                }
+
+                if (str_ends_with($entryType, '_in')) {
+                    $lembur['jam_in'] = $time;
+                } else {
+                    $lembur['jam_out'] = $time;
+                }
+
+                if (!empty($lembur['jam_in']) && !empty($lembur['jam_out'])) {
+                    $lembur['durasi'] = $this->calculateMinutesBetween($tgl, $lembur['jam_in'], $lembur['jam_out']);
+                }
+
+                $lembur['adjustment_note'] = (string) ($adjustment->note ?? '');
+            }
+            unset($lembur);
+        }
+
+        foreach ($dataKalender as &$data) {
+            if (!empty($data['lembur_data'])) {
+                $data['lembur_data'] = array_values($data['lembur_data']);
+            }
+        }
+    }
+
+    private function calculateMinutesBetween(string $date, string $startTime, string $endTime): int
+    {
+        $start = strtotime($date . ' ' . str_replace(' (esok)', '', $startTime));
+        $end = strtotime($date . ' ' . str_replace(' (esok)', '', $endTime));
+
+        if ($start === false || $end === false) {
+            return 0;
+        }
+
+        if ($end < $start) {
+            $end = strtotime('+1 day', $end);
+        }
+
+        return max(0, (int) floor(($end - $start) / 60));
     }
     
     private function getSpecialStatusData($pegawaiPin, $startDate, $endDate, &$dataKalender)

@@ -91,6 +91,69 @@
     </div>
 </div>
 
+<div class="performance-card mb-3">
+    <div class="todaypresence">
+        <div class="rekappresensi">
+            <h3 class="section-title">Performance Presensi</h3>
+            <div class="text-center mb-2" style="font-size: 11px; color: #777;">
+                Periode {{ \Carbon\Carbon::parse($periodePresensi . '-26')->subMonth()->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($periodePresensi . '-25')->format('d/m/Y') }}
+            </div>
+            <div class="row text-center">
+                <div class="col-3 mb-2">
+                    <div class="card stat-card" data-type="presensi" data-label="Hadir">
+                        <div class="card-body position-relative p-2">
+                            <span class="badge bg-success position-absolute count-badge">{{ $attendancePerformance['present_days'] ?? 0 }}</span>
+                            <ion-icon name="checkmark-circle-outline" class="text-success stat-icon"></ion-icon>
+                            <span class="stat-label">Hadir</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3 mb-2">
+                    <div class="card stat-card" data-type="presensi" data-label="Telat">
+                        <div class="card-body position-relative p-2">
+                            <span class="badge bg-danger position-absolute count-badge">{{ $attendancePerformance['late_days'] ?? 0 }}</span>
+                            <ion-icon name="alarm-outline" class="text-danger stat-icon"></ion-icon>
+                            <span class="stat-label">Telat</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3 mb-2">
+                    <div class="card stat-card" data-type="presensi" data-label="Cuti">
+                        <div class="card-body position-relative p-2">
+                            <span class="badge bg-warning position-absolute count-badge">{{ $attendancePerformance['leave_days'] ?? 0 }}</span>
+                            <ion-icon name="calendar-clear-outline" class="text-warning stat-icon"></ion-icon>
+                            <span class="stat-label">Cuti</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3 mb-2">
+                    <div class="card stat-card" data-type="presensi" data-label="Tugas Luar">
+                        <div class="card-body position-relative p-2">
+                            <span class="badge bg-info position-absolute count-badge">{{ $attendancePerformance['outside_duty_days'] ?? 0 }}</span>
+                            <ion-icon name="briefcase-outline" class="text-info stat-icon"></ion-icon>
+                            <span class="stat-label">Tugas Luar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row text-center mt-1">
+                <div class="col-4">
+                    <small class="text-muted d-block">Jadwal</small>
+                    <strong>{{ $attendancePerformance['scheduled_days'] ?? 0 }} hari</strong>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted d-block">Kehadiran</small>
+                    <strong>{{ $attendancePerformance['attendance_rate'] ?? 0 }}%</strong>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted d-block">Durasi Telat</small>
+                    <strong>{{ $attendancePerformance['late_minutes'] ?? 0 }} menit</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Task Management Summary -->
 <div class="performance-card mb-3">
     <div class="todaypresence">
@@ -208,6 +271,24 @@
         </button>
 
     </div>
+</div>
+
+<!-- Modal Presensi -->
+<div class="modal fade" id="presensiModal" tabindex="-1" aria-labelledby="presensiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="section-title text-white mb-0" id="presensiModalLabel">Detail Presensi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group" id="presensiList"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Tiket -->
@@ -748,18 +829,17 @@ document.addEventListener('DOMContentLoaded', function () {
         // Filter data berdasarkan label
         Object.keys(presensiData).forEach(tanggal => {
             const data = presensiData[tanggal];
-            const jamMasuk = data.masuk?.jam_in;
-            const jamPulang = data.pulang?.jam_in;
+            const jamMasuk = timeOnly(data.jam_masuk_actual || data.jam_masuk || '');
+            const jamPulang = timeOnly(data.jam_pulang_actual || data.jam_pulang || '');
             const jamMasukShift = data.jam_masuk_shift;
-            
+            const statusKhusus = (data.status_khusus || '').toLowerCase();
+            const lateMinutes = parseInt(data.late_minutes || 0, 10);
+
             let status = 'Hadir';
             if (!jamMasuk && !jamPulang) {
                 status = 'Tidak Hadir';
-            } else if (jamMasuk && jamMasukShift) {
-                const isTerlambat = new Date(`1970-01-01T${jamMasuk}`) > new Date(`1970-01-01T${jamMasukShift}`);
-                if (isTerlambat) {
-                    status = 'Terlambat';
-                }
+            } else if (lateMinutes > 0) {
+                status = 'Terlambat';
             }
 
             // Filter sesuai label
@@ -767,6 +847,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 filteredData.push({ tanggal, data, status });
             } else if (label === 'Telat' && status === 'Terlambat') {
                 filteredData.push({ tanggal, data, status });
+            } else if (label === 'Cuti' && statusKhusus.includes('cuti')) {
+                filteredData.push({ tanggal, data, status: data.status_khusus || label });
+            } else if (label === 'Tugas Luar' && (statusKhusus.includes('tugas luar') || statusKhusus.includes('dinas luar'))) {
+                filteredData.push({ tanggal, data, status: data.status_khusus || label });
+            } else if (label === 'Double Shift' && statusKhusus.includes('double shift')) {
+                filteredData.push({ tanggal, data, status: data.status_khusus || label });
             }
         });
 
@@ -785,14 +871,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (filteredData.length === 0) {
             presensiList.innerHTML = `<div class="text-center p-3 text-muted">
-                Tidak ada data presensi untuk <b>${label}</b>.
+                Tidak ada data untuk <b>${label}</b>.
             </div>`;
         } else {
             filteredData.forEach(({ tanggal, data, status }) => {
-                const jamMasuk = data.masuk?.jam_in;
-                const jamPulang = data.pulang?.jam_in;
+                const jamMasuk = timeOnly(data.jam_masuk_actual || data.jam_masuk || '');
+                const jamPulang = timeOnly(data.jam_pulang_actual || data.jam_pulang || '');
                 const jamMasukShift = data.jam_masuk_shift;
-                
+
                 const listItem = document.createElement('div');
                 listItem.className = 'list-group-item list-group-item-action border-bottom';
                 
@@ -812,14 +898,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="row small text-muted">
                         <div class="col-6">
-                            <strong>Masuk:</strong> ${jamMasuk ? new Date(`1970-01-01T${jamMasuk}`).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-'}
+                            <strong>Masuk:</strong> ${formatTime(jamMasuk)}
                         </div>
                         <div class="col-6">
-                            <strong>Pulang:</strong> ${jamPulang ? new Date(`1970-01-01T${jamPulang}`).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-'}
+                            <strong>Pulang:</strong> ${formatTime(jamPulang)}
                         </div>
                     </div>
                     ${data.shift && data.shift !== '-' ? `<small class="text-muted">Shift: ${data.shift}</small>` : ''}
                     ${jamMasukShift ? `<small class="text-muted d-block">Jam Shift: ${jamMasukShift}</small>` : ''}
+                    ${data.attendance_adjustment_note ? `<small class="text-primary d-block">Koreksi: ${data.attendance_adjustment_note}</small>` : ''}
                 `;
                 presensiList.appendChild(listItem);
             });
@@ -1112,6 +1199,11 @@ function formatSimpleDate(dateString) {
     }
 
     function getPresensiStatusColor(status) {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized.includes('cuti')) return 'warning';
+        if (normalized.includes('tugas luar') || normalized.includes('dinas luar')) return 'info';
+        if (normalized.includes('double shift')) return 'primary';
+
         switch(status) {
             case 'Hadir': return 'success';
             case 'Terlambat': return 'danger';
@@ -1119,7 +1211,22 @@ function formatSimpleDate(dateString) {
             default: return 'dark';
         }
     }
-    
+
+    function timeOnly(value) {
+        const text = String(value || '').replace(/<[^>]*>/g, '').replace(' (esok)', '').trim();
+        const match = text.match(/\d{2}:\d{2}(?::\d{2})?/);
+        return match ? match[0] : '';
+    }
+
+    function formatTime(value) {
+        if (!value) return '-';
+        try {
+            return new Date(`1970-01-01T${value}`).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+        } catch (e) {
+            return value;
+        }
+    }
+
 });
 
     function openWebsite() {

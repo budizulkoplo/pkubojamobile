@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Newkalender_model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +77,8 @@ class DashboardController extends Controller
 
         // --- 4. Saldo voucher ---
         $saldoVoucher = $user->saldo ?? 0;
+        $periodePresensi = date('Y-m');
+        [$attendancePerformance, $rekapPresensiBulanIni] = $this->attendancePerformance($pin, $periodePresensi);
 
         // --- 5. Jumlah minggu dalam bulan ---
         $start = Carbon::create($tahunini, $bulanini, 1);
@@ -167,9 +170,77 @@ class DashboardController extends Controller
             [
                 'ticketSummary' => $ticketSummary,
                 'userTickets' => $userTickets,
+                'periodePresensi' => $periodePresensi,
+                'attendancePerformance' => $attendancePerformance,
+                'rekapPresensiBulanIni' => $rekapPresensiBulanIni,
             ]
         ));
 
+    }
+
+    private function attendancePerformance(string $pin, string $periode): array
+    {
+        try {
+            $calendar = (new Newkalender_model())->getDataKalenderWithNightShift($pin, $periode);
+        } catch (\Throwable $exception) {
+            \Log::error('Gagal mengambil performance presensi dashboard: ' . $exception->getMessage());
+            $calendar = [];
+        }
+
+        $summary = [
+            'scheduled_days' => 0,
+            'present_days' => 0,
+            'late_days' => 0,
+            'late_minutes' => 0,
+            'leave_days' => 0,
+            'outside_duty_days' => 0,
+            'double_shift_days' => 0,
+            'overtime_minutes' => 0,
+            'attendance_rate' => 0,
+        ];
+
+        foreach ($calendar as $day) {
+            $status = strtolower((string) ($day['status_khusus'] ?? ''));
+            $hasAttendance = !empty($day['jam_masuk_actual'] ?? '') || !empty($day['jam_pulang_actual'] ?? '');
+            $hasSchedule = !empty($day['has_schedule']);
+            $isSpecialDay = !empty($day['status_khusus'] ?? '');
+            $lateMinutes = (int) ($day['late_minutes'] ?? 0);
+
+            if ($hasSchedule) {
+                $summary['scheduled_days']++;
+            }
+
+            if ($hasAttendance) {
+                $summary['present_days']++;
+            }
+
+            if ($hasSchedule && $hasAttendance && !$isSpecialDay && $lateMinutes > 0) {
+                $summary['late_days']++;
+                $summary['late_minutes'] += $lateMinutes;
+            }
+
+            if (str_contains($status, 'cuti')) {
+                $summary['leave_days']++;
+            }
+
+            if (str_contains($status, 'tugas luar') || str_contains($status, 'dinas luar')) {
+                $summary['outside_duty_days']++;
+            }
+
+            if (str_contains($status, 'double shift')) {
+                $summary['double_shift_days']++;
+            }
+
+            foreach (($day['lembur_data'] ?? []) as $lembur) {
+                $summary['overtime_minutes'] += (int) ($lembur['durasi'] ?? 0);
+            }
+        }
+
+        if ($summary['scheduled_days'] > 0) {
+            $summary['attendance_rate'] = (int) round(($summary['present_days'] / $summary['scheduled_days']) * 100);
+        }
+
+        return [$summary, $calendar];
     }
 
     public function dashboardadmin()
