@@ -244,7 +244,23 @@
                 $infaqPdm + $infaqTerlambat + $bpjs + $bpjstk + $koperasi;
         }
 
+        $uangmakan = $rekap['uangMakan'] ?? $uangmakan;
+        $nilaiKehadiran = $rekap['kehadiranVal'] ?? $nilaiKehadiran;
+        $tugasLuarVal = $rekap['tugasluarVal'] ?? $tugasLuarVal;
+        $lemburVal = $rekap['lemburVal'] ?? $lemburVal;
+        $operasiVal = $rekap['operasiVal'] ?? $operasiVal;
+        $doubleShiftVal = $rekap['doubleshiftVal'] ?? $doubleShiftVal;
+        $totalPenghasilan = $rekap['jumlah'] ?? $totalPenghasilan;
+        $zis = $rekap['zis'] ?? $zis;
+        $qurban = $rekap['qurban'] ?? $qurban;
+        $potransport = $rekap['potransport'] ?? $potransport;
+        $infaqPdm = $rekap['infaqPdm'] ?? $infaqPdm;
+        $infaqTerlambat = $rekap['infaqTerlambat'] ?? $infaqTerlambat;
+        $bpjs = $rekap['bpjs'] ?? $bpjs;
+        $bpjstk = $rekap['bpjstk'] ?? $bpjstk;
+        $totalPotongan = $rekap['potongan'] ?? $totalPotongan;
         $netto = $totalPenghasilan - $totalPotongan;
+        $netto = $rekap['grandtotal'] ?? $netto;
 
         @endphp
 

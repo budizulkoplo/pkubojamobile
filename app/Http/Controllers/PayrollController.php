@@ -2,12 +2,39 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Newkalender_model;
 
 class PayrollController extends Controller
 {
+    private const EDITABLE_FIELDS = [
+        'jmlabsensi',
+        'jmlterlambat',
+        'konversilembur',
+        'konversioperasi',
+        'cuti',
+        'tugasluar',
+        'totalharikerja',
+        'doubleshift',
+        'jmlrujukan',
+        'tunjRujukan',
+        'uangMakan',
+        'kehadiranVal',
+        'tugasluarVal',
+        'lemburVal',
+        'operasiVal',
+        'doubleshiftVal',
+        'jumlah',
+        'zis',
+        'qurban',
+        'potransport',
+        'infaqPdm',
+        'infaqTerlambat',
+        'potongan',
+        'grandtotal',
+    ];
+
     public function index(Request $request)
     {
         $pin = auth()->user()->id;
@@ -114,7 +141,7 @@ class PayrollController extends Controller
         $rekap = (array) $rekap;
         $rekap['jmlrujukan'] = $jmlrujukan;
         $rekap['use_new_system'] = $useNewSystem; // Flag untuk view
-        $rekap = $this->syncLateFromCalendar($rekap, $periode);
+        $rekap = $this->enrichPayrollSummary($rekap, $periode);
 
         $site = [
             'icon' => 'logopku.png',
@@ -175,6 +202,8 @@ class PayrollController extends Controller
                 'mg.bpjstk',
                 'mg.bpjskes',
                 'mg.koperasi',
+                DB::raw('0 as qurban'),
+                DB::raw('0 as potransport'),
                 'mg.direktur',
                 'mg.harian',
 
@@ -277,7 +306,7 @@ class PayrollController extends Controller
         $rekap = (array) $rekap;
         $rekap['jmlrujukan'] = $jmlrujukan;
         $rekap['use_new_system'] = $useNewSystem;
-        $rekap = $this->syncLateFromCalendar($rekap, $periode);
+        $rekap = $this->enrichPayrollSummary($rekap, $periode);
 
         $site = [
             'icon' => 'logopku.png',
@@ -296,16 +325,114 @@ class PayrollController extends Controller
         return $pdf->download('Slip-Gaji-'.$rekap['pegawai_nama'].'-'.$periode.'.pdf');
     }
 
-    private function syncLateFromCalendar(array $rekap, string $periode): array
+    private function enrichPayrollSummary(array $rekap, string $periode): array
     {
-        if (empty($rekap['pegawai_pin'])) {
+        $rekap = array_merge($rekap, $this->calculatePayroll($rekap, $periode));
+
+        if (($rekap['use_new_system'] ?? false) && ! empty($rekap['pegawai_pin'])) {
+            $rekap = $this->applyPublishedDraftOverrides($rekap, $periode);
+        }
+
+        return $rekap;
+    }
+
+    private function calculatePayroll(array $row, string $periode): array
+    {
+        $jmlabsensi = (int) ($row['jmlabsensi'] ?? 0);
+        $kehadiranNominal = (float) ($row['kehadiran'] ?? 0);
+        $gajipokok = (float) ($row['gajipokok'] ?? 0);
+        $lemburNominal = ! empty($row['lemburkhusus']) && $row['lemburkhusus'] > 0 ? (float) $row['lemburkhusus'] : $kehadiranNominal;
+        $isTraining = $gajipokok <= 0;
+        $isHarian = (string) ($row['harian'] ?? '0') === '1';
+        $isDirektur = (string) ($row['direktur'] ?? '0') === '1';
+        $tunjRujukan = (int) ($row['jmlrujukan'] ?? 0) * (float) ($row['rujukan'] ?? 0);
+        $uangMakan = $jmlabsensi * (float) ($row['uangmakan'] ?? 0);
+
+        if ($isDirektur || $isHarian || $isTraining) {
+            $uangMakan = 0;
+        }
+
+        $kehadiranVal = $jmlabsensi * $kehadiranNominal;
+        $tugasluarVal = (int) ($row['tugasluar'] ?? 0) * $lemburNominal;
+        $lemburVal = (int) ($row['konversilembur'] ?? 0) * $lemburNominal;
+        $operasiVal = (int) ($row['konversioperasi'] ?? 0) * $lemburNominal;
+        $doubleshiftVal = (int) ($row['doubleshift'] ?? 0) * $lemburNominal;
+        $lateMinutes = (int) ($row['jmlterlambat'] ?? 0);
+        $infaqTerlambat = $this->lateInfaq($lateMinutes, $uangMakan, $row['tgl_aktif_keterlambatan'] ?? null, $periode);
+
+        if ($isHarian) {
+            $jumlah = $kehadiranVal;
+            $zis = round($jumlah * 0.025);
+            $infaqPdm = 0;
+            $bpjs = (float) ($row['bpjskes'] ?? 0);
+            $bpjstk = (float) ($row['bpjstk'] ?? 0);
+            $potongan = $zis + $infaqPdm + $infaqTerlambat + $bpjs + $bpjstk + (float) ($row['pph21'] ?? 0) + (float) ($row['koperasi'] ?? 0);
+        } elseif ($isTraining) {
+            $jumlah = $kehadiranVal + $tugasluarVal;
+            $zis = $infaqPdm = $bpjs = $bpjstk = $potongan = 0;
+        } else {
+            $jumlah = $gajipokok + (float) ($row['tunjstruktural'] ?? 0) + (float) ($row['tunjkeluarga'] ?? 0) + (float) ($row['tunjfungsional'] ?? 0) + (float) ($row['tunjapotek'] ?? 0) + $tunjRujukan + $uangMakan + $kehadiranVal + $tugasluarVal + $lemburVal + $operasiVal + $doubleshiftVal;
+            $bpjs = (float) ($row['bpjskes'] ?? 0);
+            $bpjstk = (float) ($row['bpjstk'] ?? 0);
+            $zis = round($jumlah * 0.025);
+            $infaqPdm = round($gajipokok * 0.01);
+            $potongan = $zis + $infaqPdm + $infaqTerlambat + $bpjs + $bpjstk + (float) ($row['pph21'] ?? 0) + (float) ($row['koperasi'] ?? 0);
+        }
+
+        return compact('tunjRujukan', 'uangMakan', 'kehadiranVal', 'tugasluarVal', 'lemburVal', 'operasiVal', 'doubleshiftVal', 'jumlah', 'zis', 'infaqPdm', 'infaqTerlambat', 'bpjs', 'bpjstk', 'potongan') + [
+            'grandtotal' => $jumlah - $potongan,
+            'late_formatted' => sprintf('%02d:%02d', intdiv(max(0, $lateMinutes), 60), max(0, $lateMinutes) % 60),
+        ];
+    }
+
+    private function applyPublishedDraftOverrides(array $rekap, string $periode): array
+    {
+        if (! Schema::hasTable('payroll_drafts')) {
             return $rekap;
         }
 
-        $kalenderModel = new Newkalender_model();
-        $lateSummary = $kalenderModel->getLateSummaryForPeriod($rekap['pegawai_pin'], $periode);
-        $rekap['jmlterlambat'] = $lateSummary['total_minutes'];
+        $overridesJson = DB::table('payroll_drafts')
+            ->where('periode', $periode)
+            ->where('pegawai_pin', $rekap['pegawai_pin'])
+            ->where('status', 'published')
+            ->value('overrides');
+
+        foreach ($this->decodeOverrides($overridesJson) as $field => $value) {
+            if (in_array($field, self::EDITABLE_FIELDS, true)) {
+                $rekap[$field] = $value;
+            }
+        }
 
         return $rekap;
+    }
+
+    private function decodeOverrides($value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $decoded = json_decode((string) $value, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function lateInfaq(int $lateMinutes, float $uangMakan, ?string $activeDate, string $periode): int
+    {
+        if (! $activeDate || date('Y-m-25', strtotime($periode . '-01')) < $activeDate) {
+            return 0;
+        }
+
+        $chargeable = max(0, $lateMinutes - 10);
+        $rate = match (true) {
+            $chargeable <= 0 => 0,
+            $chargeable <= 30 => 0.06,
+            $chargeable <= 60 => 0.12,
+            $chargeable <= 90 => 0.18,
+            $chargeable <= 120 => 0.24,
+            default => 0.30,
+        };
+
+        return (int) round($uangMakan * $rate);
     }
 }
