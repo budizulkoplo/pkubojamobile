@@ -14,7 +14,7 @@
     <div class="card p-3">
         <h4 class="mb-2">Scan Barcode Aset</h4>
         <p class="text-muted">Arahkan kamera ke barcode aset.</p>
-        <button type="button" id="start-camera" class="btn btn-primary w-100 mb-3">Aktifkan Kamera</button>
+        <button type="button" id="start-camera" class="btn btn-primary w-100 mb-3">Coba Aktifkan Kamera Lagi</button>
         <select id="camera-select" class="form-control mb-3" hidden></select>
         <div id="reader" class="mb-3"></div>
         <form method="GET" action="{{ route('aset.search') }}">
@@ -30,6 +30,7 @@
 <script>
 const reader = new Html5Qrcode('reader');
 const cameraSelect = document.getElementById('camera-select');
+const startButton = document.getElementById('start-camera');
 let scanning = false;
 function startCamera(id) {
     reader.start(id, { fps: 10, qrbox: { width: 250, height: 250 } }, (text) => {
@@ -38,7 +39,7 @@ function startCamera(id) {
         window.location.href = '{{ route('aset.search') }}?code=' + encodeURIComponent(text);
     }, () => {}).catch(() => alert('Kamera tidak dapat diaktifkan. Pastikan izin kamera dan HTTPS tersedia.'));
 }
-document.getElementById('start-camera').addEventListener('click', () => {
+function initCamera() {
     Html5Qrcode.getCameras().then((cameras) => {
         if (!cameras.length) return alert('Kamera tidak ditemukan.');
         cameraSelect.innerHTML = cameras.map((camera, index) => `<option value="${camera.id}">${camera.label || 'Kamera ' + (index + 1)}</option>`).join('');
@@ -47,7 +48,9 @@ document.getElementById('start-camera').addEventListener('click', () => {
         cameraSelect.value = preferred.id;
         startCamera(preferred.id);
     }).catch(() => alert('Izin kamera ditolak atau kamera tidak tersedia.'));
-});
+}
+startButton.addEventListener('click', initCamera);
 cameraSelect.addEventListener('change', () => reader.stop().then(() => startCamera(cameraSelect.value)));
+window.addEventListener('DOMContentLoaded', initCamera);
 </script>
 @endsection
