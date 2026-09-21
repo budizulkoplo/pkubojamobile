@@ -20,6 +20,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\HrisController;
 use App\Http\Controllers\NewKalenderController;
 use App\Http\Controllers\PharmacyDeliveryController;
+use App\Http\Controllers\AsetController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -171,6 +172,14 @@ Route::middleware(['auth:karyawan'])->group(function () {
     Route::get('/pengantaran-obat', [PharmacyDeliveryController::class, 'index'])->name('pharmacy-deliveries.index');
     Route::post('/pengantaran-obat/{deliveryId}/ambil', [PharmacyDeliveryController::class, 'take'])->name('pharmacy-deliveries.take');
     Route::post('/pengantaran-obat/{deliveryId}/selesai', [PharmacyDeliveryController::class, 'complete'])->name('pharmacy-deliveries.complete');
+
+    // Aset
+    Route::get('/aset', [AsetController::class, 'index'])->name('aset.index');
+    Route::get('/aset/cari', [AsetController::class, 'search'])->name('aset.search');
+    Route::get('/aset/{asset}', [AsetController::class, 'show'])->name('aset.show');
+    Route::post('/aset/{asset}/verifikasi', [AsetController::class, 'verify'])->name('aset.verify');
+    Route::post('/aset/{asset}/mutasi', [AsetController::class, 'mutate'])->name('aset.mutate');
+    Route::post('/aset/{asset}/maintenance', [AsetController::class, 'maintenance'])->name('aset.maintenance');
 
 });
 
