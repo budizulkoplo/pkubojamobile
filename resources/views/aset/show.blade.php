@@ -30,15 +30,15 @@
     </div>
 
     <div class="action-grid mb-3">
-        <button type="button" class="asset-action verify-action" data-bs-toggle="collapse" data-bs-target="#verify-form" aria-controls="verify-form">
+        <button type="button" class="asset-action verify-action" data-form-target="verify-form" aria-controls="verify-form" aria-expanded="false">
             <span class="action-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
             <span><strong>Verifikasi</strong><small>Status &amp; catatan</small></span>
         </button>
-        <button type="button" class="asset-action mutate-action" data-bs-toggle="collapse" data-bs-target="#mutation-form" aria-controls="mutation-form">
+        <button type="button" class="asset-action mutate-action" data-form-target="mutation-form" aria-controls="mutation-form" aria-expanded="false">
             <span class="action-icon"><ion-icon name="swap-horizontal-outline"></ion-icon></span>
             <span><strong>Mutasi</strong><small>Pindah ruangan</small></span>
         </button>
-        <button type="button" class="asset-action maintenance-action" data-bs-toggle="collapse" data-bs-target="#maintenance-form" aria-controls="maintenance-form">
+        <button type="button" class="asset-action maintenance-action" data-form-target="maintenance-form" aria-controls="maintenance-form" aria-expanded="false">
             <span class="action-icon"><ion-icon name="build-outline"></ion-icon></span>
             <span><strong>Maintenance</strong><small>Buat tiket</small></span>
         </button>
@@ -82,9 +82,35 @@
     </form>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-form-target]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const target = document.getElementById(button.dataset.formTarget);
+            const isOpen = target.classList.contains('show');
+
+            document.querySelectorAll('.asset-form').forEach(function (form) {
+                form.classList.remove('show');
+            });
+            document.querySelectorAll('[data-form-target]').forEach(function (action) {
+                action.setAttribute('aria-expanded', 'false');
+            });
+
+            if (!isOpen) {
+                target.classList.add('show');
+                button.setAttribute('aria-expanded', 'true');
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+});
+</script>
+
 <style>
-    .asset-page { background: #f5f7fa; min-height: calc(100vh - 70px); }
+    .asset-page { margin-top: 70px; padding-bottom: 96px !important; background: #f5f7fa; min-height: calc(100vh - 70px); }
     .asset-card, .asset-form { border: 0; border-radius: 14px; background: #fff; box-shadow: 0 5px 18px rgba(15, 23, 42, .08); }
+    .asset-form { display: none; }
+    .asset-form.show { display: block; }
     .asset-card { padding: 18px; }
     .asset-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 15px; border-bottom: 1px solid #edf0f4; }
     .eyebrow { display: flex; align-items: center; gap: 5px; color: #708096; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
