@@ -34,47 +34,6 @@ class HrisController extends Controller
         ]);
     }
 
-    public function saveIdCard(Request $request): JsonResponse
-    {
-        if (!Auth::guard('karyawan')->check()) {
-            return response()->json(['message' => 'Silakan login terlebih dahulu.'], 401);
-        }
-
-        $data = $request->validate([
-            'image' => ['required', 'string'],
-        ]);
-
-        if (!preg_match('/^data:image\/png;base64,/', $data['image'])) {
-            return response()->json(['message' => 'Format gambar ID card tidak valid.'], 422);
-        }
-
-        $image = base64_decode(substr($data['image'], strpos($data['image'], ',') + 1), true);
-
-        if ($image === false) {
-            return response()->json(['message' => 'Gambar ID card gagal diproses.'], 422);
-        }
-
-        $pegawai = $this->currentPegawai();
-
-        if (!$pegawai) {
-            return response()->json(['message' => 'Data pegawai tidak ditemukan.'], 404);
-        }
-
-        $path = $this->savedIdCardPath($pegawai);
-        $absolutePath = $this->smartIdCardAbsolutePath($pegawai);
-
-        if (!is_dir(dirname($absolutePath))) {
-            mkdir(dirname($absolutePath), 0775, true);
-        }
-
-        file_put_contents($absolutePath, $image);
-
-        return response()->json([
-            'message' => 'ID card berhasil disimpan.',
-            'url' => $this->smartStorageUrl($path).'?v='.time(),
-        ]);
-    }
-
     /**
      * === INDEX LEMBUR ===
      * Tampilkan data lembur per tanggal (default: hari ini)

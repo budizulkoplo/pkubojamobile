@@ -159,7 +159,6 @@ Route::middleware(['auth:karyawan'])->group(function () {
      ->name('quran.markRutin');
 
     Route::get('/hris/id-card', [HrisController::class, 'idCard'])->name('hris.idcard');
-    Route::post('/hris/id-card', [HrisController::class, 'saveIdCard'])->name('hris.idcard.save');
 
     Route::get('/operan-shift', [OperanShiftController::class, 'index'])->name('operan.index');
     Route::get('/operan-shift/ngaji', [OperanShiftController::class, 'ngaji'])->name('operan.ngaji');

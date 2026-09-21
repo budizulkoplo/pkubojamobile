@@ -44,7 +44,7 @@
                 </div>
             </section>
 
-            <section class="editor-panel">
+            <section class="editor-panel readonly-editor" aria-hidden="true">
                 <div class="field">
                     <label>Nama</label>
                     <input type="text" value="{{ $pegawai->pegawai_nama ?: '-' }}" readonly>
@@ -88,6 +88,7 @@
 </div>
 
 <script>
+/*
 (() => {
     const photo = document.getElementById('cardPhoto');
     const placeholder = document.getElementById('photoPlaceholder');
@@ -102,7 +103,7 @@
     const savedOverlay = document.getElementById('savedOverlay');
     const savedNote = document.getElementById('savedNote');
     const savedLink = document.getElementById('savedLink');
-    const saveUrl = @json(route('hris.idcard.save'));
+    const saveUrl = '';
     const currentSavedUrl = @json($savedCardUrl);
     const currentPhotoUrl = @json($photoUrl);
     const templateUrl = @json($templateUrl);
@@ -299,8 +300,10 @@
         savedOverlay.classList.add('hidden');
     }
 })();
+*/
 </script>
 <style>
+    .readonly-editor { display: none !important; }
     .idcard-page {
         min-height: 100vh;
         padding: 76px 14px 96px;
