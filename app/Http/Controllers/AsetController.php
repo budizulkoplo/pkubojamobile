@@ -14,6 +14,11 @@ class AsetController extends Controller
         return DB::connection('aset');
     }
 
+    private function appDb()
+    {
+        return DB::connection('smartrs');
+    }
+
     public function index(): View
     {
         return view('aset.index');
@@ -71,12 +76,12 @@ class AsetController extends Controller
         ]);
         $from = $this->db()->table('lokasiaset')->where('idlokasi', $row->idlokasi)->first();
         $to = $this->db()->table('lokasiaset')->where('idlokasi', $data['to_location_id'])->first();
-        $native = $this->db()->table('aset_assets')->where('asset_code', $row->kodeaset)->first();
+        $native = $this->appDb()->table('aset_assets')->where('asset_code', $row->kodeaset)->first();
 
         abort_unless($from && $to && $native, 422, 'Aset belum memiliki data lokasi native yang diperlukan untuk mutasi.');
 
-        $this->db()->transaction(function () use ($row, $from, $to, $native, $data): void {
-            $this->db()->table('aset_mutations')->insert([
+        $this->appDb()->transaction(function () use ($row, $from, $to, $native, $data): void {
+            $this->appDb()->table('aset_mutations')->insert([
                 'asset_id' => $native->id,
                 'mutation_date' => now()->toDateString(),
                 'from_location' => $from->namalokasi,
@@ -88,7 +93,7 @@ class AsetController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            $this->db()->table('aset_assets')->where('id', $native->id)->update([
+            $this->appDb()->table('aset_assets')->where('id', $native->id)->update([
                 'location_id' => $to->idlokasi,
                 'location' => $to->namalokasi,
                 'person_in_charge' => $to->pic_name,
@@ -110,17 +115,17 @@ class AsetController extends Controller
             'issue' => ['required', 'string', 'max:220'],
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
-        $native = $this->db()->table('aset_assets')->where('asset_code', $row->kodeaset)->first();
+        $native = $this->appDb()->table('aset_assets')->where('asset_code', $row->kodeaset)->first();
         abort_unless($native, 422, 'Aset belum memiliki data native untuk maintenance.');
 
         $prefix = 'MNT-'.now()->format('Ym').'-';
-        $lastNumber = $this->db()->table('aset_maintenance_tickets')
+        $lastNumber = $this->appDb()->table('aset_maintenance_tickets')
             ->where('number', 'like', $prefix.'%')
             ->orderByDesc('number')
             ->value('number');
         $sequence = $lastNumber ? ((int) substr((string) $lastNumber, -3)) + 1 : 1;
         $number = $prefix.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
-        $this->db()->table('aset_maintenance_tickets')->insert([
+        $this->appDb()->table('aset_maintenance_tickets')->insert([
             'asset_id' => $native->id,
             'number' => $number,
             'reported_date' => now()->toDateString(),
