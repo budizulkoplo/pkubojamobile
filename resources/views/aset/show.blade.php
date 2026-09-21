@@ -2,83 +2,223 @@
 
 @section('header')
 <div class="appHeader bg-primary text-light">
-    <div class="left"><a href="{{ route('aset.index') }}" class="headerButton"><ion-icon name="chevron-back-outline"></ion-icon></a></div>
+    <div class="left">
+        <a href="{{ route('aset.index') }}" class="headerButton goBack">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+        </a>
+    </div>
     <div class="pageTitle">Detail Aset</div>
     <div class="right"></div>
 </div>
 @endsection
 
 @section('content')
-<div class="p-3 asset-page">
-    @if(session('success')) <div class="alert alert-success"><ion-icon name="checkmark-circle-outline"></ion-icon> {{ session('success') }}</div> @endif
-    @if($errors->any()) <div class="alert alert-danger"><ion-icon name="alert-circle-outline"></ion-icon> {{ $errors->first() }}</div> @endif
+<div class="p-3" style="margin-top: 70px; padding-bottom: 96px !important; background: #f5f7fa; min-height: calc(100vh - 70px);">
 
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
+
+    {{-- ===================== CARD DETAIL ===================== --}}
     <div class="asset-card mb-3">
         <div class="asset-card-heading">
             <div>
-                <span class="eyebrow"><ion-icon name="cube-outline"></ion-icon> Detail aset</span>
+                <span class="eyebrow"><ion-icon name="cube-outline"></ion-icon> Detail Aset</span>
                 <h4>{{ $row->namaaset }}</h4>
-                <div class="asset-code"><ion-icon name="barcode-outline"></ion-icon> {{ $row->kodeaset }}</div>
+                <div class="asset-code">
+                    <ion-icon name="barcode-outline"></ion-icon> {{ $row->kodeaset }}
+                </div>
             </div>
-            <span class="condition-badge condition-{{ \Illuminate\Support\Str::slug($row->kondisi ?: 'tanpa-kondisi') }}">{{ $row->kondisi ?: 'Tanpa kondisi' }}</span>
+            <span class="condition-badge condition-{{ \Illuminate\Support\Str::slug($row->kondisi ?: 'tanpa-kondisi') }}">
+                {{ $row->kondisi ?: 'Tanpa Kondisi' }}
+            </span>
         </div>
+
         <dl class="row mb-0">
-            @foreach(['barcode' => 'Barcode', 'namabarang' => 'Barang', 'namajenis' => 'Jenis', 'tipe_aset' => 'Tipe', 'tahunpengadaan' => 'Tahun Pengadaan', 'merk' => 'Merk', 'type' => 'Type', 'spesifikasi' => 'Spesifikasi', 'kondisi' => 'Kondisi', 'nilaiaset' => 'Nilai Aset', 'tanggalperolehan' => 'Tanggal Perolehan', 'serial_no' => 'Serial Number', 'ipaddress' => 'IP Address', 'namalokasi' => 'Lokasi', 'pic_name' => 'PIC', 'status_verifikasi' => 'Status Verifikasi', 'verifikasi_at' => 'Waktu Verifikasi', 'verifikasi_note' => 'Catatan Verifikasi'] as $field => $label)
-                <dt class="col-5">{{ $label }}</dt><dd class="col-7">{{ $row->{$field} ?? '-' }}</dd>
+            @php
+                $fields = [
+                    'barcode'             => 'Barcode',
+                    'namabarang'          => 'Barang',
+                    'namajenis'           => 'Jenis',
+                    'tipe_aset'           => 'Tipe',
+                    'tahunpengadaan'      => 'Tahun Pengadaan',
+                    'merk'                => 'Merk',
+                    'type'                => 'Type',
+                    'spesifikasi'         => 'Spesifikasi',
+                    'kondisi'             => 'Kondisi',
+                    'nilaiaset'           => 'Nilai Aset',
+                    'tanggalperolehan'    => 'Tanggal Perolehan',
+                    'serial_no'           => 'Serial Number',
+                    'ipaddress'           => 'IP Address',
+                    'namalokasi'          => 'Lokasi',
+                    'pic_name'            => 'PIC',
+                    'status_verifikasi'   => 'Status Verifikasi',
+                    'verifikasi_at'       => 'Waktu Verifikasi',
+                    'verifikasi_note'     => 'Catatan Verifikasi',
+                ];
+            @endphp
+
+            @foreach($fields as $field => $label)
+                @php
+                    $value = $row->{$field} ?? null;
+
+                    // Format khusus per field
+                    if ($field === 'nilaiaset' && $value !== null && $value !== '') {
+                        $value = 'Rp ' . number_format((float) $value, 0, ',', '.');
+                    } elseif (in_array($field, ['tanggalperolehan', 'verifikasi_at']) && !empty($value)) {
+                        try {
+                            $value = \Carbon\Carbon::parse($value)->translatedFormat('d F Y H:i');
+                        } catch (\Exception $e) {
+                            // biarkan nilai asli jika gagal parse
+                        }
+                    } elseif ($field === 'status_verifikasi' && !empty($value)) {
+                        $value = ucwords(str_replace('_', ' ', $value));
+                    } elseif (empty($value)) {
+                        $value = '-';
+                    }
+                @endphp
+                <dt class="col-5">{{ $label }}</dt>
+                <dd class="col-7">{{ $value }}</dd>
             @endforeach
         </dl>
     </div>
 
+    {{-- ===================== AKSI ===================== --}}
     <div class="action-grid mb-3">
-        <button type="button" class="asset-action verify-action" data-form-target="verify-form" aria-controls="verify-form" aria-expanded="false">
+        <button type="button" class="asset-action verify-action"
+                data-form-target="verify-form"
+                aria-controls="verify-form" aria-expanded="false">
             <span class="action-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
             <span><strong>Verifikasi</strong><small>Status &amp; catatan</small></span>
         </button>
-        <button type="button" class="asset-action mutate-action" data-form-target="mutation-form" aria-controls="mutation-form" aria-expanded="false">
+        <button type="button" class="asset-action mutate-action"
+                data-form-target="mutation-form"
+                aria-controls="mutation-form" aria-expanded="false">
             <span class="action-icon"><ion-icon name="swap-horizontal-outline"></ion-icon></span>
             <span><strong>Mutasi</strong><small>Pindah ruangan</small></span>
         </button>
-        <button type="button" class="asset-action maintenance-action" data-form-target="maintenance-form" aria-controls="maintenance-form" aria-expanded="false">
+        <button type="button" class="asset-action maintenance-action"
+                data-form-target="maintenance-form"
+                aria-controls="maintenance-form" aria-expanded="false">
             <span class="action-icon"><ion-icon name="build-outline"></ion-icon></span>
             <span><strong>Maintenance</strong><small>Buat tiket</small></span>
         </button>
     </div>
 
-    <form id="verify-form" class="collapse asset-form verify-form mb-3" method="POST" action="{{ route('aset.verify', $row->idaset) }}">
+    {{-- ===================== FORM VERIFIKASI ===================== --}}
+    <form id="verify-form" class="collapse asset-form verify-form mb-3"
+          method="POST" action="{{ route('aset.verify', $row->idaset) }}">
         @csrf
-        <div class="form-heading"><span class="form-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span><div><h5>Verifikasi Aset</h5><small>Status terakhir dan catatan pemeriksaan</small></div></div>
-        <label>Status Terakhir</label>
-        <select name="status_verifikasi" class="form-control mb-3" required>
-            @foreach(['baik' => 'Baik', 'diperbaiki' => 'Diperbaiki', 'rusak' => 'Rusak', 'terjual' => 'Terjual', 'hilang' => 'Hilang', 'tidak_ditemukan' => 'Tidak Ditemukan'] as $value => $label)
-                <option value="{{ $value }}" @selected(($row->status_verifikasi ?: 'baik') === $value)>{{ $label }}</option>
-            @endforeach
-        </select>
-        <label>Catatan Pemeriksaan</label>
-        <textarea name="verifikasi_note" class="form-control mb-3" rows="3" placeholder="Catatan pemeriksaan (opsional)">{{ $row->verifikasi_note }}</textarea>
-        <button class="form-submit verify-submit"><ion-icon name="checkmark-outline"></ion-icon> Simpan Verifikasi</button>
+        <div class="form-heading">
+            <span class="form-icon"><ion-icon name="checkmark-circle-outline"></ion-icon></span>
+            <div>
+                <h5>Verifikasi Aset</h5>
+                <small>Status terakhir dan catatan pemeriksaan</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Status Terakhir</label>
+            <select name="status_verifikasi" class="form-control" required>
+                @foreach(['baik' => 'Baik', 'diperbaiki' => 'Diperbaiki', 'rusak' => 'Rusak', 'terjual' => 'Terjual', 'hilang' => 'Hilang', 'tidak_ditemukan' => 'Tidak Ditemukan'] as $value => $label)
+                    <option value="{{ $value }}" @selected(($row->status_verifikasi ?: 'baik') === $value)>
+                        {{ $label }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Catatan Pemeriksaan</label>
+            <textarea name="verifikasi_note" class="form-control" rows="3"
+                      placeholder="Catatan pemeriksaan (opsional)">{{ $row->verifikasi_note }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-block mt-3">
+            <ion-icon name="checkmark-outline"></ion-icon> Simpan Verifikasi
+        </button>
     </form>
 
-    <form id="mutation-form" class="collapse asset-form mutate-form mb-3" method="POST" action="{{ route('aset.mutate', $row->idaset) }}">
+    {{-- ===================== FORM MUTASI ===================== --}}
+    <form id="mutation-form" class="collapse asset-form mutate-form mb-3"
+          method="POST" action="{{ route('aset.mutate', $row->idaset) }}">
         @csrf
-        <div class="form-heading"><span class="form-icon"><ion-icon name="swap-horizontal-outline"></ion-icon></span><div><h5>Mutasi Aset</h5><small>Pindahkan aset ke ruangan tujuan</small></div></div>
+        <div class="form-heading">
+            <span class="form-icon"><ion-icon name="swap-horizontal-outline"></ion-icon></span>
+            <div>
+                <h5>Mutasi Aset</h5>
+                <small>Pindahkan aset ke ruangan tujuan</small>
+            </div>
+        </div>
+
         <input type="hidden" name="location_id" value="{{ $row->idlokasi }}">
-        <div class="location-summary"><ion-icon name="location-outline"></ion-icon><span><small>Lokasi saat ini</small><strong>{{ $row->namalokasi ?: 'Belum ada lokasi' }}</strong></span></div>
-        <label>Lokasi Tujuan</label>
-        <select name="to_location_id" class="form-control mb-3" required><option value="">Pilih ruangan tujuan</option>@foreach($locations as $location)<option value="{{ $location->idlokasi }}">{{ $location->namalokasi }}{{ $location->pic_name ? ' - PIC: '.$location->pic_name : '' }}</option>@endforeach</select>
-        <label>Alasan Mutasi</label>
-        <textarea name="reason" class="form-control mb-3" rows="3" placeholder="Alasan mutasi (opsional)"></textarea>
-        <button class="form-submit mutate-submit"><ion-icon name="save-outline"></ion-icon> Simpan Mutasi</button>
+
+        <div class="location-summary">
+            <ion-icon name="location-outline"></ion-icon>
+            <span>
+                <small>Lokasi saat ini</small>
+                <strong>{{ $row->namalokasi ?: 'Belum ada lokasi' }}</strong>
+            </span>
+        </div>
+
+        <div class="form-group">
+            <label>Lokasi Tujuan</label>
+            <select name="to_location_id" class="form-control" required>
+                <option value="">Pilih ruangan tujuan</option>
+                @foreach($locations as $location)
+                    <option value="{{ $location->idlokasi }}">
+                        {{ $location->namalokasi }}{{ $location->pic_name ? ' - PIC: '.$location->pic_name : '' }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Alasan Mutasi</label>
+            <textarea name="reason" class="form-control" rows="3"
+                      placeholder="Alasan mutasi (opsional)"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-warning btn-block mt-3">
+            <ion-icon name="save-outline"></ion-icon> Simpan Mutasi
+        </button>
     </form>
 
-    <form id="maintenance-form" class="collapse asset-form maintenance-form mb-3" method="POST" action="{{ route('aset.maintenance', $row->idaset) }}">
+    {{-- ===================== FORM MAINTENANCE ===================== --}}
+    <form id="maintenance-form" class="collapse asset-form maintenance-form mb-3"
+          method="POST" action="{{ route('aset.maintenance', $row->idaset) }}">
         @csrf
-        <div class="form-heading"><span class="form-icon"><ion-icon name="build-outline"></ion-icon></span><div><h5>Maintenance Aset</h5><small>Buat tiket maintenance dengan status open</small></div></div>
-        <div class="ticket-summary"><ion-icon name="document-text-outline"></ion-icon><span>Tiket baru akan diproses oleh tim terkait.</span></div>
-        <label>Masalah Aset</label>
-        <input name="issue" class="form-control mb-3" placeholder="Contoh: Monitor tidak menyala" required>
-        <label>Deskripsi Masalah</label>
-        <textarea name="description" class="form-control mb-3" rows="3" placeholder="Detail masalah atau kondisi aset (opsional)"></textarea>
-        <button class="form-submit maintenance-submit"><ion-icon name="send-outline"></ion-icon> Buat Tiket Maintenance</button>
+        <div class="form-heading">
+            <span class="form-icon"><ion-icon name="build-outline"></ion-icon></span>
+            <div>
+                <h5>Maintenance Aset</h5>
+                <small>Buat tiket maintenance dengan status open</small>
+            </div>
+        </div>
+
+        <div class="ticket-summary">
+            <ion-icon name="document-text-outline"></ion-icon>
+            <span>Tiket baru akan diproses oleh tim terkait.</span>
+        </div>
+
+        <div class="form-group">
+            <label>Masalah Aset</label>
+            <input name="issue" class="form-control"
+                   placeholder="Contoh: Monitor tidak menyala" required>
+        </div>
+
+        <div class="form-group">
+            <label>Deskripsi Masalah</label>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="Detail masalah atau kondisi aset (opsional)"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-danger btn-block mt-3">
+            <ion-icon name="send-outline"></ion-icon> Buat Tiket Maintenance
+        </button>
     </form>
 </div>
 
