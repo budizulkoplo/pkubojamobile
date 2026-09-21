@@ -141,6 +141,22 @@ return [
             'engine' => null,
         ],
 
+        'aset' => [
+            'driver' => env('ASET_DB_CONNECTION', 'mariadb'),
+            'url' => env('ASET_DB_URL'),
+            'host' => env('ASET_DB_HOST', '127.0.0.1'),
+            'port' => env('ASET_DB_PORT', '3306'),
+            'database' => env('ASET_DB_DATABASE', 'aset'),
+            'username' => env('ASET_DB_USERNAME', ''),
+            'password' => env('ASET_DB_PASSWORD', ''),
+            'unix_socket' => env('ASET_DB_SOCKET', ''),
+            'charset' => env('ASET_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('ASET_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'strict' => false,
+            'engine' => null,
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

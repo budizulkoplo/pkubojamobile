@@ -11,7 +11,7 @@ class AsetController extends Controller
 {
     private function db()
     {
-        return DB::connection('smartrs');
+        return DB::connection('aset');
     }
 
     public function index(): View
