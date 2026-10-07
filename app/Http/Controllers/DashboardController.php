@@ -233,6 +233,10 @@ class DashboardController extends Controller
             }
 
             foreach (($day['lembur_data'] ?? []) as $lembur) {
+                if (!empty($lembur['warning'])) {
+                    continue;
+                }
+
                 $summary['overtime_minutes'] += (int) ($lembur['durasi'] ?? 0);
             }
         }

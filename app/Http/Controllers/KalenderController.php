@@ -336,6 +336,10 @@ class KalenderController extends Controller
     {
         if (!empty($data['lembur_data'])) {
             foreach ($data['lembur_data'] as $lembur) {
+                if (!empty($lembur['warning'])) {
+                    continue;
+                }
+
                 $stats['lembur'] += ((int) ($lembur['durasi'] ?? 0)) * 60;
             }
             return;

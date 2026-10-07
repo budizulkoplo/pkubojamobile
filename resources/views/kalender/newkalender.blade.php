@@ -77,6 +77,10 @@ foreach ($dataKalender as $date => $data) {
     // Calculate overtime from lembur_data
     if (!empty($data['lembur_data'])) {
         foreach ($data['lembur_data'] as $lembur) {
+            if (!empty($lembur['warning'])) {
+                continue;
+            }
+
             $lemburSeconds = $lembur['durasi'];
             if ($lemburSeconds > 0 && $lemburSeconds <= 57600) {
                 if ($lembur['tipe'] == 'operasi') {
@@ -269,8 +273,8 @@ function formatDurasi($durasiDetik) {
                                         $lemburItems = []; $operasiItems = []; $totalLemburHari = 0; $totalOperasiHari = 0;
                                         if (!empty($data['lembur_data'])) {
                                             foreach ($data['lembur_data'] as $lembur) {
-                                                if ($lembur['tipe'] == 'operasi') { $operasiItems[] = $lembur; $totalOperasiHari += $lembur['durasi']; }
-                                                else { $lemburItems[] = $lembur; $totalLemburHari += $lembur['durasi']; }
+                                                if ($lembur['tipe'] == 'operasi') { $operasiItems[] = $lembur; if (empty($lembur['warning'])) $totalOperasiHari += $lembur['durasi']; }
+                                                else { $lemburItems[] = $lembur; if (empty($lembur['warning'])) $totalLemburHari += $lembur['durasi']; }
                                             }
                                         }
                                     @endphp
@@ -292,6 +296,7 @@ function formatDurasi($durasiDetik) {
                                                             @foreach($lemburItems as $index => $lembur)
                                                                 <div class="lembur-item">
                                                                     @if(!empty($lembur['alasan']))<div class="lembur-alasan" title="{{ $lembur['alasan'] }}">{{ $lembur['alasan'] }}</div>@endif
+                                                                    @if(!empty($lembur['warning']))<div class="lembur-warning text-danger">{{ $lembur['warning'] }}</div>@endif
                                                                     <div class="lembur-detail"><span class="jam-label">IN:</span><span class="lembur-time">{{ $formatWaktu($lembur['jam_in'] ?? '-') }}</span></div>
                                                                     <div class="lembur-detail"><span class="jam-label">OUT:</span><span class="lembur-time">{{ $formatWaktu($lembur['jam_out'] ?? '-') }}</span></div>
                                                                     <div class="lembur-duration lembur">{{ formatDurasi($lembur['durasi']) }}</div>

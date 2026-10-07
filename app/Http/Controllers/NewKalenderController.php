@@ -242,6 +242,10 @@ class NewKalenderController extends Controller
     {
         if (!empty($data['lembur_data'])) {
             foreach ($data['lembur_data'] as $lembur) {
+                if (!empty($lembur['warning'])) {
+                    continue;
+                }
+
                 $stats['lembur'] += $lembur['durasi'];
             }
         }

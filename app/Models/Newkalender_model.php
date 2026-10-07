@@ -79,6 +79,9 @@ class Newkalender_model extends Model
 
         // Terapkan koreksi presensi dari admin SMART RS sebelum hitung statistik/telat.
         $this->applyAttendanceAdjustments($pegawaiPin, $startDate, $endDate, $dataKalender);
+
+        // Samakan normalisasi lembur dengan kalender SMART RS.
+        $this->normalizeOvertimeAgainstSchedule($dataKalender);
         
         // Calculate late and other calculations
         $this->calculateLateAndOther($dataKalender, $this->getTanggalAktifKeterlambatan());
@@ -586,6 +589,59 @@ class Newkalender_model extends Model
 
         return max(0, (int) floor(($end - $start) / 60));
     }
+
+    private function normalizeOvertimeAgainstSchedule(array &$dataKalender): void
+    {
+        foreach ($dataKalender as $date => &$day) {
+            if (empty($day['has_schedule']) || empty($day['jam_pulang_shift'])) {
+                continue;
+            }
+
+            $shiftStart = substr((string) $day['jam_masuk_shift'], 0, 8);
+            $shiftEnd = substr((string) $day['jam_pulang_shift'], 0, 8);
+
+            if ($shiftStart === '' || $shiftEnd === '' || $shiftEnd <= $shiftStart) {
+                continue;
+            }
+
+            foreach ($day['lembur_data'] as &$lembur) {
+                if (($lembur['tipe'] ?? '') !== 'lembur' || empty($lembur['jam_in'])) {
+                    continue;
+                }
+
+                $jamIn = substr((string) $lembur['jam_in'], 0, 8);
+                $jamOut = substr((string) ($lembur['jam_out'] ?? ''), 0, 8);
+
+                if ($jamOut !== '' && $jamIn < $shiftStart && $jamOut > $shiftStart) {
+                    $lembur['jam_out'] = $shiftStart;
+                    $lembur['durasi'] = $this->calculateMinutesBetween(
+                        (string) $date,
+                        (string) $lembur['jam_in'],
+                        $shiftStart
+                    );
+                    continue;
+                }
+
+                if ($jamOut !== '' && $jamIn >= $shiftStart && $jamIn < $shiftEnd && $jamOut <= $shiftEnd) {
+                    $lembur['warning'] = 'Lembur tidak diijinkan didalam jam shift.';
+                    continue;
+                }
+
+                if ($jamIn >= $shiftStart && $jamIn < $shiftEnd) {
+                    $lembur['jam_in'] = $shiftEnd;
+                    if ($jamOut !== '') {
+                        $lembur['durasi'] = $this->calculateMinutesBetween(
+                            (string) $date,
+                            $shiftEnd,
+                            (string) $lembur['jam_out']
+                        );
+                    }
+                }
+            }
+            unset($lembur);
+        }
+        unset($day);
+    }
     
     private function getSpecialStatusData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
@@ -696,6 +752,10 @@ class Newkalender_model extends Model
             // Hitung lembur dan operasi
             if (!empty($data['lembur_data'])) {
                 foreach ($data['lembur_data'] as $lembur) {
+                    if (!empty($lembur['warning'])) {
+                        continue;
+                    }
+
                     if ($lembur['tipe'] == 'operasi') {
                         $summary['total_durasi_operasi'] += $lembur['durasi'];
                     } else {
