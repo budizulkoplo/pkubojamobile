@@ -40,15 +40,20 @@ class AppServiceProvider extends ServiceProvider
                 // --- BAGIAN INI MENGHILANGKAN CACHE ---
 
                 // Mengambil data menu drawer langsung dari database
-                $drawerMenus = DB::connection('hris')->table('mobilemenu')
-                    ->where('status', 'drawer')
-                    ->where(function ($query) use ($role) {
-                        $query->where('level', 'like', "%$role%")
-                            ->orWhere('level', 'all')
-                            ->orWhereNull('level');
-                    })
-                    ->orderBy('idmenu')
-                    ->get();
+                try {
+                    $drawerMenus = DB::connection('hris')->table('mobilemenu')
+                        ->where('status', 'drawer')
+                        ->where(function ($query) use ($role) {
+                            $query->where('level', 'like', "%$role%")
+                                ->orWhere('level', 'all')
+                                ->orWhereNull('level');
+                        })
+                        ->orderBy('idmenu')
+                        ->get();
+                } catch (\Throwable $exception) {
+                    report($exception);
+                    $drawerMenus = collect();
+                }
                 
                 // --- AKHIR PENGHILANGAN CACHE ---
 

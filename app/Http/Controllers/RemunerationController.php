@@ -12,11 +12,11 @@ class RemunerationController extends Controller
 
     public function index(Request $request)
     {
-        $pin = (string) Auth::guard('karyawan')->id();
+        $pin = $this->authenticatedPegawaiPin();
         $tahun = (int) ($request->query('tahun') ?: now('Asia/Jakarta')->year);
         $slips = DB::connection('hris')->table(self::SLIPS_TABLE)
             ->where('pegawai_pin', $pin)
-            ->whereYear('periode', $tahun)
+            ->where('periode', 'like', sprintf('%04d-', $tahun) . '%')
             ->orderByDesc('periode')
             ->get();
 
@@ -37,7 +37,7 @@ class RemunerationController extends Controller
 
     public function detail(int $tahun, int $bulan)
     {
-        $pin = (string) Auth::guard('karyawan')->id();
+        $pin = $this->authenticatedPegawaiPin();
         $periode = sprintf('%04d-%02d', $tahun, $bulan);
         $slip = DB::connection('hris')->table(self::SLIPS_TABLE)
             ->where('pegawai_pin', $pin)
@@ -52,5 +52,34 @@ class RemunerationController extends Controller
             'slip' => $slip,
             'periode' => $periode,
         ]);
+    }
+
+    /**
+     * Slip remunerasi memakai pegawai_pin, sedangkan session mobile memakai
+     * karyawan.id. Keduanya tidak selalu memiliki nilai yang sama.
+     */
+    private function authenticatedPegawaiPin(): string
+    {
+        $user = Auth::guard('karyawan')->user();
+
+        if (! $user) {
+            return '';
+        }
+
+        $nik = trim((string) ($user->nik ?? ''));
+        if ($nik !== '') {
+            $pin = DB::connection('hris')
+                ->table('pegawai')
+                ->where('nik', $nik)
+                ->value('pegawai_pin');
+
+            if ($pin !== null && trim((string) $pin) !== '') {
+                return (string) $pin;
+            }
+        }
+
+        // Kompatibilitas dengan data lama yang kebetulan memakai ID karyawan
+        // sebagai PIN pegawai.
+        return (string) ($user->id ?? '');
     }
 }
