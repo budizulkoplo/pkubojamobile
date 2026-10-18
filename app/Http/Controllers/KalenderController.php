@@ -5,10 +5,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use App\Libraries\PayrollLateInfaq;
 use App\Models\Newkalender_model;
+use App\Services\EmployeeKpiPerformanceService;
 
 class KalenderController extends Controller
 {
@@ -43,7 +43,7 @@ class KalenderController extends Controller
         return $this->renderKalenderView($request, 'kalender.lembur');
     }
 
-    public function statistik(Request $request)
+    public function statistik(Request $request, EmployeeKpiPerformanceService $kpiPerformance)
     {
         $bulan = $this->validateMonth($request->bulan ?? date('Y-m'));
 
@@ -78,7 +78,11 @@ class KalenderController extends Controller
                 (int) ($stats['terlambat'] ?? 0),
                 (int) ($stats['workDays'] ?? 0)
             );
-            $performance = $this->remunerationPerformance($this->pegawaiPin, $bulan);
+            $performance = $kpiPerformance->calculate(
+                (string) $this->pegawaiPin,
+                $bulan,
+                $data['dataKalender']
+            );
 
             $stats = array_merge([
                 'jumlahTepatWaktu'  => 0,
@@ -137,43 +141,6 @@ class KalenderController extends Controller
         }
 
         return view('kalender.statistik', $viewData);
-    }
-
-    protected function remunerationPerformance(string $pegawaiPin, string $bulan): ?array
-    {
-        try {
-            if (! Schema::connection('hris')->hasTable('hris_payroll_remuneration_slips')) {
-                return null;
-            }
-
-            $slip = DB::connection('hris')->table('hris_payroll_remuneration_slips')
-                ->where('pegawai_pin', $pegawaiPin)
-                ->where('periode', $bulan)
-                ->first();
-
-            if (! $slip) {
-                return null;
-            }
-
-            $details = json_decode((string) $slip->kpi_details, true) ?: [];
-
-            return [
-                'score' => $details['score'] ?? [
-                    'total' => (float) $slip->score_total,
-                    'attendance' => (float) $slip->score_attendance,
-                    'activity' => (float) $slip->score_activity,
-                    'label' => '-',
-                ],
-                'attendance' => $details['attendance'] ?? [],
-                'religious' => $details['religious'] ?? [],
-                'remuneration_amount' => (float) $slip->remuneration_amount,
-                'published_at' => $slip->published_at,
-            ];
-        } catch (\Throwable $exception) {
-            \Log::warning('Gagal mengambil performance remunerasi: '.$exception->getMessage());
-
-            return null;
-        }
     }
 
     protected function renderKalenderView(Request $request, string $view)
