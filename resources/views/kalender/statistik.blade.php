@@ -315,6 +315,11 @@
     </div>
 </div>
 @push('myscript')
+<style>
+    .performance-card .card-header { background: #f4fbf7; border-bottom-color: #d8f0e1; }
+    .performance-card .performance-score { color: #198754; font-size: 1.8rem; line-height: 1; }
+    .performance-card .list-group-item { background: transparent; border-color: #edf2ef; }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
