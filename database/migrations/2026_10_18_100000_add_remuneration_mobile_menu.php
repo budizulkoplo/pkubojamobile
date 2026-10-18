@@ -17,20 +17,21 @@ return new class extends Migration
             'user' => 129,
         ];
 
-        $menu = DB::table('mobilemenu')->where('link', '/remunerasi')->first();
+        $db = DB::connection('hris');
+        $menu = $db->table('mobilemenu')->where('link', '/remunerasi')->first();
 
         if ($menu) {
-            DB::table('mobilemenu')->where('idmenu', $menu->idmenu)->update($data);
+            $db->table('mobilemenu')->where('idmenu', $menu->idmenu)->update($data);
 
             return;
         }
 
-        $data['idmenu'] = ((int) DB::table('mobilemenu')->max('idmenu')) + 1;
-        DB::table('mobilemenu')->insert($data);
+        $data['idmenu'] = ((int) $db->table('mobilemenu')->max('idmenu')) + 1;
+        $db->table('mobilemenu')->insert($data);
     }
 
     public function down(): void
     {
-        DB::table('mobilemenu')->where('link', '/remunerasi')->delete();
+        DB::connection('hris')->table('mobilemenu')->where('link', '/remunerasi')->delete();
     }
 };
