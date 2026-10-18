@@ -13,6 +13,7 @@ use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\AhadPagiController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\RemunerationController;
 use App\Http\Controllers\LosAbsenController;
 use App\Http\Controllers\QuranController;
 use App\Http\Controllers\OperanShiftController;
@@ -148,6 +149,8 @@ Route::middleware(['auth:karyawan'])->group(function () {
     Route::get('/payroll/{tahun}', [PayrollController::class, 'index'])->name('payroll.index');
     Route::get('/payroll/{tahun}/{bulan}', [PayrollController::class, 'detail'])->name('payroll.detail');
     Route::get('/slip-gaji/pdf/{tahun}/{bulan}', [App\Http\Controllers\PayrollController::class, 'downloadPDF'])->name('slip.pdf');
+    Route::get('/remunerasi', [RemunerationController::class, 'index'])->name('remuneration.index');
+    Route::get('/remunerasi/{tahun}/{bulan}', [RemunerationController::class, 'detail'])->name('remuneration.detail');
 
     Route::get('/losabsen', [LosAbsenController::class, 'index'])->name('losabsen.index');
     Route::post('/losabsen', [LosAbsenController::class, 'store'])->name('losabsen.store');

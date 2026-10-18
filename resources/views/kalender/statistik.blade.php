@@ -123,6 +123,45 @@
             </div>
         </div>
 
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="card performance-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="card-title mb-0">Performance / KPI</p>
+                            <small class="text-muted">Nilai yang digunakan dalam slip remunerasi periode ini</small>
+                        </div>
+                        @if($performance)
+                            <span class="badge bg-success">Terbit</span>
+                        @endif
+                    </div>
+                    <div class="card-body">
+                        @if($performance)
+                            @php
+                                $performanceScore = $performance['score'] ?? [];
+                                $performanceAttendance = $performance['attendance'] ?? [];
+                                $performanceReligious = $performance['religious'] ?? [];
+                            @endphp
+                            <div class="row text-center mb-3">
+                                <div class="col-4"><small class="text-muted d-block">Skor KPI</small><strong class="performance-score">{{ $performanceScore['total'] ?? 0 }}</strong><small class="d-block">{{ $performanceScore['label'] ?? '-' }}</small></div>
+                                <div class="col-4"><small class="text-muted d-block">Absensi</small><strong>{{ $performanceScore['attendance'] ?? 0 }}</strong></div>
+                                <div class="col-4"><small class="text-muted d-block">Aktivitas</small><strong>{{ $performanceScore['activity'] ?? 0 }}</strong></div>
+                            </div>
+                            <div class="list-group list-group-flush small">
+                                <div class="list-group-item d-flex justify-content-between px-0"><span>Hadir / terjadwal</span><strong>{{ $performanceAttendance['present_days'] ?? 0 }} / {{ $performanceAttendance['scheduled_days'] ?? 0 }}</strong></div>
+                                <div class="list-group-item d-flex justify-content-between px-0"><span>Ketepatan waktu</span><strong>{{ $performanceAttendance['punctuality_rate'] ?? 0 }}%</strong></div>
+                                <div class="list-group-item d-flex justify-content-between px-0"><span>Keterlambatan</span><strong>{{ $performanceAttendance['late_days'] ?? 0 }} hari / {{ $performanceAttendance['late_minutes'] ?? 0 }} menit</strong></div>
+                                <div class="list-group-item d-flex justify-content-between px-0"><span>Kajian / tadarus / sholat</span><strong>{{ $performanceReligious['kajian']['total'] ?? 0 }} / {{ $performanceReligious['tadarus']['total_sesi'] ?? 0 }} / {{ $performanceReligious['sholat']['hari_aktif'] ?? 0 }}</strong></div>
+                                <div class="list-group-item d-flex justify-content-between px-0"><span>Remunerasi</span><strong class="text-success">Rp {{ number_format($performance['remuneration_amount'] ?? 0, 0, ',', '.') }}</strong></div>
+                            </div>
+                        @else
+                            <div class="alert alert-info mb-0">Performance KPI akan tampil setelah slip remunerasi periode ini diterbitkan oleh HRIS.</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Waktu Aktual -->
         <div class="row mt-2">
             <div class="col-12">

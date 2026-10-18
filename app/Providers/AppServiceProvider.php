@@ -42,7 +42,11 @@ class AppServiceProvider extends ServiceProvider
                 // Mengambil data menu drawer langsung dari database
                 $drawerMenus = DB::table('mobilemenu')
                     ->where('status', 'drawer')
-                    ->where('level', 'like', "%$role%")
+                    ->where(function ($query) use ($role) {
+                        $query->where('level', 'like', "%$role%")
+                            ->orWhere('level', 'all')
+                            ->orWhereNull('level');
+                    })
                     ->orderBy('idmenu')
                     ->get();
                 

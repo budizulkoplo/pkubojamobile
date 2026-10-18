@@ -141,6 +141,21 @@ return [
             'engine' => null,
         ],
 
+        'hris' => [
+            'driver' => env('HRIS_DB_CONNECTION', env('SMART_RS_DB_CONNECTION', 'mariadb')),
+            'host' => env('HRIS_DB_HOST', env('SMART_RS_DB_HOST', '127.0.0.1')),
+            'port' => env('HRIS_DB_PORT', env('SMART_RS_DB_PORT', '3306')),
+            'database' => env('HRIS_DB_DATABASE', 'hris'),
+            'username' => env('HRIS_DB_USERNAME', env('SMART_RS_DB_USERNAME', 'root')),
+            'password' => env('HRIS_DB_PASSWORD', env('SMART_RS_DB_PASSWORD', '')),
+            'unix_socket' => env('HRIS_DB_SOCKET', ''),
+            'charset' => env('HRIS_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('HRIS_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'aset' => [
             'driver' => env('ASET_DB_CONNECTION', 'mariadb'),
             'url' => env('ASET_DB_URL'),
