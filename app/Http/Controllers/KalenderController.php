@@ -254,11 +254,24 @@ class KalenderController extends Controller
     protected function parseHolidayResponse(array $holidays): array
     {
         $result = [];
-        foreach ($holidays as $holiday) {
-            if ($holiday['is_national_holiday']) {
-                $result[$holiday['event_date']] = $holiday['event_name'];
+        $items = is_array($holidays['data'] ?? null) ? $holidays['data'] : $holidays;
+
+        foreach ($items as $holiday) {
+            if (! is_array($holiday)) {
+                continue;
+            }
+
+            if (array_key_exists('is_national_holiday', $holiday) && ! $holiday['is_national_holiday']) {
+                continue;
+            }
+
+            $date = $holiday['date'] ?? $holiday['event_date'] ?? null;
+            $description = $holiday['description'] ?? $holiday['event_name'] ?? null;
+            if ($date && $description) {
+                $result[$date] = $description;
             }
         }
+
         return $result;
     }
 

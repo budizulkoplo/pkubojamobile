@@ -24,13 +24,23 @@ if (!function_exists('getHolidays')) {
         
         try {
             $response = file_get_contents($apiUrl);
-            $holidaysData = json_decode($response, true);
+            $payload = json_decode($response, true);
+            $holidaysData = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
             
             $nationalHolidays = [];
-            foreach ($holidaysData as $holiday) {
-                if ($holiday['is_national_holiday']) {
-                    $holidayDate = $holiday['event_date'];
-                    $nationalHolidays[$holidayDate] = $holiday['event_name'];
+            foreach (is_array($holidaysData) ? $holidaysData : [] as $holiday) {
+                if (! is_array($holiday)) {
+                    continue;
+                }
+
+                if (array_key_exists('is_national_holiday', $holiday) && ! $holiday['is_national_holiday']) {
+                    continue;
+                }
+
+                $holidayDate = $holiday['date'] ?? $holiday['event_date'] ?? null;
+                $holidayName = $holiday['description'] ?? $holiday['event_name'] ?? null;
+                if ($holidayDate && $holidayName) {
+                    $nationalHolidays[$holidayDate] = $holidayName;
                 }
             }
             
