@@ -13,7 +13,6 @@
     <div class="text-center mb-3">
         <ion-icon name="calculator-outline" class="text-success remuneration-main-icon"></ion-icon>
         <h5 class="mb-1">Perhitungan KPI Remunerasi</h5>
-        <small class="text-muted">Pahami pembentukan skor sebelum melihat slip remunerasi.</small>
     </div>
 
     <div class="card mb-3 formula-card">
@@ -48,11 +47,7 @@
         </div>
     </div>
 
-    <div class="alert alert-info small">
-        Nilai pada slip mengikuti data absensi dan aktivitas yang tercatat pada periode remunerasi. Rincian sumber nilai akan ditampilkan pada slip.
-    </div>
-
-    <a href="{{ route('remuneration.slips') }}" class="btn btn-success btn-block remuneration-slip-button">
+    <a href="{{ route('remuneration.slips') }}" class="btn btn-success remuneration-slip-button">
         <ion-icon name="document-text-outline"></ion-icon> Lihat Slip Remunerasi
     </a>
 </div>
@@ -60,10 +55,11 @@
 
 @push('myscript')
 <style>
+    .remuneration-mobile-page { padding-bottom: 100px !important; }
     .remuneration-main-icon { font-size: 42px; }
-    .formula-card { border-left: 4px solid #198754; }
+    .formula-card { border-left: 4px solid #198754; overflow: hidden; }
     .formula-card .card-header { background: #f7fbf9; color: #344054; }
     .formula-box { background: #f8fafc; border: 1px solid #dbe5e1; border-left: 3px solid #20a779; border-radius: 4px; color: #495057; padding: 10px; }
-    .remuneration-slip-button { display: block; padding: 11px; }
+    .remuneration-slip-button { align-items: center; display: flex; gap: 6px; justify-content: center; margin: 16px 0 20px; min-height: 44px; padding: 11px 14px; width: 100%; }
 </style>
 @endpush
