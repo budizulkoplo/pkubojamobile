@@ -20,7 +20,7 @@ if (!function_exists('minutesToTime')) {
 
 if (!function_exists('getHolidays')) {
     function getHolidays($year) {
-        $apiUrl = "https://hari-libur-api.vercel.app/api?year=".$year;
+        $apiUrl = "https://api-hari-libur.vercel.app/api?year=".$year;
         
         try {
             $response = file_get_contents($apiUrl);

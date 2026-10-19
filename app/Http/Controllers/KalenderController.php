@@ -239,7 +239,7 @@ class KalenderController extends Controller
             $cacheKey = 'national_holidays_' . $year;
 
             return cache()->remember($cacheKey, now()->addMonth(), function() use ($year) {
-                $response = Http::timeout(3)->get("https://hari-libur-api.vercel.app/api", [
+                $response = Http::timeout(3)->get("https://api-hari-libur.vercel.app/api", [
                     'year' => $year
                 ]);
 

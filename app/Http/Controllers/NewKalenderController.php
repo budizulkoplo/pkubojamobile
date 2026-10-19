@@ -165,7 +165,7 @@ class NewKalenderController extends Controller
     {
         try {
             $year = date('Y', strtotime($bulan . '-01'));
-            $apiUrl = "https://hari-libur-api.vercel.app/api?year=" . $year;
+            $apiUrl = "https://api-hari-libur.vercel.app/api?year=" . $year;
             
             $response = file_get_contents($apiUrl);
             $holidaysData = json_decode($response, true);
