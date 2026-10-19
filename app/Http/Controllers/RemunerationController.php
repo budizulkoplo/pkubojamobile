@@ -10,7 +10,12 @@ class RemunerationController extends Controller
 {
     private const SLIPS_TABLE = 'hris_payroll_remuneration_slips';
 
-    public function index(Request $request)
+    public function index()
+    {
+        return view('remunerasi.index');
+    }
+
+    public function slips(Request $request)
     {
         $pin = $this->authenticatedPegawaiPin();
         $tahun = (int) ($request->query('tahun') ?: now('Asia/Jakarta')->year);
@@ -32,7 +37,7 @@ class RemunerationController extends Controller
             $tahunList = collect([$tahun]);
         }
 
-        return view('remunerasi.index', compact('slips', 'tahun', 'tahunList'));
+        return view('remunerasi.slips', compact('slips', 'tahun', 'tahunList'));
     }
 
     public function detail(int $tahun, int $bulan)

@@ -150,6 +150,7 @@ Route::middleware(['auth:karyawan'])->group(function () {
     Route::get('/payroll/{tahun}/{bulan}', [PayrollController::class, 'detail'])->name('payroll.detail');
     Route::get('/slip-gaji/pdf/{tahun}/{bulan}', [App\Http\Controllers\PayrollController::class, 'downloadPDF'])->name('slip.pdf');
     Route::get('/remunerasi', [RemunerationController::class, 'index'])->name('remuneration.index');
+    Route::get('/remunerasi/slip', [RemunerationController::class, 'slips'])->name('remuneration.slips');
     Route::get('/remunerasi/{tahun}/{bulan}', [RemunerationController::class, 'detail'])->name('remuneration.detail');
 
     Route::get('/losabsen', [LosAbsenController::class, 'index'])->name('losabsen.index');

@@ -16,6 +16,12 @@
     $kajian = $religious['kajian'] ?? [];
     $tadarus = $religious['tadarus'] ?? [];
     $sholat = $religious['sholat'] ?? [];
+    $attendanceRate = (float) ($attendance['attendance_rate'] ?? 0);
+    $punctualityRate = (float) ($attendance['punctuality_rate'] ?? 0);
+    $kajianTotal = (int) ($kajian['total'] ?? 0);
+    $tadarusSessions = (int) ($tadarus['total_sesi'] ?? 0);
+    $activePrayerDays = (int) ($sholat['hari_aktif'] ?? 0);
+    $activityRaw = ($kajianTotal * 15) + ($tadarusSessions * 8) + ($activePrayerDays * 3);
     $money = fn ($value): string => 'Rp '.number_format((float) $value, 0, ',', '.');
 @endphp
 
@@ -31,7 +37,6 @@
         <strong>{{ $slip->pegawai_nama ?: '-' }}</strong><br>
         NIP: {{ $slip->pegawai_nip ?: '-' }}<br>
         Jabatan: {{ $slip->jabatan ?: '-' }}<br>
-        Profesi: {{ $slip->profesi ?: '-' }}<br>
         Kelompok: {{ $slip->group_name ?: '-' }}{{ $slip->is_ojt ? ' (OJT 50%)' : '' }}
     </div>
 
@@ -45,10 +50,22 @@
                 <tr><td>Hadir / Terjadwal</td><td class="text-end">{{ $attendance['present_days'] ?? 0 }} / {{ $attendance['scheduled_days'] ?? 0 }}</td></tr>
                 <tr><td>Ketepatan waktu</td><td class="text-end">{{ $attendance['punctuality_rate'] ?? 0 }}%</td></tr>
                 <tr><td>Keterlambatan</td><td class="text-end">{{ $attendance['late_days'] ?? 0 }} hari / {{ $attendance['late_minutes'] ?? 0 }} menit</td></tr>
-                <tr><td>Kajian</td><td class="text-end">{{ $kajian['total'] ?? 0 }}</td></tr>
+                <tr><td>Kajian total</td><td class="text-end">{{ $kajianTotal }} kegiatan</td></tr>
+                <tr><td class="sub-row">- Ahad pagi</td><td class="text-end">{{ $kajian['ahad_pagi'] ?? 0 }}</td></tr>
+                <tr><td class="sub-row">- Senin pagi</td><td class="text-end">{{ $kajian['senin_pagi'] ?? 0 }}</td></tr>
+                <tr><td class="sub-row">- Kajian bulanan/lainnya</td><td class="text-end">{{ $kajian['kajian_bulanan'] ?? 0 }}</td></tr>
                 <tr><td>Tadarus</td><td class="text-end">{{ $tadarus['total_sesi'] ?? 0 }} sesi</td></tr>
                 <tr><td>Sholat / hari aktif</td><td class="text-end">{{ $sholat['total'] ?? 0 }} / {{ $sholat['hari_aktif'] ?? 0 }}</td></tr>
             </table>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-light">DASAR PERHITUNGAN SKOR</div>
+        <div class="card-body p-2 small">
+            <p class="mb-2"><strong>Absensi:</strong> 45% × {{ number_format($attendanceRate, 0) }}% kehadiran + 55% × {{ number_format($punctualityRate, 0) }}% ketepatan waktu = <strong>{{ $score['attendance'] ?? $slip->score_attendance }}</strong>.</p>
+            <p class="mb-2"><strong>Aktivitas:</strong> {{ $kajianTotal }} kajian × 15 + {{ $tadarusSessions }} tadarus × 8 + {{ $activePrayerDays }} hari aktif sholat × 3 = <strong>{{ min(100, $activityRaw) }}</strong> poin.</p>
+            <p class="mb-0"><strong>KPI akhir:</strong> 70% × skor absensi + 30% × skor aktivitas = <strong>{{ $score['total'] ?? $slip->score_total }}</strong>.</p>
         </div>
     </div>
 
@@ -72,6 +89,7 @@
     .remuneration-slip-mobile .card-header { font-size: 12px; font-weight: 700; }
     .remuneration-slip-mobile table td { padding: 6px 10px; }
     .remuneration-slip-mobile table td:last-child { font-weight: 600; }
+    .remuneration-slip-mobile .sub-row { padding-left: 22px; color: #6c757d; font-size: 12px; }
     @media print {
         .appHeader, .bottom-nav, .bottomMenuDrawer, .bottomMenuOverlay, button { display: none !important; }
         .remuneration-slip-mobile { margin-top: 0 !important; }
