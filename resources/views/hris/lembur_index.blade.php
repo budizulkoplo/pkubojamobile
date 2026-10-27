@@ -302,8 +302,10 @@
         font-weight: 600;
     }
 
-    .overtime-photo-modal .btn-close {
-        filter: invert(1);
+    .overtime-photo-close {
+        color: #fff;
+        opacity: .8;
+        text-shadow: none;
     }
 
     .overtime-photo-modal .modal-body {
@@ -495,7 +497,7 @@
                                 <div class="overtime-time-value">
                                     <strong>{{ $item->jam_lembur_masuk?->translatedFormat('H:i') ?? '-' }}</strong>
                                     @if($item->foto_lembur_masuk)
-                                        <button type="button" class="overtime-photo-thumb" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_masuk }}" data-photo-title="Foto masuk - {{ $item->pegawai_nama }}" aria-label="Lihat foto masuk {{ $item->pegawai_nama }}">
+                                        <button type="button" class="overtime-photo-thumb" data-photo-url="{{ $item->foto_lembur_masuk }}" data-photo-title="Foto masuk - {{ $item->pegawai_nama }}" aria-label="Lihat foto masuk {{ $item->pegawai_nama }}">
                                             <img src="{{ $item->foto_lembur_masuk }}" alt="Thumbnail foto masuk {{ $item->pegawai_nama }}" loading="lazy">
                                         </button>
                                     @endif
@@ -509,7 +511,7 @@
                                 <div class="overtime-time-value">
                                     <strong>{{ $item->jam_lembur_pulang?->translatedFormat('H:i') ?? '-' }}</strong>
                                     @if($item->foto_lembur_pulang)
-                                        <button type="button" class="overtime-photo-thumb" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_pulang }}" data-photo-title="Foto pulang - {{ $item->pegawai_nama }}" aria-label="Lihat foto pulang {{ $item->pegawai_nama }}">
+                                        <button type="button" class="overtime-photo-thumb" data-photo-url="{{ $item->foto_lembur_pulang }}" data-photo-title="Foto pulang - {{ $item->pegawai_nama }}" aria-label="Lihat foto pulang {{ $item->pegawai_nama }}">
                                             <img src="{{ $item->foto_lembur_pulang }}" alt="Thumbnail foto pulang {{ $item->pegawai_nama }}" loading="lazy">
                                         </button>
                                     @endif
@@ -575,7 +577,7 @@
                                     <div class="overtime-time-value">
                                         <span>{{ $item->jam_lembur_masuk?->translatedFormat('d M Y H:i') ?? '-' }}</span>
                                         @if($item->foto_lembur_masuk)
-                                            <button type="button" class="overtime-photo-thumb overtime-desktop-photo" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_masuk }}" data-photo-title="Foto masuk - {{ $item->pegawai_nama }}" aria-label="Lihat foto masuk {{ $item->pegawai_nama }}">
+                                            <button type="button" class="overtime-photo-thumb overtime-desktop-photo" data-photo-url="{{ $item->foto_lembur_masuk }}" data-photo-title="Foto masuk - {{ $item->pegawai_nama }}" aria-label="Lihat foto masuk {{ $item->pegawai_nama }}">
                                                 <img src="{{ $item->foto_lembur_masuk }}" alt="Thumbnail foto masuk {{ $item->pegawai_nama }}" loading="lazy">
                                             </button>
                                         @endif
@@ -585,7 +587,7 @@
                                     <div class="overtime-time-value">
                                         <span>{{ $item->jam_lembur_pulang?->translatedFormat('d M Y H:i') ?? '-' }}</span>
                                         @if($item->foto_lembur_pulang)
-                                            <button type="button" class="overtime-photo-thumb overtime-desktop-photo" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_pulang }}" data-photo-title="Foto pulang - {{ $item->pegawai_nama }}" aria-label="Lihat foto pulang {{ $item->pegawai_nama }}">
+                                            <button type="button" class="overtime-photo-thumb overtime-desktop-photo" data-photo-url="{{ $item->foto_lembur_pulang }}" data-photo-title="Foto pulang - {{ $item->pegawai_nama }}" aria-label="Lihat foto pulang {{ $item->pegawai_nama }}">
                                                 <img src="{{ $item->foto_lembur_pulang }}" alt="Thumbnail foto pulang {{ $item->pegawai_nama }}" loading="lazy">
                                             </button>
                                         @endif
@@ -632,7 +634,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="overtimePhotoModalTitle">Foto presensi lembur</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                <button type="button" class="close overtime-photo-close" data-dismiss="modal" aria-label="Tutup">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <img id="overtimePhotoModalImage" src="" alt="Foto presensi lembur">
@@ -651,19 +655,14 @@
             return;
         }
 
-        modal.addEventListener('show.bs.modal', function (event) {
-            const trigger = event.relatedTarget;
-
-            if (!trigger) {
-                return;
-            }
-
-            image.src = trigger.dataset.photoUrl;
-            image.alt = trigger.dataset.photoTitle;
-            title.textContent = trigger.dataset.photoTitle;
+        $('.overtime-photo-thumb').on('click', function () {
+            image.src = this.dataset.photoUrl;
+            image.alt = this.dataset.photoTitle;
+            title.textContent = this.dataset.photoTitle;
+            $(modal).modal('show');
         });
 
-        modal.addEventListener('hidden.bs.modal', function () {
+        $(modal).on('hidden.bs.modal', function () {
             image.removeAttribute('src');
         });
     });
