@@ -243,13 +243,83 @@
         background: #fff;
     }
 
+    .overtime-time-value {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 7px;
+    }
+
     .overtime-time strong {
-        display: block;
+        display: inline-block;
         color: #24364b;
         font-size: .8rem;
         font-weight: 700;
         line-height: 1.35;
         overflow-wrap: anywhere;
+    }
+
+    .overtime-photo-thumb {
+        flex: 0 0 auto;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        overflow: hidden;
+        border: 2px solid #fff;
+        border-radius: 11px;
+        background: #e8f1f5;
+        box-shadow: 0 0 0 1px #dce5eb, 0 3px 8px rgba(27, 48, 73, .12);
+        cursor: zoom-in;
+    }
+
+    .overtime-photo-thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .overtime-desktop-photo {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+    }
+
+    .overtime-photo-modal .modal-content {
+        overflow: hidden;
+        border: 0;
+        border-radius: 18px;
+        background: #101820;
+        color: #fff;
+    }
+
+    .overtime-photo-modal .modal-header {
+        border: 0;
+    }
+
+    .overtime-photo-modal .modal-title {
+        font-size: .95rem;
+        font-weight: 600;
+    }
+
+    .overtime-photo-modal .btn-close {
+        filter: invert(1);
+    }
+
+    .overtime-photo-modal .modal-body {
+        display: flex;
+        min-height: 200px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 14px 16px;
+    }
+
+    .overtime-photo-modal img {
+        display: block;
+        max-width: 100%;
+        max-height: 72vh;
+        border-radius: 12px;
+        object-fit: contain;
     }
 
     .overtime-time small {
@@ -422,14 +492,28 @@
                         <div class="overtime-attendance">
                             <div class="overtime-time">
                                 <span class="overtime-label">Jam masuk</span>
-                                <strong>{{ $item->jam_lembur_masuk?->translatedFormat('H:i') ?? '-' }}</strong>
+                                <div class="overtime-time-value">
+                                    <strong>{{ $item->jam_lembur_masuk?->translatedFormat('H:i') ?? '-' }}</strong>
+                                    @if($item->foto_lembur_masuk)
+                                        <button type="button" class="overtime-photo-thumb" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_masuk }}" data-photo-title="Foto masuk - {{ $item->pegawai_nama }}" aria-label="Lihat foto masuk {{ $item->pegawai_nama }}">
+                                            <img src="{{ $item->foto_lembur_masuk }}" alt="Thumbnail foto masuk {{ $item->pegawai_nama }}" loading="lazy">
+                                        </button>
+                                    @endif
+                                </div>
                                 @if($item->jam_lembur_masuk)
                                     <small>{{ $item->jam_lembur_masuk->translatedFormat('d M Y') }}</small>
                                 @endif
                             </div>
                             <div class="overtime-time">
                                 <span class="overtime-label">Jam pulang</span>
-                                <strong>{{ $item->jam_lembur_pulang?->translatedFormat('H:i') ?? '-' }}</strong>
+                                <div class="overtime-time-value">
+                                    <strong>{{ $item->jam_lembur_pulang?->translatedFormat('H:i') ?? '-' }}</strong>
+                                    @if($item->foto_lembur_pulang)
+                                        <button type="button" class="overtime-photo-thumb" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_pulang }}" data-photo-title="Foto pulang - {{ $item->pegawai_nama }}" aria-label="Lihat foto pulang {{ $item->pegawai_nama }}">
+                                            <img src="{{ $item->foto_lembur_pulang }}" alt="Thumbnail foto pulang {{ $item->pegawai_nama }}" loading="lazy">
+                                        </button>
+                                    @endif
+                                </div>
                                 @if($item->jam_lembur_pulang)
                                     <small>{{ $item->jam_lembur_pulang->translatedFormat('d M Y') }}</small>
                                 @endif
@@ -487,8 +571,26 @@
                                 <td>{{ $item->pegawai_nama }}</td>
                                 <td>{{ $item->bagian ?: '-' }} / {{ $item->jabatan ?: '-' }}</td>
                                 <td>{{ $item->alasan ?: '-' }}</td>
-                                <td>{{ $item->jam_lembur_masuk?->translatedFormat('d M Y H:i') ?? '-' }}</td>
-                                <td>{{ $item->jam_lembur_pulang?->translatedFormat('d M Y H:i') ?? '-' }}</td>
+                                <td>
+                                    <div class="overtime-time-value">
+                                        <span>{{ $item->jam_lembur_masuk?->translatedFormat('d M Y H:i') ?? '-' }}</span>
+                                        @if($item->foto_lembur_masuk)
+                                            <button type="button" class="overtime-photo-thumb overtime-desktop-photo" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_masuk }}" data-photo-title="Foto masuk - {{ $item->pegawai_nama }}" aria-label="Lihat foto masuk {{ $item->pegawai_nama }}">
+                                                <img src="{{ $item->foto_lembur_masuk }}" alt="Thumbnail foto masuk {{ $item->pegawai_nama }}" loading="lazy">
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="overtime-time-value">
+                                        <span>{{ $item->jam_lembur_pulang?->translatedFormat('d M Y H:i') ?? '-' }}</span>
+                                        @if($item->foto_lembur_pulang)
+                                            <button type="button" class="overtime-photo-thumb overtime-desktop-photo" data-bs-toggle="modal" data-bs-target="#overtimePhotoModal" data-photo-url="{{ $item->foto_lembur_pulang }}" data-photo-title="Foto pulang - {{ $item->pegawai_nama }}" aria-label="Lihat foto pulang {{ $item->pegawai_nama }}">
+                                                <img src="{{ $item->foto_lembur_pulang }}" alt="Thumbnail foto pulang {{ $item->pegawai_nama }}" loading="lazy">
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td>{{ $item->durasi_lembur ?? 'Belum lengkap' }}</td>
                                 <td class="text-center">
                                     @if($item->verified_at)
@@ -524,4 +626,46 @@
         </div>
     @endif
 </div>
+
+<div class="modal fade overtime-photo-modal" id="overtimePhotoModal" tabindex="-1" aria-labelledby="overtimePhotoModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="overtimePhotoModalTitle">Foto presensi lembur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <img id="overtimePhotoModalImage" src="" alt="Foto presensi lembur">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('overtimePhotoModal');
+        const image = document.getElementById('overtimePhotoModalImage');
+        const title = document.getElementById('overtimePhotoModalTitle');
+
+        if (!modal || !image || !title) {
+            return;
+        }
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+
+            if (!trigger) {
+                return;
+            }
+
+            image.src = trigger.dataset.photoUrl;
+            image.alt = trigger.dataset.photoTitle;
+            title.textContent = trigger.dataset.photoTitle;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            image.removeAttribute('src');
+        });
+    });
+</script>
 @endsection

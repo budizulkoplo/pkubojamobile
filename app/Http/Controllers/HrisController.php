@@ -94,7 +94,7 @@ class HrisController extends Controller
             : DB::table('presensi')
                 ->whereIn('idlembur', $lemburIds)
                 ->whereIn('inoutmode', [5, 6])
-                ->select('idlembur', 'inoutmode', 'tgl_presensi', 'jam_in')
+                ->select('idlembur', 'inoutmode', 'tgl_presensi', 'jam_in', 'foto_in')
                 ->orderBy('tgl_presensi')
                 ->orderBy('jam_in')
                 ->get()
@@ -110,6 +110,12 @@ class HrisController extends Controller
                 : null;
             $item->jam_lembur_pulang = $presensiPulang
                 ? Carbon::parse($presensiPulang->tgl_presensi . ' ' . $presensiPulang->jam_in)
+                : null;
+            $item->foto_lembur_masuk = $presensiMasuk && $presensiMasuk->foto_in
+                ? Storage::disk('public')->url('uploads/absensi/' . $presensiMasuk->foto_in)
+                : null;
+            $item->foto_lembur_pulang = $presensiPulang && $presensiPulang->foto_in
+                ? Storage::disk('public')->url('uploads/absensi/' . $presensiPulang->foto_in)
                 : null;
             $item->durasi_lembur = null;
 
