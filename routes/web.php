@@ -196,6 +196,8 @@ Route::prefix('hris')->group(function () {
     Route::post('/lembur/ajukan/store', [HrisController::class, 'storeAjukanLembur'])->name('hris.ajukan_lembur_store');
     Route::post('/lembur/{id}/verify', [HrisController::class,'verifyLembur'])
     ->name('hris.lembur_verify');
+    Route::post('/lembur/{id}/unverify', [HrisController::class, 'unverifyLembur'])
+    ->name('hris.lembur_unverify');
 
     // Jadwal lembur untuk pegawai
     Route::get('/jadwallembur', [HrisController::class, 'jadwalLembur'])->name('hris.jadwal_lembur');

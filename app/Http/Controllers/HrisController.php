@@ -36,8 +36,7 @@ class HrisController extends Controller
 
     /**
      * === INDEX LEMBUR ===
-     * Tampilkan data lembur per tanggal (default: hari ini)
-     * dan hanya anggota yang berada di bawah karu login.
+     * Tampilkan data lembur bulanan anggota yang berada di bawah karu login.
      */
     public function indexLembur(Request $request)
     {
@@ -67,22 +66,66 @@ class HrisController extends Controller
             ->unique()
             ->toArray();
 
-        // Tanggal filter
-        $tanggal = $request->get('tanggal') ?? Carbon::now()->toDateString();
+        $validated = $request->validate([
+            'periode' => 'nullable|date_format:Y-m',
+        ]);
+        $periode = $validated['periode'] ?? Carbon::now()->format('Y-m');
+        $awalPeriode = Carbon::createFromFormat('Y-m', $periode)->startOfMonth();
+        $akhirPeriode = $awalPeriode->copy()->endOfMonth();
 
-        // Ambil data lembur berdasarkan tanggal dan anggota karu
+        // Ambil data lembur berdasarkan bulan dan anggota karu
         $lembur = DB::table('lembur as l')
             ->join('pegawai as p', 'l.pegawai_pin', '=', 'p.pegawai_pin')
             ->whereIn('l.pegawai_pin', $anggotaPins)
-            ->whereDate('l.tgllembur', $tanggal)
+            ->whereNull('l.deleted_at')
+            ->whereBetween('l.tgllembur', [
+                $awalPeriode->toDateString(),
+                $akhirPeriode->toDateString(),
+            ])
             ->where('l.jenis', 'lembur')
             ->select('l.*', 'p.pegawai_nama', 'p.bagian', 'p.jabatan')
+            ->orderBy('l.tgllembur', 'desc')
             ->orderBy('p.pegawai_nama', 'asc')
             ->get();
 
+        $lemburIds = $lembur->pluck('idlembur')->all();
+        $presensiByLembur = empty($lemburIds)
+            ? collect()
+            : DB::table('presensi')
+                ->whereIn('idlembur', $lemburIds)
+                ->whereIn('inoutmode', [5, 6])
+                ->select('idlembur', 'inoutmode', 'tgl_presensi', 'jam_in')
+                ->orderBy('tgl_presensi')
+                ->orderBy('jam_in')
+                ->get()
+                ->groupBy('idlembur');
+
+        $lembur->each(function ($item) use ($presensiByLembur): void {
+            $presensi = $presensiByLembur->get($item->idlembur, collect());
+            $presensiMasuk = $presensi->firstWhere('inoutmode', 5);
+            $presensiPulang = $presensi->where('inoutmode', 6)->last();
+
+            $item->jam_lembur_masuk = $presensiMasuk
+                ? Carbon::parse($presensiMasuk->tgl_presensi . ' ' . $presensiMasuk->jam_in)
+                : null;
+            $item->jam_lembur_pulang = $presensiPulang
+                ? Carbon::parse($presensiPulang->tgl_presensi . ' ' . $presensiPulang->jam_in)
+                : null;
+            $item->durasi_lembur = null;
+
+            if (
+                $item->jam_lembur_masuk
+                && $item->jam_lembur_pulang
+                && $item->jam_lembur_pulang->greaterThanOrEqualTo($item->jam_lembur_masuk)
+            ) {
+                $durasiMenit = (int) $item->jam_lembur_masuk->diffInMinutes($item->jam_lembur_pulang);
+                $item->durasi_lembur = intdiv($durasiMenit, 60) . ' jam ' . ($durasiMenit % 60) . ' menit';
+            }
+        });
+
         return view('hris.lembur_index', [
-            'karu'    => $karuList, 
-            'tanggal' => $tanggal,
+            'karu'    => $karuList,
+            'periode' => $periode,
             'lembur'  => $lembur,
         ]);
     }
@@ -915,6 +958,12 @@ class HrisController extends Controller
 
     public function verifyLembur($id)
     {
+        if (!Auth::guard('karyawan')->check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        $this->authorizeLemburVerification($id);
+
         DB::table('lembur')
             ->where('idlembur', $id)
             ->update([
@@ -922,6 +971,47 @@ class HrisController extends Controller
             ]);
 
         return back()->with('success', 'Lembur berhasil diverifikasi.');
+    }
+
+    public function unverifyLembur($id)
+    {
+        if (!Auth::guard('karyawan')->check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        $this->authorizeLemburVerification($id);
+
+        DB::table('lembur')
+            ->where('idlembur', $id)
+            ->update([
+                'verified_at' => null,
+            ]);
+
+        return back()->with('success', 'Verifikasi lembur berhasil dibatalkan.');
+    }
+
+    private function authorizeLemburVerification($id): object
+    {
+        $lembur = DB::table('lembur')
+            ->where('idlembur', $id)
+            ->where('jenis', 'lembur')
+            ->first();
+
+        if (!$lembur) {
+            abort(404, 'Data lembur tidak ditemukan.');
+        }
+
+        $isAnggotaKaru = DB::table('karupegawai as kp')
+            ->join('karu as k', 'kp.idkaru', '=', 'k.idkaru')
+            ->where('k.pin', Auth::guard('karyawan')->user()->id)
+            ->where('kp.pegawai_pin', $lembur->pegawai_pin)
+            ->exists();
+
+        if (!$isAnggotaKaru) {
+            abort(403, 'Anda tidak berhak mengubah verifikasi lembur pegawai ini.');
+        }
+
+        return $lembur;
     }
 
     private function currentPegawai(): ?object
