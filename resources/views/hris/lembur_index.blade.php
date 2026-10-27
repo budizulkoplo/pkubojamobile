@@ -285,32 +285,63 @@
         border-radius: 9px;
     }
 
+    .overtime-photo-modal {
+        position: fixed;
+        z-index: 2000;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(8, 15, 24, .82);
+        opacity: 0;
+        transition: opacity .18s ease;
+    }
+
+    .overtime-photo-modal.is-open {
+        display: flex;
+        opacity: 1;
+    }
+
     .overtime-photo-modal .modal-content {
+        position: relative;
+        width: min(100%, 760px);
+        max-height: 90vh;
         overflow: hidden;
         border: 0;
         border-radius: 18px;
         background: #101820;
         color: #fff;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, .35);
     }
 
     .overtime-photo-modal .modal-header {
-        border: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
     }
 
     .overtime-photo-modal .modal-title {
+        margin: 0;
         font-size: .95rem;
         font-weight: 600;
     }
 
     .overtime-photo-close {
+        padding: 0 4px;
+        border: 0;
+        background: transparent;
         color: #fff;
+        font-size: 1.8rem;
+        line-height: 1;
         opacity: .8;
-        text-shadow: none;
+        cursor: pointer;
     }
 
     .overtime-photo-modal .modal-body {
         display: flex;
-        min-height: 200px;
+        min-height: 120px;
         align-items: center;
         justify-content: center;
         padding: 0 14px 16px;
@@ -629,19 +660,17 @@
     @endif
 </div>
 
-<div class="modal fade overtime-photo-modal" id="overtimePhotoModal" tabindex="-1" aria-labelledby="overtimePhotoModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
+<div class="overtime-photo-modal" id="overtimePhotoModal" tabindex="-1" role="dialog" aria-labelledby="overtimePhotoModalTitle" aria-hidden="true">
+    <div class="modal-content" role="document">
             <div class="modal-header">
                 <h5 class="modal-title" id="overtimePhotoModalTitle">Foto presensi lembur</h5>
-                <button type="button" class="close overtime-photo-close" data-dismiss="modal" aria-label="Tutup">
+                <button type="button" class="overtime-photo-close" data-close-photo aria-label="Tutup">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <img id="overtimePhotoModalImage" src="" alt="Foto presensi lembur">
             </div>
-        </div>
     </div>
 </div>
 
@@ -655,15 +684,39 @@
             return;
         }
 
-        $('.overtime-photo-thumb').on('click', function () {
-            image.src = this.dataset.photoUrl;
-            image.alt = this.dataset.photoTitle;
-            title.textContent = this.dataset.photoTitle;
-            $(modal).modal('show');
+        const closeButton = modal.querySelector('[data-close-photo]');
+
+        const closePhoto = function () {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            image.removeAttribute('src');
+        };
+
+        document.querySelectorAll('.overtime-photo-thumb').forEach(function (thumbnail) {
+            thumbnail.addEventListener('click', function () {
+                image.src = this.dataset.photoUrl;
+                image.alt = this.dataset.photoTitle;
+                title.textContent = this.dataset.photoTitle;
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                closeButton.focus();
+            });
         });
 
-        $(modal).on('hidden.bs.modal', function () {
-            image.removeAttribute('src');
+        closeButton.addEventListener('click', closePhoto);
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closePhoto();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                closePhoto();
+            }
         });
     });
 </script>
