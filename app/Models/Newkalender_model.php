@@ -21,7 +21,7 @@ class Newkalender_model extends Model
         $startDate = date('Y-m-d', strtotime($endDate . ' -1 month +1 day'));
         
         // Get employee data
-        $pegawai = DB::table('pegawai')
+        $pegawai = DB::connection('hris')->table('pegawai')
             ->where('pegawai_pin', $pegawaiPin)
             ->first();
         
@@ -96,7 +96,7 @@ class Newkalender_model extends Model
         // 1. Cek bagian pegawai pada tanggal periode agar histori bagian tetap konsisten
         $bagian = $this->resolveBagianAtDate($pegawaiPin, $endDate);
 
-        $kelompokJam = DB::select("
+        $kelompokJam = DB::connection('hris')->select("
             SELECT shift, jammasuk, jampulang 
             FROM kelompokjam 
             WHERE bagian = ?
@@ -107,7 +107,7 @@ class Newkalender_model extends Model
         $defaultJamPulang = $kelompokJam[0]->jampulang ?? '16:00:00';
 
         // 2. Query jadwal dari tabel jadwal
-        $results = DB::select("
+        $results = DB::connection('hris')->select("
             SELECT 
                 j.tgl,
                 j.shift,
@@ -170,7 +170,7 @@ class Newkalender_model extends Model
             return;
         }
 
-        $officeShift = DB::select("
+        $officeShift = DB::connection('hris')->select("
             SELECT shift, jammasuk, jampulang
             FROM kelompokjam
             WHERE bagian = ? AND shift = '-'
@@ -207,7 +207,7 @@ class Newkalender_model extends Model
         $attendanceEnd = date('Y-m-d', strtotime($endDate . ' +1 day'));
 
         // Get all attendance data termasuk 1 hari sebelum/sesudah untuk shift malam lintas cut off
-        $allAttendance = DB::select("
+        $allAttendance = DB::connection('hris')->select("
             SELECT 
                 DATE(scan_date) as tgl,
                 scan_date,
@@ -420,7 +420,7 @@ class Newkalender_model extends Model
 
         $date = $date ?: date('Y-m-d');
 
-        $history = DB::table('pegawai_bagian_history')
+        $history = DB::connection('hris')->table('pegawai_bagian_history')
             ->where('pegawai_pin', $pegawaiPin)
             ->orderBy('effective_from', 'asc')
             ->orderBy('id', 'asc')
@@ -444,7 +444,7 @@ class Newkalender_model extends Model
             return !empty($earliest->bagian_lama) ? (string) $earliest->bagian_lama : (string) ($earliest->bagian_baru ?? '');
         }
 
-        $pegawai = DB::table('pegawai')
+        $pegawai = DB::connection('hris')->table('pegawai')
             ->where('pegawai_pin', $pegawaiPin)
             ->value('bagian');
 
@@ -453,7 +453,7 @@ class Newkalender_model extends Model
 
     private function getTanggalAktifKeterlambatan(): ?string
     {
-        $row = DB::table('keterlambatan')
+        $row = DB::connection('hris')->table('keterlambatan')
             ->whereNotNull('tgl_aktif')
             ->min('tgl_aktif');
 
@@ -462,7 +462,7 @@ class Newkalender_model extends Model
     
     private function getOvertimeData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
-        $results = DB::select("
+        $results = DB::connection('hris')->select("
             SELECT 
                 r.tgl,
                 r.jam_in,
@@ -499,11 +499,11 @@ class Newkalender_model extends Model
 
     private function applyAttendanceAdjustments($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
-        if (!Schema::hasTable('attendance_adjustments')) {
+        if (!Schema::connection('hris')->hasTable('attendance_adjustments')) {
             return;
         }
 
-        $adjustments = DB::table('attendance_adjustments')
+        $adjustments = DB::connection('hris')->table('attendance_adjustments')
             ->where('pegawai_pin', $pegawaiPin)
             ->whereBetween('tgl', [$startDate, $endDate])
             ->orderBy('tgl')
@@ -646,7 +646,7 @@ class Newkalender_model extends Model
     private function getSpecialStatusData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
         // Get cuti data
-        $cutiResults = DB::select("
+        $cutiResults = DB::connection('hris')->select("
             SELECT 
                 C.tglcuti as tgl,
                 'Cuti' as keterangan
@@ -666,7 +666,7 @@ class Newkalender_model extends Model
         }
         
         // Get tugas luar data
-        $tugasLuarResults = DB::select("
+        $tugasLuarResults = DB::connection('hris')->select("
             SELECT 
                 tgltugasluar as tgl,
                 'Tugas Luar' as keterangan
@@ -683,7 +683,7 @@ class Newkalender_model extends Model
         }
         
         // Get double shift data
-        $doubleShiftResults = DB::select("
+        $doubleShiftResults = DB::connection('hris')->select("
             SELECT 
                 tglshift as tgl,
                 'Double Shift' as keterangan
