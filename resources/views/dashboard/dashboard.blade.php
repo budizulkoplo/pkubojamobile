@@ -2,13 +2,9 @@
 
 @section('content')
 
-<div id="user-section" class="dashboard-hero">
-    <span class="hero-orb hero-orb-one" aria-hidden="true"></span>
-    <span class="hero-orb hero-orb-two" aria-hidden="true"></span>
-    <div class="hero-topline">
-        <span class="hero-eyebrow">HRIS MOBILE</span>
-        <span class="hero-status"><span class="status-dot"></span> Sistem aktif</span>
-    </div>
+<link rel="stylesheet" href="{{ asset('assets/css/homes.css') }}">
+
+<div id="user-section">
     <div id="user-detail">
         <div class="avatar">
             @if(!empty(Auth::guard('karyawan')->user()->foto))
@@ -22,30 +18,14 @@
         </div>
         
         <div id="user-info">
-            <div class="user-greeting">Assalamu'alaikum..</div>
+            <div id="user-role">Assalamu'alaikum..</div>
             <h3>{{ Auth::guard('karyawan')->user()->nama_lengkap }}</h3>
-            <div class="user-role">{{ Auth::guard('karyawan')->user()->jabatan }}</div>
+            <div id="user-role">Jabatan: <strong>{{ Auth::guard('karyawan')->user()->jabatan }}</strong></div>
         </div>
-        <div class="hero-action" aria-hidden="true"><ion-icon name="sparkles-outline"></ion-icon></div>
-    </div>
-    <div class="hero-footer">
-        <div>
-            <span class="hero-date-label">Hari ini</span>
-            <strong>{{ $namabulanaktif }} {{ $tahunini }}</strong>
-        </div>
-        <div class="hero-brand"><img src="{{ asset('assets/img/logopku.png') }}" alt="Logo PKU"><span>RS PKU Boja</span></div>
     </div>
 </div>
-<div class="dashboard-content">
-<div class="performance-card overview-card">
-    <div class="overview-head">
-        <div>
-            <span class="card-eyebrow">PERSONAL OVERVIEW</span>
-            <div class="title">Ritme kerjamu bulan ini</div>
-        </div>
-        <span class="leave-chip"><ion-icon name="leaf-outline"></ion-icon> {{ $sisaCuti }} cuti</span>
-    </div>
-    <div class="overview-note">Pantau aktivitas dan benefit-mu dalam satu layar.</div>
+<div class="performance-card">
+    <div class="title">Bulan ini: <small>{{ $sisaCuti }} x Sisa Cuti</small></div>
 
     <div class="performance-grid">
         {{-- Kajian --}}
@@ -105,16 +85,16 @@
             </div>
         </a>
     </div>
-    <div class="overview-footer text-center mt-2" style="font-size: 11px; color: #777;">
+    <div class="text-center mt-2" style="font-size: 11px; color: #777;">
         <img src="{{ asset('assets/img/logopku.png') }}" alt="Logo" width="16" class="me-1 align-middle">
         <strong>HRIS Mobile v3.0</strong> – RS PKU Muhammadiyah Boja
     </div>
 </div>
 
-<div class="performance-card mb-3 attendance-card">
+<div class="performance-card mb-3">
     <div class="todaypresence">
         <div class="rekappresensi">
-            <h3 class="section-title"><span><small class="card-eyebrow">LIVE METRICS</small>Performance Presensi</span><span class="section-status"><span class="status-dot"></span> Aktif</span></h3>
+            <h3 class="section-title">Performance Presensi</h3>
             <div class="text-center mb-2" style="font-size: 11px; color: #777;">
                 Periode {{ \Carbon\Carbon::parse($periodePresensi . '-26')->subMonth()->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($periodePresensi . '-25')->format('d/m/Y') }}
             </div>
@@ -175,10 +155,10 @@
 </div>
 
 <!-- Task Management Summary -->
-<div class="performance-card mb-3 memo-card">
+<div class="performance-card mb-3">
     <div class="todaypresence">
         <div class="rekappresensi">
-            <h3 class="section-title"><span><small class="card-eyebrow">WORKFLOW</small>Memo Internal</span><span class="section-status"><ion-icon name="pulse-outline"></ion-icon> Live</span></h3>
+            <h3 class="section-title">Memo Internal</h3>
             <div class="row text-center">
                 @if($ticketSummary->count() > 0)
                     @foreach($ticketSummary as $status => $count)
@@ -234,9 +214,9 @@
 </div>
 <!-- Task Management Summary -->
 
-<div class="scrollable-content quick-access">
+<div class="scrollable-content">
     <div class="rekappresensi">
-        <h4 class="quick-title"><span>Akses cepat</span><small>Sering digunakan</small></h4>
+        <h4 class="text-center">Akses Cepat:</h4>
 
         <button onclick="location.href='{{ route('form.scan.camera') }}'" class="btn btn-success w-100 d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="qr-code-outline"></ion-icon>
@@ -291,7 +271,6 @@
         </button>
 
     </div>
-</div>
 </div>
 
 <!-- Modal Presensi -->
@@ -818,7 +797,6 @@
     height: auto;
 }
 </style>
-<link rel="stylesheet" href="{{ asset('assets/css/homes.css') }}">
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const allTickets = @json($userTickets ?? []);
