@@ -22,6 +22,10 @@
     <!-- CSS utama dengan cache-busting -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}?v={{ filemtime(public_path('assets/css/style.css')) }}">
 
+    @if (request()->is('dashboard'))
+        <link rel="stylesheet" href="{{ asset('assets/css/homes.css') }}?v={{ filemtime(public_path('assets/css/homes.css')) }}">
+    @endif
+
     <!-- Manifest untuk PWA -->
     <link rel="manifest" href="{{ url('manifest.json') }}">
 

@@ -2,16 +2,15 @@
 
 @section('content')
 
-<link rel="stylesheet" href="{{ asset('assets/css/homes.css') }}">
-
-<div id="user-section">
+<div class="dashboard-app">
+<div id="user-section" class="dashboard-header">
     <div id="user-detail">
         <div class="avatar">
             @if(!empty(Auth::guard('karyawan')->user()->foto))
                 @php
                     $path = Storage::url('uploads/karyawan/' . Auth::guard('karyawan')->user()->foto);
                 @endphp
-                <img src="{{ url($path) }}" alt="avatar">
+                <img src="{{ url($path) }}" alt="avatar" onerror="this.onerror=null;this.src='{{ asset('assets/img/sample/avatar/avatar1.jpg') }}';">
             @else
                 <img src="{{ asset('assets/img/sample/avatar/avatar1.jpg') }}" alt="avatar" loading="lazy">
             @endif
@@ -23,11 +22,28 @@
             <div id="user-role">Jabatan: <strong>{{ Auth::guard('karyawan')->user()->jabatan }}</strong></div>
         </div>
     </div>
+    <div class="dashboard-header-footer">
+        <span>Personal dashboard</span>
+        <strong>{{ now()->format('d M Y') }}</strong>
+    </div>
 </div>
-<div class="performance-card">
-    <div class="title">Bulan ini: <small>{{ $sisaCuti }} x Sisa Cuti</small></div>
+<main class="dashboard-main">
+<div class="performance-card overview-card">
+    <div class="overview-meta">
+        <strong class="overview-title">Bulan ini</strong>
+        <span class="leave-pill"><ion-icon name="calendar-outline"></ion-icon>{{ $sisaCuti }} hari cuti</span>
+    </div>
 
     <div class="performance-grid">
+        {{-- Saldo Voucher --}}
+        <a href="/sale" class="perf-item perf-saldo text-decoration-none">
+            <ion-icon name="wallet-outline"></ion-icon>
+            <div class="perf-text">
+                <div class="label">Saldo Voucher</div>
+                <div class="value">Rp {{ number_format(Auth::guard('karyawan')->user()->saldo, 0, ',', '.') }}</div>
+            </div>
+        </a>
+
         {{-- Kajian --}}
         <a href="/presensi/recordkajian" class="perf-item perf-kajian {{ request()->routeIs('presensi.recordkajian') ? 'active' : '' }}">
             <ion-icon name="library-outline"></ion-icon>
@@ -62,7 +78,7 @@
         <a href="/quran" class="perf-item perf-cuti">
             <ion-icon name="book-outline"></ion-icon>
             <div class="perf-text">
-                <div class="value">Qur'an</div>
+                <div class="value">Al Qur'an</div>
                 <div class="label">{!! $lastQuranText !!}</div>
 
             </div>
@@ -76,25 +92,25 @@
             </div>
         </a> -->
 
-        {{-- Saldo Voucher --}}
-        <a href="/sale" class="perf-item perf-saldo text-decoration-none">
-            <ion-icon name="wallet-outline"></ion-icon>
-            <div class="perf-text">
-                <div class="label">Saldo Voucher</div>
-                <div class="value">Rp {{ number_format(Auth::guard('karyawan')->user()->saldo, 0, ',', '.') }}</div>
-            </div>
-        </a>
     </div>
     <div class="text-center mt-2" style="font-size: 11px; color: #777;">
         <img src="{{ asset('assets/img/logopku.png') }}" alt="Logo" width="16" class="me-1 align-middle">
-        <strong>HRIS Mobile v3.0</strong> – RS PKU Muhammadiyah Boja
+        <strong>HRIS Mobile v4.0</strong> – RS PKU Muhammadiyah Boja
     </div>
 </div>
 
-<div class="performance-card mb-3">
+<div class="performance-card mb-3 attendance-card">
     <div class="todaypresence">
         <div class="rekappresensi">
-            <h3 class="section-title">Performance Presensi</h3>
+            <div class="dashboard-section-heading">
+                <div>
+                    <h3 class="section-title">Performance Presensi</h3>
+                </div>
+                <div class="attendance-rate">
+                    <strong>{{ $attendancePerformance['attendance_rate'] ?? 0 }}%</strong>
+                    <span>kehadiran</span>
+                </div>
+            </div>
             <div class="text-center mb-2" style="font-size: 11px; color: #777;">
                 Periode {{ \Carbon\Carbon::parse($periodePresensi . '-26')->subMonth()->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($periodePresensi . '-25')->format('d/m/Y') }}
             </div>
@@ -155,10 +171,15 @@
 </div>
 
 <!-- Task Management Summary -->
-<div class="performance-card mb-3">
+<div class="performance-card mb-3 memo-card">
     <div class="todaypresence">
         <div class="rekappresensi">
-            <h3 class="section-title">Memo Internal</h3>
+            <div class="dashboard-section-heading">
+                <div>
+                    <h3 class="section-title">Memo Internal</h3>
+                </div>
+                <ion-icon class="section-heading-icon" name="chatbubbles-outline"></ion-icon>
+            </div>
             <div class="row text-center">
                 @if($ticketSummary->count() > 0)
                     @foreach($ticketSummary as $status => $count)
@@ -214,63 +235,71 @@
 </div>
 <!-- Task Management Summary -->
 
-<div class="scrollable-content">
+<section class="scrollable-content dashboard-quick-access">
     <div class="rekappresensi">
-        <h4 class="text-center">Akses Cepat:</h4>
+        <div class="dashboard-section-heading quick-heading">
+            <div>
+                <h4>Akses cepat</h4>
+            </div>
+        </div>
+        <div class="quick-grid">
 
-        <button onclick="location.href='{{ route('form.scan.camera') }}'" class="btn btn-success w-100 d-flex align-items-center justify-content-start gap-3">
+        <button onclick="location.href='{{ route('form.scan.camera') }}'" class="btn btn-success quick-action quick-action-featured d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="qr-code-outline"></ion-icon>
-            <span>| Scan QR Kehadiran Kajian</span>
+            <span>Scan QR Kehadiran Kajian</span>
         </button>
 
         <!-- Tombol Absen Ahad Pagi - buka di tab/browser baru -->
-        <button onclick="window.open('https://kajian.pcmboja.com', '_blank')" class="btn btn-success w-100 d-flex align-items-center justify-content-start gap-3">
+        <button onclick="window.open('https://kajian.pcmboja.com', '_blank')" class="btn btn-success quick-action d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="calendar-outline"></ion-icon>
-            <span>| Absen Ahad Pagi</span>
+            <span>Absen Ahad Pagi</span>
         </button>
 
-        <button onclick="location.href='{{ route('presensi.recordkajian') }}'" class="btn btn-primary w-100 d-flex align-items-center justify-content-start gap-3">
+        <button onclick="location.href='{{ route('presensi.recordkajian') }}'" class="btn btn-primary quick-action d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="school-outline"></ion-icon>
-            <span>| Record Kehadiran Kajian</span>
+            <span>Record Kehadiran Kajian</span>
+        </button>
+
+        {{-- Website Rumah Sakit --}}
+        <button onclick="openWebsite()" class="btn btn-info quick-action d-flex align-items-center justify-content-start gap-3">
+            <ion-icon name="medkit-outline"></ion-icon>
+            <span>Website Rumah Sakit</span>
+            <span id="spinner-rs" class="spinner-border spinner-border-sm ms-auto d-none" role="status"></span>
+        </button>
+
+        <button onclick="loadPasien()" class="btn btn-info quick-action d-flex align-items-center justify-content-start gap-3">
+            <ion-icon name="people-outline"></ion-icon>
+            <span>Update Pasien</span>
+            <span id="spinner" class="spinner-border spinner-border-sm ms-auto d-none" role="status"></span>
         </button>
 
         @php $idUser = Auth::guard('karyawan')->user()->jabatan ?? ''; @endphp
 
         @if(in_array($idUser, ['Security', 'Pemegang Saham', 'SDI','IT']))
-        <button onclick="location.href='{{ route('inventaris.index') }}'" class="btn btn-warning w-100 d-flex align-items-center justify-content-start gap-3">
+        <button onclick="location.href='{{ route('inventaris.index') }}'" class="btn btn-warning quick-action d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="briefcase-outline"></ion-icon>
-            <span>| Inventaris Security</span>
+            <span>Inventaris Security</span>
         </button>
         @endif
 
         @if(in_array($idUser, ['Security','Pemegang Saham', 'IT', 'SDI']))
-        <button onclick="location.href='{{ route('kegiatan.index') }}'" class="btn btn-warning w-100 d-flex align-items-center justify-content-start gap-3">
+        <button onclick="location.href='{{ route('kegiatan.index') }}'" class="btn btn-warning quick-action d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="clipboard-outline"></ion-icon>
-            <span>| Kegiatan Harian Security</span>
+            <span>Kegiatan Harian Security</span>
         </button>
         @endif
 
         @if(in_array($idUser, ['SDI', 'Kabid Pelayanan', 'IT Network', 'IT','Direktur', 'Binroh']))
-        <button onclick="location.href='{{ route('presensi.agenda') }}'" class="btn btn-info w-100 d-flex align-items-center justify-content-start gap-3">
+        <button onclick="location.href='{{ route('presensi.agenda') }}'" class="btn btn-info quick-action d-flex align-items-center justify-content-start gap-3">
             <ion-icon name="document-text-outline"></ion-icon>
-            <span>| Input Agenda</span>
+            <span>Input Agenda</span>
         </button>
         @endif
-
-        {{-- Website Rumah Sakit --}}
-        <button onclick="openWebsite()" class="btn btn-info w-100 d-flex align-items-center justify-content-start gap-3 mb-2">
-            <ion-icon name="medkit-outline"></ion-icon>
-            <span>| Website Rumah Sakit</span>
-            <span id="spinner-rs" class="spinner-border spinner-border-sm ms-auto d-none" role="status"></span>
-        </button>
-
-        <button onclick="loadPasien()" class="btn btn-info w-100 d-flex align-items-center justify-content-start gap-3">
-            <ion-icon name="medkit-outline"></ion-icon>
-            <span>| Update Pasien</span>
-            <span id="spinner" class="spinner-border spinner-border-sm ms-auto d-none" role="status"></span>
-        </button>
-
+        </div>
     </div>
+</section>
+
+</main>
 </div>
 
 <!-- Modal Presensi -->
@@ -797,6 +826,7 @@
     height: auto;
 }
 </style>
+<link rel="stylesheet" href="{{ asset('assets/css/homes.css') }}?v={{ filemtime(public_path('assets/css/homes.css')) }}">
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const allTickets = @json($userTickets ?? []);

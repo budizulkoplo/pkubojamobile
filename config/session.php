@@ -32,13 +32,8 @@ return [
     |
     */
 
-    'driver' => 'redis', // kamu sudah pakai ini
-
     'lifetime' => 43200, // 30 hari
     'expire_on_close' => false, // jangan hapus session saat browser/app ditutup
-
-    'secure' => env('SESSION_SECURE_COOKIE', true), // true jika pakai HTTPS
-
 
     /*
     |--------------------------------------------------------------------------
@@ -173,7 +168,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------
