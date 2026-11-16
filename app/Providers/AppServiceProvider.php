@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // HTTPS wajib di production, tetapi jangan memaksa HTTPS saat dijalankan
         // melalui http://localhost di lingkungan development.
-        if (env('ENFORCE_SSL', app()->environment('production'))) {
+        if (app()->environment('production') || filter_var(env('ENFORCE_SSL', false), FILTER_VALIDATE_BOOL)) {
             URL::forceScheme('https');
         }
         // Mengatur lokal Carbon (tanggal/waktu) ke Bahasa Indonesia
