@@ -25,11 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // HTTPS wajib di production, tetapi jangan memaksa HTTPS saat dijalankan
-        // melalui http://localhost di lingkungan development.
-        if (app()->environment('production') || filter_var(env('ENFORCE_SSL', false), FILTER_VALIDATE_BOOL)) {
-            URL::forceScheme('https');
-        }
+        // Mengatur skema URL menjadi HTTPS secara paksa
+        URL::forceScheme('https');
         // Mengatur lokal Carbon (tanggal/waktu) ke Bahasa Indonesia
         Carbon::setLocale('id');
 
