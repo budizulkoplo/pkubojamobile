@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 class Newkalender_model extends Model
 {
@@ -13,6 +14,12 @@ class Newkalender_model extends Model
 
     protected $table = 'pegawai';
     protected $primaryKey = 'pegawai_id';
+
+    private array $bagianHistoryCache = [];
+
+    private array $employeeBagianCache = [];
+
+    private array $workHourCache = [];
     
     public function getDataKalenderWithNightShift($pegawaiPin, $bulan)
     {
@@ -49,7 +56,6 @@ class Newkalender_model extends Model
                 'late_basis' => 'regular',
                 'lembur_data' => [],
                 'is_night_shift' => false,
-                'night_shift_check_out' => '',
                 'work_duration' => '00:00',
                 'jam_masuk_actual' => '',
                 'jam_pulang_actual' => '',
@@ -93,97 +99,34 @@ class Newkalender_model extends Model
     
     private function getScheduleData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
-        // 1. Cek bagian pegawai pada tanggal periode agar histori bagian tetap konsisten
-        $bagian = $this->resolveBagianAtDate($pegawaiPin, $endDate);
+        $results = DB::connection('hris')->table('jadwal')
+            ->where('pegawai_pin', $pegawaiPin)
+            ->whereBetween('tgl', [$startDate, $endDate])
+            ->orderBy('tgl')
+            ->get(['tgl', 'shift']);
 
-        $kelompokJam = DB::connection('hris')->select("
-            SELECT shift, jammasuk, jampulang 
-            FROM kelompokjam 
-            WHERE bagian = ?
-        ", [$bagian]);
-        
-        $isOfficeShift = ($kelompokJam[0]->shift ?? '') == '-';
-        $defaultJamMasuk = $kelompokJam[0]->jammasuk ?? '08:00:00';
-        $defaultJamPulang = $kelompokJam[0]->jampulang ?? '16:00:00';
-
-        // 2. Query jadwal dari tabel jadwal
-        $results = DB::connection('hris')->select("
-            SELECT 
-                j.tgl,
-                j.shift,
-                k.jammasuk as jam_masuk_shift,
-                k.jampulang as jam_pulang_shift
-            FROM jadwal j
-                LEFT JOIN kelompokjam k ON j.shift = k.shift 
-                join pegawai p on j.pegawai_pin=p.pegawai_pin
-                and p.bagian=k.bagian
-            WHERE j.pegawai_pin = ?
-            AND j.tgl BETWEEN ? AND ?
-            ORDER BY j.tgl
-        ", [$pegawaiPin, $startDate, $endDate]);
-        
-        // 3. Process jadwal yang ada
         foreach ($results as $row) {
-            $tgl = $row->tgl;
+            $tgl = (string) $row->tgl;
             if (isset($dataKalender[$tgl])) {
-                // Apply Office shift logic
-                if ($isOfficeShift) {
-                    $dataKalender[$tgl]['shift'] = 'Office';
-                    $dataKalender[$tgl]['jam_masuk_shift'] = $defaultJamMasuk;
-                    $dataKalender[$tgl]['jam_pulang_shift'] = $defaultJamPulang;
-                } else {
-                    $dataKalender[$tgl]['shift'] = $row->shift;
-                    $dataKalender[$tgl]['jam_masuk_shift'] = $row->jam_masuk_shift;
-                    $dataKalender[$tgl]['jam_pulang_shift'] = $row->jam_pulang_shift;
-                }
+                $bagian = $this->resolveBagianAtDate($pegawaiPin, $tgl);
+                $workHour = $this->workHourForBagianAndShift($bagian, (string) $row->shift);
+
+                $dataKalender[$tgl]['shift'] = $this->isOfficeBagian($bagian) ? 'Office' : (string) $row->shift;
+                $dataKalender[$tgl]['jam_masuk_shift'] = (string) ($workHour->jammasuk ?? '');
+                $dataKalender[$tgl]['jam_pulang_shift'] = (string) ($workHour->jampulang ?? '');
                 $dataKalender[$tgl]['has_schedule'] = true;
             }
         }
-        
-        // 4. Khusus untuk Office shift, set jadwal untuk semua hari yang ada absensi
-        if ($isOfficeShift) {
-            foreach ($dataKalender as $tgl => $data) {
-                $hasAttendance = !empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual']);
-                
-                // Jika ada absensi dan belum ada jadwal, set Office sebagai default
-                if ($hasAttendance && empty($data['has_schedule'])) {
-                    $dataKalender[$tgl]['shift'] = 'Office';
-                    $dataKalender[$tgl]['jam_masuk_shift'] = $defaultJamMasuk;
-                    $dataKalender[$tgl]['jam_pulang_shift'] = $defaultJamPulang;
-                    $dataKalender[$tgl]['has_schedule'] = true;
-                    $dataKalender[$tgl]['is_default_office'] = true;
-                }
-            }
+
+        foreach ($dataKalender as $tgl => &$data) {
+            $bagian = $this->resolveBagianAtDate($pegawaiPin, (string) $tgl);
+            $data['is_office_shift'] = $this->isOfficeBagian($bagian);
         }
-        
-        // 5. Tandai semua data kalender dengan info office shift
-        foreach ($dataKalender as $tgl => $data) {
-            $dataKalender[$tgl]['is_office_shift'] = $isOfficeShift;
-        }
+        unset($data);
     }
 
     private function applyOfficeAttendanceDefaults($pegawaiPin, &$dataKalender)
     {
-        $endDate = !empty($dataKalender) ? array_key_last($dataKalender) : null;
-        $bagian = $endDate ? $this->resolveBagianAtDate($pegawaiPin, $endDate) : '';
-        if ($bagian === '') {
-            return;
-        }
-
-        $officeShift = DB::connection('hris')->select("
-            SELECT shift, jammasuk, jampulang
-            FROM kelompokjam
-            WHERE bagian = ? AND shift = '-'
-            LIMIT 1
-        ", [$bagian]);
-
-        if (empty($officeShift)) {
-            return;
-        }
-
-        $defaultJamMasuk = $officeShift[0]->jammasuk ?? '08:00:00';
-        $defaultJamPulang = $officeShift[0]->jampulang ?? '16:00:00';
-
         foreach ($dataKalender as $tgl => $data) {
             $hasAttendance = !empty($data['jam_masuk_actual']) || !empty($data['jam_pulang_actual']);
             if (!$hasAttendance) {
@@ -191,9 +134,15 @@ class Newkalender_model extends Model
             }
 
             if (empty($dataKalender[$tgl]['jam_masuk_shift'])) {
+                $bagian = $this->resolveBagianAtDate($pegawaiPin, (string) $tgl);
+                $officeShift = $this->workHourForBagianAndShift($bagian, '-');
+                if (!$officeShift) {
+                    continue;
+                }
+
                 $dataKalender[$tgl]['shift'] = 'Office';
-                $dataKalender[$tgl]['jam_masuk_shift'] = $defaultJamMasuk;
-                $dataKalender[$tgl]['jam_pulang_shift'] = $defaultJamPulang;
+                $dataKalender[$tgl]['jam_masuk_shift'] = (string) ($officeShift->jammasuk ?? '08:00:00');
+                $dataKalender[$tgl]['jam_pulang_shift'] = (string) ($officeShift->jampulang ?? '16:00:00');
                 $dataKalender[$tgl]['has_schedule'] = true;
                 $dataKalender[$tgl]['is_default_office'] = true;
                 $dataKalender[$tgl]['is_office_shift'] = true;
@@ -330,7 +279,6 @@ class Newkalender_model extends Model
                         // Tampilkan shift malam di hari check-in jika masih dalam periode kalender
                         if (isset($dataKalender[$currentDate])) {
                             $dataKalender[$currentDate]['is_night_shift'] = true;
-                            $dataKalender[$currentDate]['night_shift_check_out'] = $firstMorningCheckOut['jam'];
                             $dataKalender[$currentDate]['jam_pulang'] = $firstMorningCheckOut['jam'] . ' (esok)';
                             $dataKalender[$currentDate]['jam_pulang_actual'] = $firstMorningCheckOut['jam'];
                             $dataKalender[$currentDate]['jam_masuk_actual'] = $lastNightCheckIn['jam'];
@@ -344,7 +292,6 @@ class Newkalender_model extends Model
 
                         // Tandai checkout pagi sebagai milik shift malam sebelumnya
                         if (isset($dataKalender[$nextDate])) {
-                            $dataKalender[$nextDate]['has_night_shift_checkout'] = true;
                             $dataKalender[$nextDate]['night_shift_checkout_time'] = $firstMorningCheckOut['jam'];
                             $dataKalender[$nextDate]['consumed_by_previous_night_shift'] = true;
                         }
@@ -387,13 +334,13 @@ class Newkalender_model extends Model
                 if ($isRuleActive) {
                     $lateThreshold = strtotime('-30 minutes', $jamMasukShift);
                     $data['late_basis'] = 'all_minus_30';
-                    $data['late_rule_text'] = 'Mulai ' . date('d-m-Y', strtotime($tglAktifKeterlambatan)) . ', semua pegawai wajib absen masuk paling lambat 30 menit sebelum jam kerja.';
+                    $data['late_rule_text'] = 'Semua pegawai wajib absen masuk paling lambat 30 menit sebelum jam kerja.';
                 } elseif (!empty($data['has_schedule']) && empty($data['is_office_shift'])) {
                     $lateThreshold = strtotime('-30 minutes', $jamMasukShift);
                     $data['late_basis'] = 'shift_minus_30';
-                    $data['late_rule_text'] = 'Pegawai shift wajib absen masuk paling lambat 30 menit sebelum jam shift dimulai untuk operan shift.';
+                    $data['late_rule_text'] = 'Pegawai shift wajib absen masuk paling lambat 30 menit sebelum jam shift dimulai.';
                 } else {
-                    $data['late_rule_text'] = 'Pegawai office/non-shift dinilai terlambat jika absen masuk melewati jam masuk shift karena tidak ada operan jaga.';
+                    $data['late_rule_text'] = 'Pegawai office/non-shift dinilai terlambat jika absen masuk melewati jam masuk shift.';
                 }
 
                 $data['late_cutoff_time'] = date('H:i:s', $lateThreshold);
@@ -402,9 +349,6 @@ class Newkalender_model extends Model
                     $lateSeconds = $jamMasuk - $lateThreshold;
                     $data['late_seconds'] = $lateSeconds;
                     $data['late_minutes'] = (int) floor($lateSeconds / 60);
-                    
-                    // Format jam masuk dengan warna merah jika terlambat
-                    $data['jam_masuk'] = '<span style="color:red;">' . $data['jam_masuk_actual'] . '</span>';
                 }
             }
         }
@@ -420,21 +364,18 @@ class Newkalender_model extends Model
 
         $date = $date ?: date('Y-m-d');
 
-        $history = DB::connection('hris')->table('pegawai_bagian_history')
-            ->where('pegawai_pin', $pegawaiPin)
-            ->orderBy('effective_from', 'asc')
-            ->orderBy('id', 'asc')
-            ->get(['bagian_lama', 'bagian_baru', 'effective_from']);
+        if (!array_key_exists($pegawaiPin, $this->bagianHistoryCache)) {
+            $this->bagianHistoryCache[$pegawaiPin] = DB::connection('hris')->table('pegawai_bagian_history')
+                ->where('pegawai_pin', $pegawaiPin)
+                ->orderBy('effective_from')
+                ->orderBy('id')
+                ->get(['bagian_lama', 'bagian_baru', 'effective_from']);
+        }
+
+        $history = $this->bagianHistoryCache[$pegawaiPin];
 
         if ($history->isNotEmpty()) {
-            $latest = null;
-            foreach ($history as $row) {
-                if ($row->effective_from <= $date) {
-                    $latest = $row;
-                } else {
-                    break;
-                }
-            }
+            $latest = $history->last(fn ($row) => $row->effective_from <= $date);
 
             if ($latest) {
                 return !empty($latest->bagian_baru) ? (string) $latest->bagian_baru : (string) ($latest->bagian_lama ?? '');
@@ -444,15 +385,43 @@ class Newkalender_model extends Model
             return !empty($earliest->bagian_lama) ? (string) $earliest->bagian_lama : (string) ($earliest->bagian_baru ?? '');
         }
 
-        $pegawai = DB::connection('hris')->table('pegawai')
-            ->where('pegawai_pin', $pegawaiPin)
-            ->value('bagian');
+        if (!array_key_exists($pegawaiPin, $this->employeeBagianCache)) {
+            $this->employeeBagianCache[$pegawaiPin] = DB::connection('hris')->table('pegawai')
+                ->where('pegawai_pin', $pegawaiPin)
+                ->value('bagian');
+        }
 
-        return (string) ($pegawai ?? '');
+        return (string) ($this->employeeBagianCache[$pegawaiPin] ?? '');
+    }
+
+    private function workHourForBagianAndShift(string $bagian, string $shift): ?object
+    {
+        if ($bagian === '' || $shift === '') {
+            return null;
+        }
+
+        $key = $bagian.'|'.$shift;
+        if (!array_key_exists($key, $this->workHourCache)) {
+            $this->workHourCache[$key] = DB::connection('hris')->table('kelompokjam')
+                ->where('bagian', $bagian)
+                ->where('shift', $shift)
+                ->first(['jammasuk', 'jampulang']);
+        }
+
+        return $this->workHourCache[$key];
+    }
+
+    private function isOfficeBagian(string $bagian): bool
+    {
+        return $this->workHourForBagianAndShift($bagian, '-') !== null;
     }
 
     private function getTanggalAktifKeterlambatan(): ?string
     {
+        if (!Schema::connection('hris')->hasTable('keterlambatan')) {
+            return null;
+        }
+
         $row = DB::connection('hris')->table('keterlambatan')
             ->whereNotNull('tgl_aktif')
             ->min('tgl_aktif');
@@ -462,6 +431,10 @@ class Newkalender_model extends Model
     
     private function getOvertimeData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
+        if (!Schema::connection('hris')->hasTable('riwayatlembur')) {
+            return;
+        }
+
         $results = DB::connection('hris')->select("
             SELECT 
                 r.tgl,
@@ -486,12 +459,14 @@ class Newkalender_model extends Model
                 }
                 
                 $dataKalender[$tgl]['lembur_data'][] = [
-                    'jam_in' => $row->jam_in,
-                    'jam_out' => $row->jam_out,
-                    'durasi' => $row->durasi,
-                    'alasan' => $row->alasan,
-                    'tipe' => $row->tipe,
-                    'idlembur' => $row->idlembur
+                    'jam_in' => (string) $row->jam_in,
+                    'jam_out' => (string) $row->jam_out,
+                    'durasi' => (int) $row->durasi,
+                    'alasan' => (string) $row->alasan,
+                    'tipe' => (string) $row->tipe,
+                    'idlembur' => $row->idlembur,
+                    'session_key' => $this->overtimeSessionKey((string) $row->tipe, $row->idlembur, (string) $row->jam_in, (string) $row->jam_out),
+                    'idoperasi' => (string) $row->tipe === 'operasi' ? $row->idlembur : null,
                 ];
             }
         }
@@ -524,11 +499,9 @@ class Newkalender_model extends Model
                     $dataKalender[$tgl]['jam_masuk'] = $time;
                 } else {
                     $dataKalender[$tgl]['jam_pulang_actual'] = $time;
-                    $dataKalender[$tgl]['jam_pulang'] = !empty($dataKalender[$tgl]['is_night_shift']) ? $time . ' (esok)' : $time;
+                    $dataKalender[$tgl]['jam_pulang'] = $time;
                 }
 
-                $dataKalender[$tgl]['has_attendance'] = !empty($dataKalender[$tgl]['jam_masuk_actual'])
-                    || !empty($dataKalender[$tgl]['jam_pulang_actual']);
                 $dataKalender[$tgl]['attendance_adjustment_note'] = (string) ($adjustment->note ?? '');
                 continue;
             }
@@ -541,18 +514,37 @@ class Newkalender_model extends Model
             $targetId = $tipe === 'operasi'
                 ? (int) ($adjustment->idoperasi ?? $adjustment->idlembur ?? 0)
                 : (int) ($adjustment->idlembur ?? 0);
+            $targetPrefix = $tipe === 'operasi' ? 'operasi:' : 'lembur:';
+            $targetKey = trim((string) ($adjustment->target_key ?? ''));
+            $targetSessionKey = str_starts_with($targetKey, $targetPrefix)
+                ? substr($targetKey, strlen($targetPrefix))
+                : '';
+            if (preg_match('/^regular|^[0-9]+$/', $targetSessionKey)) {
+                $targetSessionKey = '';
+            }
+
+            if ($targetSessionKey === '' && $targetId <= 0) {
+                continue;
+            }
 
             foreach ($dataKalender[$tgl]['lembur_data'] as &$lembur) {
                 if (($lembur['tipe'] ?? '') !== $tipe) {
                     continue;
                 }
 
-                $lemburId = (int) ($lembur['idlembur'] ?? 0);
-                if ($lemburId !== $targetId) {
+                $sessionKey = (string) ($lembur['session_key'] ?? '');
+                if ($targetSessionKey !== '' && $sessionKey !== '' && $sessionKey !== $targetSessionKey) {
                     continue;
                 }
 
-                if (str_ends_with($entryType, '_in')) {
+                $lemburId = $tipe === 'operasi'
+                    ? (int) ($lembur['idoperasi'] ?? $lembur['idlembur'] ?? 0)
+                    : (int) ($lembur['idlembur'] ?? 0);
+                if ($targetSessionKey === '' && $lemburId !== $targetId) {
+                    continue;
+                }
+
+                if ($entryType === 'overtime_in' || $entryType === 'operation_in') {
                     $lembur['jam_in'] = $time;
                 } else {
                     $lembur['jam_out'] = $time;
@@ -574,20 +566,26 @@ class Newkalender_model extends Model
         }
     }
 
-    private function calculateMinutesBetween(string $date, string $startTime, string $endTime): int
+    private function overtimeSessionKey(string $type, $idlembur, string $jamIn, string $jamOut): string
     {
-        $start = strtotime($date . ' ' . str_replace(' (esok)', '', $startTime));
-        $end = strtotime($date . ' ' . str_replace(' (esok)', '', $endTime));
+        return substr(hash('sha1', implode('|', [
+            $type,
+            (string) ($idlembur ?? ''),
+            substr($jamIn, 0, 8),
+            substr($jamOut, 0, 8),
+        ])), 0, 40);
+    }
 
-        if ($start === false || $end === false) {
-            return 0;
+    private function calculateMinutesBetween(string $date, string $startTime, string $endTime): float
+    {
+        $start = Carbon::parse($date.' '.str_replace(' (esok)', '', $startTime));
+        $end = Carbon::parse($date.' '.str_replace(' (esok)', '', $endTime));
+
+        if ($end->lt($start)) {
+            $end->addDay();
         }
 
-        if ($end < $start) {
-            $end = strtotime('+1 day', $end);
-        }
-
-        return max(0, (int) floor(($end - $start) / 60));
+        return $start->diffInMinutes($end);
     }
 
     private function normalizeOvertimeAgainstSchedule(array &$dataKalender): void
@@ -645,62 +643,91 @@ class Newkalender_model extends Model
     
     private function getSpecialStatusData($pegawaiPin, $startDate, $endDate, &$dataKalender)
     {
-        // Get cuti data
-        $cutiResults = DB::connection('hris')->select("
-            SELECT 
-                C.tglcuti as tgl,
-                'Cuti' as keterangan
-            FROM cuti C
-            JOIN cutihdr H ON H.idcuti = C.idcuti
-            WHERE C.pegawai_pin = ?
-            AND C.tglcuti BETWEEN ? AND ?
-            AND H.jeniscuti = 'Cuti Tahunan'
-            AND C.tglcuti BETWEEN H.tgl_mulai AND H.tgl_selesai
-        ", [$pegawaiPin, $startDate, $endDate]);
-        
-        foreach ($cutiResults as $row) {
-            $tgl = $row->tgl;
-            if (isset($dataKalender[$tgl])) {
-                $dataKalender[$tgl]['status_khusus'] = $row->keterangan;
+        if (Schema::connection('hris')->hasTable('cuti') && Schema::connection('hris')->hasTable('cutihdr')) {
+            $cutiResults = DB::connection('hris')->select("
+                SELECT
+                    C.tglcuti as tgl,
+                    'Cuti' as keterangan
+                FROM cuti C
+                JOIN cutihdr H ON H.idcuti = C.idcuti
+                WHERE C.pegawai_pin = ?
+                AND C.tglcuti BETWEEN ? AND ?
+                AND H.jeniscuti = 'Cuti Tahunan'
+                AND C.tglcuti BETWEEN H.tgl_mulai AND H.tgl_selesai
+            ", [$pegawaiPin, $startDate, $endDate]);
+
+            foreach ($cutiResults as $row) {
+                $tgl = $row->tgl;
+                if (isset($dataKalender[$tgl])) {
+                    $dataKalender[$tgl]['status_khusus'] = $row->keterangan;
+                }
+            }
+        }
+
+        if (Schema::connection('hris')->hasTable('tugasluar')) {
+            $tugasLuarResults = DB::connection('hris')->select("
+                SELECT
+                    tgltugasluar as tgl,
+                    'Tugas Luar' as keterangan
+                FROM tugasluar
+                WHERE pegawai_pin = ?
+                AND tgltugasluar BETWEEN ? AND ?
+            ", [$pegawaiPin, $startDate, $endDate]);
+
+            foreach ($tugasLuarResults as $row) {
+                $tgl = $row->tgl;
+                if (isset($dataKalender[$tgl])) {
+                    $dataKalender[$tgl]['status_khusus'] = $row->keterangan;
+                }
+            }
+        }
+
+        if (Schema::connection('hris')->hasTable('doubleshift')) {
+            $doubleShiftResults = DB::connection('hris')->select("
+                SELECT
+                    tglshift as tgl,
+                    'Double Shift' as keterangan
+                FROM doubleshift
+                WHERE pegawai_pin = ?
+                AND tglshift BETWEEN ? AND ?
+            ", [$pegawaiPin, $startDate, $endDate]);
+
+            foreach ($doubleShiftResults as $row) {
+                $tgl = $row->tgl;
+                if (isset($dataKalender[$tgl])) {
+                    $dataKalender[$tgl]['status_khusus'] = $row->keterangan;
+                }
             }
         }
         
-        // Get tugas luar data
-        $tugasLuarResults = DB::connection('hris')->select("
-            SELECT 
-                tgltugasluar as tgl,
-                'Tugas Luar' as keterangan
-            FROM tugasluar
-            WHERE pegawai_pin = ?
-            AND tgltugasluar BETWEEN ? AND ?
-        ", [$pegawaiPin, $startDate, $endDate]);
-        
-        foreach ($tugasLuarResults as $row) {
-            $tgl = $row->tgl;
-            if (isset($dataKalender[$tgl])) {
-                $dataKalender[$tgl]['status_khusus'] = $row->keterangan;
+        if (Schema::connection('hris')->hasTable('perizinan')) {
+            $permitRows = DB::connection('hris')->table('perizinan')
+                ->where('pegawai_pin', $pegawaiPin)
+                ->where('status', 'disetujui')
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('tanggal_mulai', [$startDate, $endDate])
+                        ->orWhereBetween('tanggal_selesai', [$startDate, $endDate])
+                        ->orWhere(function ($query) use ($startDate, $endDate) {
+                            $query->where('tanggal_mulai', '<=', $startDate)
+                                ->where('tanggal_selesai', '>=', $endDate);
+                        });
+                })
+                ->get(['tanggal_mulai', 'tanggal_selesai', 'keterangan']);
+
+            foreach ($permitRows as $permit) {
+                $current = Carbon::parse($permit->tanggal_mulai)->max(Carbon::parse($startDate));
+                $end = Carbon::parse($permit->tanggal_selesai)->min(Carbon::parse($endDate));
+
+                while ($current->lte($end)) {
+                    $tgl = $current->toDateString();
+                    if (isset($dataKalender[$tgl]) && empty($dataKalender[$tgl]['status_khusus'])) {
+                        $dataKalender[$tgl]['status_khusus'] = (string) $permit->keterangan;
+                    }
+
+                    $current->addDay();
+                }
             }
         }
-        
-        // Get double shift data
-        $doubleShiftResults = DB::connection('hris')->select("
-            SELECT 
-                tglshift as tgl,
-                'Double Shift' as keterangan
-            FROM doubleshift
-            WHERE pegawai_pin = ?
-            AND tglshift BETWEEN ? AND ?
-        ", [$pegawaiPin, $startDate, $endDate]);
-        
-        foreach ($doubleShiftResults as $row) {
-            $tgl = $row->tgl;
-            if (isset($dataKalender[$tgl])) {
-                $dataKalender[$tgl]['status_khusus'] = $row->keterangan;
-            }
-        }
-        
-        // Get other perizinan data
-        
     }
 
     // Method untuk mendapatkan summary data dengan penanganan shift malam

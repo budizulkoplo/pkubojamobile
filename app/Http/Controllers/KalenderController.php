@@ -186,33 +186,10 @@ class KalenderController extends Controller
         return preg_match('/^\d{4}-\d{2}$/', $month) ? $month : date('Y-m');
     }
 
-    protected function prepareKalenderData(string $bulan, bool $preferNewModel = true): array
+    protected function prepareKalenderData(string $bulan): array
     {
-        if ($preferNewModel) {
-            $kalenderModel = new Newkalender_model();
-            $dataKalender = $kalenderModel->getDataKalenderWithNightShift($this->pegawaiPin, $bulan);
-
-            if (!empty($dataKalender)) {
-                return [
-                    'dataKalender' => $dataKalender,
-                    'weeks'        => $this->generateCalendarWeeks($bulan),
-                    'liburNasional'=> $this->getNationalHolidays($bulan),
-                    'liburBulanIni'=> $this->filterHolidaysByMonth($bulan),
-                ];
-            }
-        }
-
-        $start_date = Carbon::parse($bulan . '-26')->subMonth()->format('Y-m-d');
-        $end_date   = Carbon::parse($bulan . '-25')->format('Y-m-d');
-
-        $result = DB::select("CALL spKalenderAbsensiPegawai(?, ?, ?)", [
-            $this->pegawaiPin, $start_date, $end_date
-        ]);
-
-        $dataKalender = [];
-        foreach ($result as $row) {
-            $dataKalender[$row->tgl] = (array) $row;
-        }
+        $kalenderModel = new Newkalender_model();
+        $dataKalender = $kalenderModel->getDataKalenderWithNightShift($this->pegawaiPin, $bulan);
 
         return [
             'dataKalender' => $dataKalender,
