@@ -173,7 +173,7 @@ class OperanShiftController extends Controller
             ->where('type', 'operan')
             ->where('idkelompokkerja', $kelompok->idkelompokkerja)
             ->where('idsurat', 114)
-            ->where('ayat', '>=', 6)
+            ->where('ayat', 6)
             ->where(function ($query) {
                 $query->where('flag', 'selesai')
                     ->orWhereNull('flag');

@@ -70,7 +70,6 @@
             <div class="card-body">
                 <div class="muted-small mb-1">Total khatam Al-Qur'an unit</div>
                 <div class="last-title">{{ $khatamCount }} kali</div>
-                <div class="muted-small">Setelah An-Nas ayat 6, bacaan berikutnya dimulai lagi dari Al-Fatihah ayat 1.</div>
             </div>
         </div>
 
