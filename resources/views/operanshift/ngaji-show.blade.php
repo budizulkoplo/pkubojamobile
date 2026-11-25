@@ -203,6 +203,10 @@
             <a href="{{ route('operan.ngaji.show', $surat['suratSelanjutnya']['nomor']) }}" class="btn btn-outline-primary">
                 {{ $surat['suratSelanjutnya']['namaLatin'] }} &rarr;
             </a>
+        @elseif((int) $surat['nomor'] === 114)
+            <a href="{{ route('operan.ngaji.show', ['nomor' => 1, 'ayat' => 1]) }}#ayat-1" class="btn btn-outline-primary">
+                Al-Fatihah &rarr;
+            </a>
         @endif
     </div>
 
