@@ -112,12 +112,13 @@
         document.body.addEventListener('click', (e) => {
             const el = e.target.closest('a, button[type=submit], input[type=submit]');
             if (!el) return;
+            if (el.closest('[data-no-page-loader]')) return;
 
             const href = el.getAttribute('href') ?? '';
             if (el.tagName === 'A' && (
-                href.startsWith('#') || 
-                href.startsWith('javascript:') || 
-                href === '' || 
+                href.startsWith('#') ||
+                href.startsWith('javascript:') ||
+                href === '' ||
                 el.target === '_blank'
             )) return;
 
@@ -126,7 +127,11 @@
 
         // Loader saat form submit
         document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', showLoader);
+            form.addEventListener('submit', () => {
+                if (!form.hasAttribute('data-no-page-loader')) {
+                    showLoader();
+                }
+            });
         });
 
         // Pastikan loader tertutup setelah load penuh

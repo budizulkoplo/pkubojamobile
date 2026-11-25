@@ -963,10 +963,10 @@ class HrisController extends Controller
         return $waktuIn->diffInMinutes(Carbon::now()) <= self::MAKSIMAL_JAM_LEMBUR_AKTIF * 60;
     }
 
-    public function verifyLembur($id)
+    public function verifyLembur(Request $request, $id)
     {
         if (!Auth::guard('karyawan')->check()) {
-            if (request()->expectsJson()) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Sesi login berakhir. Silakan login kembali.',
@@ -985,19 +985,27 @@ class HrisController extends Controller
                 'verified_at' => $verifiedAt,
             ]);
 
-        if (request()->expectsJson()) {
+        if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Lembur berhasil diverifikasi.',
+                'verified' => true,
             ]);
         }
 
         return back()->with('success', 'Lembur berhasil diverifikasi.');
     }
 
-    public function unverifyLembur($id)
+    public function unverifyLembur(Request $request, $id)
     {
         if (!Auth::guard('karyawan')->check()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sesi login berakhir. Silakan login kembali.',
+                ], 401);
+            }
+
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
@@ -1008,6 +1016,14 @@ class HrisController extends Controller
             ->update([
                 'verified_at' => null,
             ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Verifikasi lembur berhasil dibatalkan.',
+                'verified' => false,
+            ]);
+        }
 
         return back()->with('success', 'Verifikasi lembur berhasil dibatalkan.');
     }

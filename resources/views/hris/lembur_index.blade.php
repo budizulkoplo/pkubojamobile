@@ -561,16 +561,18 @@
                         <div
                             class="overtime-actions"
                             data-overtime-actions
+                            data-verify-url="{{ route('hris.lembur_verify', $item->idlembur) }}"
                             data-unverify-url="{{ route('hris.lembur_unverify', $item->idlembur) }}"
+                            data-cancel-url="{{ route('hris.lembur_cancel', $item->idlembur) }}"
                             data-csrf-token="{{ csrf_token() }}"
                         >
                             @if($item->verified_at)
-                                <form action="{{ route('hris.lembur_unverify', $item->idlembur) }}" method="POST" onsubmit="return confirm('Batalkan verifikasi lembur ini?')">
+                                <form action="{{ route('hris.lembur_unverify', $item->idlembur) }}" method="POST" data-overtime-ajax="unverify" data-no-page-loader onsubmit="return confirm('Batalkan verifikasi lembur ini?')">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-warning">Batal Verif</button>
                                 </form>
                             @else
-                                <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" data-overtime-verify onsubmit="return confirm('Verifikasi lembur ini?')">
+                                <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" data-overtime-ajax="verify" data-no-page-loader onsubmit="return confirm('Verifikasi lembur ini?')">
                                     @csrf
                                     <button type="submit" class="btn btn-success">Verifikasi</button>
                                 </form>
@@ -588,7 +590,7 @@
         <div class="overtime-desktop-table table-responsive">
             <table class="table table-sm align-middle">
                     <thead class="table-primary">
-                        <tr data-overtime-id="{{ $item->idlembur }}">
+                        <tr>
                             <th>#</th>
                             <th>Tanggal</th>
                             <th>Nama Pegawai</th>
@@ -603,7 +605,7 @@
                     </thead>
                     <tbody>
                         @foreach($lembur as $index => $item)
-                            <tr>
+                            <tr data-overtime-id="{{ $item->idlembur }}">
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ \Carbon\Carbon::parse($item->tgllembur)->translatedFormat('d M Y') }}</td>
                                 <td>{{ $item->pegawai_nama }}</td>
@@ -641,16 +643,18 @@
                                     <div
                                         class="d-flex justify-content-center gap-1"
                                         data-overtime-actions
+                                        data-verify-url="{{ route('hris.lembur_verify', $item->idlembur) }}"
                                         data-unverify-url="{{ route('hris.lembur_unverify', $item->idlembur) }}"
+                                        data-cancel-url="{{ route('hris.lembur_cancel', $item->idlembur) }}"
                                         data-csrf-token="{{ csrf_token() }}"
                                     >
                                     @if($item->verified_at)
-                                        <form action="{{ route('hris.lembur_unverify', $item->idlembur) }}" method="POST" onsubmit="return confirm('Batalkan verifikasi lembur ini?')">
+                                        <form action="{{ route('hris.lembur_unverify', $item->idlembur) }}" method="POST" data-overtime-ajax="unverify" data-no-page-loader onsubmit="return confirm('Batalkan verifikasi lembur ini?')">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-warning">Batal Verif</button>
                                         </form>
                                     @else
-                                        <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" data-overtime-verify onsubmit="return confirm('Verifikasi lembur ini?')">
+                                        <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" data-overtime-ajax="verify" data-no-page-loader onsubmit="return confirm('Verifikasi lembur ini?')">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success">Verifikasi</button>
                                         </form>
@@ -734,8 +738,9 @@
 <script>
     document.addEventListener('submit', async function (event) {
         const form = event.target;
+        const action = form.dataset.overtimeAjax;
 
-        if (!form.matches('[data-overtime-verify]') || event.defaultPrevented) {
+        if (!action || event.defaultPrevented) {
             return;
         }
 
@@ -751,7 +756,7 @@
         const overtimeId = row.dataset.overtimeId;
         const originalButtonText = button.textContent;
         button.disabled = true;
-        button.textContent = 'Memverifikasi...';
+        button.textContent = action === 'verify' ? 'Memverifikasi...' : 'Membatalkan...';
 
         try {
             const response = await fetch(form.action, {
@@ -773,8 +778,10 @@
             });
 
             if (!response.ok || !result || !result.success) {
-                throw new Error(result && result.message ? result.message : 'Verifikasi lembur gagal.');
+                throw new Error(result && result.message ? result.message : 'Gagal memperbarui verifikasi lembur.');
             }
+
+            const isVerified = result.verified === true;
 
             document.querySelectorAll('[data-overtime-id]').forEach(function (itemRow) {
                 if (itemRow.dataset.overtimeId !== overtimeId) {
@@ -783,10 +790,17 @@
 
                 const status = itemRow.querySelector('[data-overtime-status]');
                 if (status) {
-                    status.textContent = 'Terverifikasi';
-                    status.className = status.classList.contains('badge')
-                        ? 'badge bg-success px-3'
-                        : 'overtime-status is-verified';
+                    status.textContent = isVerified ? 'Terverifikasi' : 'Belum diverifikasi';
+
+                    if (status.classList.contains('badge')) {
+                        status.className = isVerified
+                            ? 'badge bg-success px-3'
+                            : 'badge bg-warning text-dark px-3';
+                    } else {
+                        status.className = isVerified
+                            ? 'overtime-status is-verified'
+                            : 'overtime-status is-pending';
+                    }
                 }
 
                 const actions = itemRow.querySelector('[data-overtime-actions]');
@@ -796,52 +810,122 @@
 
                 actions.replaceChildren();
 
-                const unverifyForm = document.createElement('form');
-                unverifyForm.method = 'POST';
-                unverifyForm.action = actions.dataset.unverifyUrl;
-                unverifyForm.addEventListener('submit', function (submitEvent) {
-                    if (!window.confirm('Batalkan verifikasi lembur ini?')) {
-                        submitEvent.preventDefault();
-                    }
-                });
+                const isCard = itemRow.classList.contains('overtime-card');
+                const verifyForm = function () {
+                    return createOvertimeActionForm(
+                        actions.dataset.verifyUrl,
+                        actions.dataset.csrfToken,
+                        'verify',
+                        'Verifikasi',
+                        isCard ? 'btn btn-success' : 'btn btn-sm btn-success',
+                        'Verifikasi lembur ini?'
+                    );
+                };
+                const unverifyForm = function () {
+                    return createOvertimeActionForm(
+                        actions.dataset.unverifyUrl,
+                        actions.dataset.csrfToken,
+                        'unverify',
+                        'Batal Verif',
+                        isCard ? 'btn btn-outline-warning' : 'btn btn-sm btn-outline-warning',
+                        'Batalkan verifikasi lembur ini?'
+                    );
+                };
 
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = actions.dataset.csrfToken;
-                unverifyForm.appendChild(csrfInput);
+                if (isVerified) {
+                    actions.appendChild(unverifyForm());
+                    return;
+                }
 
-                const unverifyButton = document.createElement('button');
-                unverifyButton.type = 'submit';
-                unverifyButton.className = itemRow.classList.contains('overtime-card')
-                    ? 'btn btn-outline-warning'
-                    : 'btn btn-sm btn-outline-warning';
-                unverifyButton.textContent = 'Batal Verif';
-                unverifyForm.appendChild(unverifyButton);
-                actions.appendChild(unverifyForm);
+                actions.appendChild(verifyForm());
+                actions.appendChild(createOvertimeCancelForm(
+                    actions.dataset.cancelUrl,
+                    actions.dataset.csrfToken,
+                    isCard
+                ));
             });
 
-            const notice = document.createElement('div');
-            notice.className = 'alert alert-success overtime-alert';
-            notice.setAttribute('role', 'status');
-            notice.textContent = result.message;
-            document.querySelector('.overtime-page').prepend(notice);
-            window.setTimeout(function () {
-                notice.remove();
-            }, 4000);
+            showOvertimeNotice(result.message, 'success');
         } catch (error) {
             button.disabled = false;
             button.textContent = originalButtonText;
-
-            const notice = document.createElement('div');
-            notice.className = 'alert alert-danger overtime-alert';
-            notice.setAttribute('role', 'alert');
-            notice.textContent = error.message || 'Verifikasi lembur gagal.';
-            document.querySelector('.overtime-page').prepend(notice);
-            window.setTimeout(function () {
-                notice.remove();
-            }, 6000);
+            showOvertimeNotice(error.message || 'Gagal memperbarui verifikasi lembur.', 'danger');
         }
     });
+
+    function createOvertimeActionForm(url, csrfToken, action, label, buttonClass, confirmation) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.dataset.overtimeAjax = action;
+        form.setAttribute('data-no-page-loader', '');
+        form.addEventListener('submit', function (event) {
+            if (!window.confirm(confirmation)) {
+                event.preventDefault();
+            }
+        });
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        const button = document.createElement('button');
+        button.type = 'submit';
+        button.className = buttonClass;
+        button.textContent = label;
+        form.appendChild(button);
+
+        return form;
+    }
+
+    function createOvertimeCancelForm(url, csrfToken, isCard) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.addEventListener('submit', function (event) {
+            if (!window.confirm('Yakin batal lembur?')) {
+                event.preventDefault();
+            }
+        });
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+
+        const button = document.createElement('button');
+        button.type = 'submit';
+        button.className = isCard ? 'btn btn-outline-danger' : 'btn btn-sm btn-danger';
+        button.textContent = 'Hapus';
+        form.appendChild(button);
+
+        return form;
+    }
+
+    function showOvertimeNotice(message, type) {
+        const page = document.querySelector('.overtime-page');
+        if (!page) {
+            return;
+        }
+
+        const notice = document.createElement('div');
+        notice.className = 'alert alert-' + type + ' overtime-alert';
+        notice.setAttribute('role', type === 'success' ? 'status' : 'alert');
+        notice.textContent = message;
+        page.prepend(notice);
+
+        window.setTimeout(function () {
+            notice.remove();
+        }, type === 'success' ? 4000 : 6000);
+    }
 </script>
 @endsection
