@@ -66,6 +66,14 @@
             </div>
         </div>
 
+        <div class="card info-card mb-3">
+            <div class="card-body">
+                <div class="muted-small mb-1">Total khatam Al-Qur'an unit</div>
+                <div class="last-title">{{ $khatamCount }} kali</div>
+                <div class="muted-small">Setelah An-Nas ayat 6, bacaan berikutnya dimulai lagi dari Al-Fatihah ayat 1.</div>
+            </div>
+        </div>
+
         <a
             href="{{ route('operan.ngaji.show', ['nomor' => $nextPosition['nomor'], 'ayat' => $nextPosition['ayat']]) }}#ayat-{{ $nextPosition['ayat'] }}"
             class="btn btn-primary w-100"

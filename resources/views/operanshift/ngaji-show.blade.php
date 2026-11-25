@@ -132,6 +132,7 @@
                 Sesi ini mulai dari {{ $startSurat['namaLatin'] ?? ('Surat ' . $startPosition['nomor']) }} ayat {{ $startPosition['ayat'] }}.
                 Tap ayat terakhir yang selesai dibaca untuk menyimpan operan.
             </div>
+            <div class="text-muted small mt-1">Total khatam unit: {{ $khatamCount }} kali.</div>
         </div>
     </div>
 

@@ -143,13 +143,17 @@ class OperanShiftController extends Controller
 
         $suratInfo = $this->findSuratInfo($surat, $latest);
         $nomor = (int) ($suratInfo['nomor'] ?? $latest->idsurat ?? 1);
-        $jumlahAyat = (int) ($suratInfo['jumlahAyat'] ?? 0);
+        $jumlahAyat = (int) ($suratInfo['jumlahAyat'] ?? ($nomor === 114 ? 6 : 0));
         $ayat = (int) ($latest->ayat ?? 0);
 
         if ($jumlahAyat > 0 && $ayat >= $jumlahAyat) {
+            if ($nomor >= 114) {
+                return ['nomor' => 1, 'ayat' => 1];
+            }
+
             return [
-                'nomor' => min($nomor + 1, 114),
-                'ayat' => $nomor >= 114 ? $jumlahAyat : 1,
+                'nomor' => $nomor + 1,
+                'ayat' => 1,
             ];
         }
 
@@ -157,6 +161,24 @@ class OperanShiftController extends Controller
             'nomor' => $nomor,
             'ayat' => max($ayat + 1, 1),
         ];
+    }
+
+    protected function getKhatamCount($kelompok): int
+    {
+        if (! $kelompok) {
+            return 0;
+        }
+
+        return DB::table('ngaji')
+            ->where('type', 'operan')
+            ->where('idkelompokkerja', $kelompok->idkelompokkerja)
+            ->where('idsurat', 114)
+            ->where('ayat', '>=', 6)
+            ->where(function ($query) {
+                $query->where('flag', 'selesai')
+                    ->orWhereNull('flag');
+            })
+            ->count();
     }
 
     public function index()
@@ -172,8 +194,9 @@ class OperanShiftController extends Controller
         $nextPosition = $this->getNextPosition($latest, $surat);
 
         $latestSurat = $latest ? $this->findSuratInfo($surat, $latest) : null;
+        $khatamCount = $this->getKhatamCount($kelompok);
 
-        return view('operanshift.ngaji', compact('kelompok', 'latest', 'latestSurat', 'nextPosition'));
+        return view('operanshift.ngaji', compact('kelompok', 'latest', 'latestSurat', 'nextPosition', 'khatamCount'));
     }
 
     public function showNgaji($nomor)
@@ -193,8 +216,9 @@ class OperanShiftController extends Controller
         $startPosition = $this->getNextPosition($latest, $daftarSurat);
         $startSurat = collect($daftarSurat)->firstWhere('nomor', $startPosition['nomor']);
         $targetAyat = (int) request()->query('ayat', $startPosition['ayat']);
+        $khatamCount = $this->getKhatamCount($kelompok);
 
-        return view('operanshift.ngaji-show', compact('kelompok', 'surat', 'latest', 'targetAyat', 'startPosition', 'startSurat'));
+        return view('operanshift.ngaji-show', compact('kelompok', 'surat', 'latest', 'targetAyat', 'startPosition', 'startSurat', 'khatamCount'));
     }
 
     public function markNgaji(Request $request)
