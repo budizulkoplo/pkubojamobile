@@ -966,16 +966,31 @@ class HrisController extends Controller
     public function verifyLembur($id)
     {
         if (!Auth::guard('karyawan')->check()) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sesi login berakhir. Silakan login kembali.',
+                ], 401);
+            }
+
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
         $this->authorizeLemburVerification($id);
+        $verifiedAt = Carbon::now();
 
         DB::table('lembur')
             ->where('idlembur', $id)
             ->update([
-                'verified_at' => Carbon::now()
+                'verified_at' => $verifiedAt,
             ]);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Lembur berhasil diverifikasi.',
+            ]);
+        }
 
         return back()->with('success', 'Lembur berhasil diverifikasi.');
     }

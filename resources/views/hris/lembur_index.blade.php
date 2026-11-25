@@ -499,16 +499,16 @@
     @else
         <div class="overtime-cards">
             @foreach($lembur as $item)
-                    <article class="overtime-card">
+                    <article class="overtime-card" data-overtime-id="{{ $item->idlembur }}">
                         <div class="overtime-card-header">
                             <div class="overtime-employee">
                                 <h3>{{ $item->pegawai_nama }}</h3>
                                 <p>{{ $item->bagian ?: '-' }} · {{ $item->jabatan ?: '-' }}</p>
                             </div>
                             @if($item->verified_at)
-                                <span class="overtime-status is-verified">Terverifikasi</span>
+                                <span class="overtime-status is-verified" data-overtime-status>Terverifikasi</span>
                             @else
-                                <span class="overtime-status is-pending">Belum diverifikasi</span>
+                                <span class="overtime-status is-pending" data-overtime-status>Belum diverifikasi</span>
                             @endif
                         </div>
 
@@ -558,14 +558,19 @@
                             <strong>{{ $item->durasi_lembur ?? 'Belum lengkap' }}</strong>
                         </div>
 
-                        <div class="overtime-actions">
+                        <div
+                            class="overtime-actions"
+                            data-overtime-actions
+                            data-unverify-url="{{ route('hris.lembur_unverify', $item->idlembur) }}"
+                            data-csrf-token="{{ csrf_token() }}"
+                        >
                             @if($item->verified_at)
                                 <form action="{{ route('hris.lembur_unverify', $item->idlembur) }}" method="POST" onsubmit="return confirm('Batalkan verifikasi lembur ini?')">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-warning">Batal Verif</button>
                                 </form>
                             @else
-                                <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" onsubmit="return confirm('Verifikasi lembur ini?')">
+                                <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" data-overtime-verify onsubmit="return confirm('Verifikasi lembur ini?')">
                                     @csrf
                                     <button type="submit" class="btn btn-success">Verifikasi</button>
                                 </form>
@@ -583,7 +588,7 @@
         <div class="overtime-desktop-table table-responsive">
             <table class="table table-sm align-middle">
                     <thead class="table-primary">
-                        <tr>
+                        <tr data-overtime-id="{{ $item->idlembur }}">
                             <th>#</th>
                             <th>Tanggal</th>
                             <th>Nama Pegawai</th>
@@ -627,30 +632,35 @@
                                 <td>{{ $item->durasi_lembur ?? 'Belum lengkap' }}</td>
                                 <td class="text-center">
                                     @if($item->verified_at)
-                                        <span class="badge bg-success px-3">Terverifikasi</span>
+                                        <span class="badge bg-success px-3" data-overtime-status>Terverifikasi</span>
                                     @else
-                                        <span class="badge bg-warning text-dark px-3">Belum diverifikasi</span>
+                                        <span class="badge bg-warning text-dark px-3" data-overtime-status>Belum diverifikasi</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
+                                    <div
+                                        class="d-flex justify-content-center gap-1"
+                                        data-overtime-actions
+                                        data-unverify-url="{{ route('hris.lembur_unverify', $item->idlembur) }}"
+                                        data-csrf-token="{{ csrf_token() }}"
+                                    >
                                     @if($item->verified_at)
                                         <form action="{{ route('hris.lembur_unverify', $item->idlembur) }}" method="POST" onsubmit="return confirm('Batalkan verifikasi lembur ini?')">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-warning">Batal Verif</button>
                                         </form>
                                     @else
-                                        <div class="d-flex justify-content-center gap-1">
-                                            <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" onsubmit="return confirm('Verifikasi lembur ini?')">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-success">Verifikasi</button>
-                                            </form>
-                                            <form action="{{ route('hris.lembur_cancel', $item->idlembur) }}" method="POST" onsubmit="return confirm('Yakin batal lembur?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                                            </form>
-                                        </div>
+                                        <form action="{{ route('hris.lembur_verify', $item->idlembur) }}" method="POST" data-overtime-verify onsubmit="return confirm('Verifikasi lembur ini?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success">Verifikasi</button>
+                                        </form>
+                                        <form action="{{ route('hris.lembur_cancel', $item->idlembur) }}" method="POST" onsubmit="return confirm('Yakin batal lembur?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                        </form>
                                     @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -718,6 +728,120 @@
                 closePhoto();
             }
         });
+    });
+</script>
+
+<script>
+    document.addEventListener('submit', async function (event) {
+        const form = event.target;
+
+        if (!form.matches('[data-overtime-verify]') || event.defaultPrevented) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const button = form.querySelector('button[type="submit"]');
+        const row = form.closest('[data-overtime-id]');
+
+        if (!button || !row || button.disabled) {
+            return;
+        }
+
+        const overtimeId = row.dataset.overtimeId;
+        const originalButtonText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Memverifikasi...';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new FormData(form)
+            });
+
+            if (response.redirected) {
+                throw new Error('Sesi login berakhir. Silakan login kembali.');
+            }
+
+            const result = await response.json().catch(function () {
+                return null;
+            });
+
+            if (!response.ok || !result || !result.success) {
+                throw new Error(result && result.message ? result.message : 'Verifikasi lembur gagal.');
+            }
+
+            document.querySelectorAll('[data-overtime-id]').forEach(function (itemRow) {
+                if (itemRow.dataset.overtimeId !== overtimeId) {
+                    return;
+                }
+
+                const status = itemRow.querySelector('[data-overtime-status]');
+                if (status) {
+                    status.textContent = 'Terverifikasi';
+                    status.className = status.classList.contains('badge')
+                        ? 'badge bg-success px-3'
+                        : 'overtime-status is-verified';
+                }
+
+                const actions = itemRow.querySelector('[data-overtime-actions]');
+                if (!actions) {
+                    return;
+                }
+
+                actions.replaceChildren();
+
+                const unverifyForm = document.createElement('form');
+                unverifyForm.method = 'POST';
+                unverifyForm.action = actions.dataset.unverifyUrl;
+                unverifyForm.addEventListener('submit', function (submitEvent) {
+                    if (!window.confirm('Batalkan verifikasi lembur ini?')) {
+                        submitEvent.preventDefault();
+                    }
+                });
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = actions.dataset.csrfToken;
+                unverifyForm.appendChild(csrfInput);
+
+                const unverifyButton = document.createElement('button');
+                unverifyButton.type = 'submit';
+                unverifyButton.className = itemRow.classList.contains('overtime-card')
+                    ? 'btn btn-outline-warning'
+                    : 'btn btn-sm btn-outline-warning';
+                unverifyButton.textContent = 'Batal Verif';
+                unverifyForm.appendChild(unverifyButton);
+                actions.appendChild(unverifyForm);
+            });
+
+            const notice = document.createElement('div');
+            notice.className = 'alert alert-success overtime-alert';
+            notice.setAttribute('role', 'status');
+            notice.textContent = result.message;
+            document.querySelector('.overtime-page').prepend(notice);
+            window.setTimeout(function () {
+                notice.remove();
+            }, 4000);
+        } catch (error) {
+            button.disabled = false;
+            button.textContent = originalButtonText;
+
+            const notice = document.createElement('div');
+            notice.className = 'alert alert-danger overtime-alert';
+            notice.setAttribute('role', 'alert');
+            notice.textContent = error.message || 'Verifikasi lembur gagal.';
+            document.querySelector('.overtime-page').prepend(notice);
+            window.setTimeout(function () {
+                notice.remove();
+            }, 6000);
+        }
     });
 </script>
 @endsection
