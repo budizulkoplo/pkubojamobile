@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class QuranController extends Controller
 {
@@ -116,19 +118,43 @@ class QuranController extends Controller
     {
         $user = Auth::guard('karyawan')->user();
 
-        // Cache per surat (misalnya simpan 1 hari)
-        $surat = Cache::remember("surat_quran_{$nomor}", now()->addDay(), function () use ($nomor) {
-            $response = Http::get("https://equran.id/api/v2/surat/{$nomor}");
+        $cacheKey = "surat_quran_{$nomor}";
+        $surat = Cache::get($cacheKey);
 
-            if ($response->failed()) {
-                return null; // biar nggak error, nanti dicek di bawah
+        if (! is_array($surat) || $surat === []) {
+            try {
+                $response = Http::connectTimeout(2)
+                    ->timeout(5)
+                    ->get("https://equran.id/api/v2/surat/{$nomor}");
+            } catch (ConnectionException $exception) {
+                Log::warning('Quran surah request timed out or failed.', [
+                    'nomor' => $nomor,
+                    'message' => $exception->getMessage(),
+                ]);
+
+                return back()->with('warning', 'Gagal mengambil data surat dari API. Silakan coba lagi.');
             }
 
-            return $response->json()['data'] ?? null;
-        });
+            if ($response->failed()) {
+                Log::warning('Quran surah request returned an unsuccessful response.', [
+                    'nomor' => $nomor,
+                    'status' => $response->status(),
+                ]);
 
-        if (!$surat) {
-            return back()->with('warning', 'Gagal mengambil data surat dari API.');
+                return back()->with('warning', 'Gagal mengambil data surat dari API. Silakan coba lagi.');
+            }
+
+            $surat = $response->json('data');
+
+            if (! is_array($surat) || $surat === []) {
+                Log::warning('Quran surah response did not contain valid data.', [
+                    'nomor' => $nomor,
+                ]);
+
+                return back()->with('warning', 'Data surat dari API tidak valid. Silakan coba lagi.');
+            }
+
+            Cache::put($cacheKey, $surat, now()->addDay());
         }
 
         // Ambil riwayat baca dari DB (nggak usah di-cache, karena ini data per user)
