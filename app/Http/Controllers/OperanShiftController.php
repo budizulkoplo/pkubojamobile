@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -14,28 +15,89 @@ class OperanShiftController extends Controller
 {
     protected function getDaftarSurat(): array
     {
-        return Cache::rememberForever('daftar_surat_quran', function () {
-            $response = Http::get('https://equran.id/api/v2/surat');
+        $cached = Cache::get('daftar_surat_quran');
 
-            if ($response->failed()) {
-                return [];
-            }
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
 
-            return $response->json('data') ?? [];
-        });
+        try {
+            $response = Http::connectTimeout(2)
+                ->timeout(5)
+                ->get('https://equran.id/api/v2/surat');
+        } catch (ConnectionException $exception) {
+            Log::warning('Quran surah list request timed out or failed.', [
+                'message' => $exception->getMessage(),
+            ]);
+
+            return [];
+        }
+
+        if ($response->failed()) {
+            Log::warning('Quran surah list request returned an unsuccessful response.', [
+                'status' => $response->status(),
+            ]);
+
+            return [];
+        }
+
+        $surat = $response->json('data');
+
+        if (! is_array($surat) || $surat === []) {
+            Log::warning('Quran surah list response did not contain valid data.');
+
+            return [];
+        }
+
+        Cache::forever('daftar_surat_quran', $surat);
+
+        return $surat;
     }
 
     protected function getSurat(int $nomor): ?array
     {
-        return Cache::remember("surat_quran_{$nomor}", now()->addDay(), function () use ($nomor) {
-            $response = Http::get("https://equran.id/api/v2/surat/{$nomor}");
+        $cacheKey = "surat_quran_{$nomor}";
+        $cached = Cache::get($cacheKey);
 
-            if ($response->failed()) {
-                return null;
-            }
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
 
-            return $response->json('data') ?? null;
-        });
+        try {
+            $response = Http::connectTimeout(2)
+                ->timeout(5)
+                ->get("https://equran.id/api/v2/surat/{$nomor}");
+        } catch (ConnectionException $exception) {
+            Log::warning('Quran surah request timed out or failed.', [
+                'nomor' => $nomor,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        if ($response->failed()) {
+            Log::warning('Quran surah request returned an unsuccessful response.', [
+                'nomor' => $nomor,
+                'status' => $response->status(),
+            ]);
+
+            return null;
+        }
+
+        $surat = $response->json('data');
+
+        if (! is_array($surat) || $surat === []) {
+            Log::warning('Quran surah response did not contain valid data.', [
+                'nomor' => $nomor,
+            ]);
+
+            return null;
+        }
+
+        Cache::put($cacheKey, $surat, now()->addDay());
+
+        return $surat;
     }
 
     protected function getKelompokKerja()
