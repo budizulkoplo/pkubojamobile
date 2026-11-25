@@ -246,7 +246,7 @@
     @endforeach
 
     <div class="d-flex justify-content-between mt-4">
-        @if($surat['suratSebelumnya'])
+        @if(!empty($surat['suratSebelumnya']))
             <a href="{{ route('quran.show', $surat['suratSebelumnya']['nomor']) }}" class="btn btn-outline-secondary">
                 &larr; {{ $surat['suratSebelumnya']['namaLatin'] }}
             </a>
@@ -254,7 +254,7 @@
             <div></div>
         @endif
 
-        @if($surat['suratSelanjutnya'])
+        @if(!empty($surat['suratSelanjutnya']))
             <a href="{{ route('quran.show', $surat['suratSelanjutnya']['nomor']) }}" class="btn btn-outline-primary">
                 {{ $surat['suratSelanjutnya']['namaLatin'] }} &rarr;
             </a>
